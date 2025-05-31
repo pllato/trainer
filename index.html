@@ -132,7 +132,7 @@
         <div id="log-entries"></div>
       </div>
       <p id="result"></p>
-      <button id="sendButton" onclick="sendToTelegram()" style="display: none;">Отправить результаты в Telegram</button>
+      <button id="sendButton" onclick="sendToTelegram()" style="display: none;">Отправить результаты преподавателю</button>
     </div>
   </div>
 
@@ -174,6 +174,11 @@
 
       const firstWord = words[0];
       const secondWord = words[1];
+      const thirdWord = words[2] || '';
+
+      // Present Continuous: is/are/am + verb-ing
+      if (['is', 'are', 'am'].includes(firstWord) && secondWord.endsWith('ing')) return 'Present Continuous';
+      if (['is', 'are', 'am'].includes(secondWord) && thirdWord.endsWith('ing')) return 'Present Continuous';
 
       if (firstWord === 'will' || secondWord === 'will') return 'Future';
       if (words.some(word => word.endsWith('ed'))) return 'Past';
@@ -192,6 +197,8 @@
       const secondWord = words[1];
 
       if (firstWord === 'will' || secondWord === 'will') return false;
+      if (['is', 'are', 'am'].includes(firstWord) && secondWord.endsWith('ing')) return false;
+      if (['is', 'are', 'am'].includes(secondWord) && (words[2] || '').endsWith('ing')) return false;
 
       if (firstWord === 'do' || firstWord === 'does') {
         if (words.length < 3) return false;
@@ -228,7 +235,7 @@
       const logMessage = `Сказано: "${spokenText}" | Время: ${detectedTense} | ${detectedTense === 'Present Simple' ? '' : 'Нужно: Present Simple | '} <span class="${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
       entry.innerHTML = logMessage;
       logEntriesDiv.appendChild(entry);
-      logEntries.push({ text: spokenText, isCorrect, isRepeat: logEntries.some(e => e.text === spokenText) });
+      logEntries.push({ text: spokenText, isCorrect, isRepeat: logEntries.some(e => e.text === spokenText), tense: detectedTense });
       document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
     }
 
@@ -363,7 +370,8 @@
       logEntries.forEach((entry, index) => {
         const status = entry.isCorrect ? 'Правильно' : 'Неправильно';
         const repeat = entry.isRepeat ? ' (Повтор)' : '';
-        protocol += `- ${index + 1}. "${entry.text}" - ${status}${repeat}\n`;
+        const tenseInfo = entry.isCorrect ? '' : ` (Время: ${entry.tense})`;
+        protocol += `- ${index + 1}. "${entry.text}" - ${status}${tenseInfo}${repeat}\n`;
       });
 
       const message = `**Отчет по тренировке ELC English Trainer**\n` +
@@ -388,7 +396,7 @@
           body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
         });
         if (response.ok) {
-          alert('Результаты отправлены в Telegram!');
+          alert('Результаты отправлены преподавателю!');
         } else {
           const errorData = await response.json();
           console.error('Ошибка Telegram API:', errorData);
