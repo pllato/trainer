@@ -121,7 +121,6 @@
       } else if (subject === 'you' || subject === 'we' || subject === 'they' || subject.includes(' and ') || subject.includes(' or ')) {
         if (verb !== 'are') return { isCorrect: false, error: 'Для множественного числа или "you" используйте "are"', correction: `Правильно: "${subject} are"` };
       } else {
-        // Для сложных подлежащих (например, "my house") считаем третьим лицом единственного числа
         if (verb !== 'is') return { isCorrect: false, error: 'Для подлежащего используйте "is"', correction: `Правильно: "${subject} is"` };
       }
 
@@ -139,22 +138,26 @@
       console.log('isThirdPersonSingular:', isThirdPersonSingular);
 
       if (verb === 'do' && nextWord === 'not') {
+        console.log('Обнаружено отрицание с "do not"');
         if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} do not like"` };
         if (isThirdPersonSingular) return { isCorrect: false, error: 'Для третьего лица единственного числа используйте "does not"', correction: `Правильно: "${subject} does not like"` };
         return { isCorrect: true };
       }
       if (verb === 'does' && nextWord === 'not') {
+        console.log('Обнаружено отрицание с "does not"');
         if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} does not like"` };
         if (!isThirdPersonSingular && subject !== 'you') return { isCorrect: false, error: 'Для подлежащих "I", "we", "they" используйте "do not"', correction: `Правильно: "${subject} do not like"` };
         return { isCorrect: true };
       }
 
       if (isThirdPersonSingular) {
+        console.log('Подлежащее - третье лицо единственного числа, проверяем окончание глагола');
         if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has' && verb !== 'goes' && verb !== 'does') {
           const correctedVerb = verb.endsWith('o') || verb.endsWith('s') || verb.endsWith('sh') || verb.endsWith('ch') || verb.endsWith('x') || verb.endsWith('z') ? `${verb}es` : `${verb}s`;
           return { isCorrect: false, error: `Отсутствует "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${correctedVerb}"` };
         }
       } else {
+        console.log('Подлежащее - НЕ третье лицо единственного числа, проверяем отсутствие окончания "s/es"');
         if ((verb.endsWith('s') || verb.endsWith('es')) && verb !== 'goes' && verb !== 'does' && !verb.endsWith('ss')) {
           return { isCorrect: false, error: `Лишнее "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${verb.replace(/es$|s$/, '')}"` };
         }
@@ -183,6 +186,7 @@
 
       // Проверка вопросов с do/does
       if (firstWord === 'do' || firstWord === 'does') {
+        console.log('Обнаружен вопрос с "do" или "does"');
         if (words.length < 3) return { isCorrect: false, error: 'Вопрос неполный', correction: 'Добавьте глагол, например: "Do you like?"' };
         const subject = words[1];
         const isThirdPersonSingular = subject === 'he' || subject === 'she' || subject === 'it';
