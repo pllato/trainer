@@ -143,6 +143,8 @@
     let recognition = null;
     let isPracticing = false;
     let lastTranscript = '';
+    let startTime = null;
+    let logEntries = [];
 
     function startTopic() {
       userName = document.getElementById('userName').value.trim();
@@ -219,13 +221,14 @@
     }
 
     function addToLog(spokenText, isCorrect) {
-      const logEntries = document.getElementById('log-entries');
+      const logEntriesDiv = document.getElementById('log-entries');
       const entry = document.createElement('div');
       entry.className = 'log-entry';
       const detectedTense = detectTense(spokenText);
       const logMessage = `Сказано: "${spokenText}" | Время: ${detectedTense} | ${detectedTense === 'Present Simple' ? '' : 'Нужно: Present Simple | '} <span class="${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
       entry.innerHTML = logMessage;
-      logEntries.appendChild(entry);
+      logEntriesDiv.appendChild(entry);
+      logEntries.push({ text: spokenText, isCorrect, isRepeat: logEntries.some(e => e.text === spokenText) });
       document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
     }
 
@@ -246,7 +249,7 @@
         recognition?.stop();
         recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.lang = 'en-US';
-        recognition.interimResults = true;
+        recognition.interimResults = false;
         recognition.maxAlternatives = 1;
         recognition.continuous = true;
 
@@ -255,20 +258,18 @@
 
         recognition.onstart = function() {
           console.log('Распознавание речи началось');
+          if (!startTime) startTime = new Date();
           toggleListeningIndicator(true);
         };
 
-        let interimTranscript = '';
         recognition.onresult = function(event) {
           let transcript = '';
           for (let i = event.resultIndex; i < event.results.length; i++) {
             if (event.results[i].isFinal) {
               transcript += event.results[i][0].transcript;
-            } else {
-              interimTranscript = event.results[i][0].transcript;
             }
           }
-          transcript = (transcript + ' ' + interimTranscript).trim();
+          transcript = transcript.trim();
 
           if (transcript && transcript !== lastTranscript) {
             document.getElementById('transcript').textContent = `Вы сказали: ${transcript}`;
@@ -344,22 +345,47 @@
       correctCount = 0;
       totalAttempts = 0;
       lastTranscript = '';
+      startTime = new Date();
+      logEntries = [];
       document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
       document.getElementById('log-entries').innerHTML = '';
       startRecognition();
     }
 
     async function sendToTelegram() {
+      const endTime = new Date();
+      const durationMs = endTime - startTime;
+      const durationMin = Math.floor(durationMs / 60000);
+      const durationSec = Math.floor((durationMs % 60000) / 1000);
+      const accuracy = totalAttempts > 0 ? ((correctCount / totalAttempts) * 100).toFixed(1) : 0;
+
+      let protocol = '### Протокол:\n';
+      logEntries.forEach((entry, index) => {
+        const status = entry.isCorrect ? 'Правильно' : 'Неправильно';
+        const repeat = entry.isRepeat ? ' (Повтор)' : '';
+        protocol += `- ${index + 1}. "${entry.text}" - ${status}${repeat}\n`;
+      });
+
+      const message = `**Отчет по тренировке ELC English Trainer**\n` +
+                      `**Имя:** ${userName}\n` +
+                      `**Тема:** Present Simple\n` +
+                      `**Время начала:** ${startTime.toLocaleString('ru-RU', { timeZone: 'Asia/Yekaterinburg' })}\n` +
+                      `**Время окончания:** ${endTime.toLocaleString('ru-RU', { timeZone: 'Asia/Yekaterinburg' })}\n` +
+                      `**Продолжительность:** ${durationMin} мин ${durationSec} сек\n` +
+                      `**Всего попыток:** ${totalAttempts}\n` +
+                      `**Правильно:** ${correctCount}\n` +
+                      `**Точность:** ${accuracy}%\n` +
+                      `${protocol}` +
+                      `**Итог:** ${correctCount >= 7 ? 'Сдано' : 'Не сдано'}`;
+
       const botToken = '7660930209:AAHx2T9toG1LID97XAlB8Ha1FOgeVfa53lM';
       const chatId = '80267795';
-      const pass = correctCount >= 7;
-      const message = `Результаты ELC English Trainer\nИмя: ${userName}\nТема: Present Simple\nПравильно: ${correctCount}/${totalAttempts}\nИтог: ${pass ? 'Сдано' : 'Не сдано'}`;
 
       try {
         const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text: message })
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
         });
         if (response.ok) {
           alert('Результаты отправлены в Telegram!');
