@@ -181,6 +181,17 @@
     let startTime = null;
     let logEntries = [];
 
+    async function checkMicAccess() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+        return true;
+      } catch (err) {
+        console.error('Ошибка доступа к микрофону:', err);
+        return false;
+      }
+    }
+
     function startTopic() {
       userName = document.getElementById('userName').value.trim();
       console.log('Попытка начать тему. Введенное имя:', userName);
@@ -355,8 +366,132 @@
       duringButtons.style.display = isListening ? 'block' : 'none';
     }
 
-    function startPractice() {
+    function startRecognition() {
+      if (!isPracticing) {
+        console.log('Распознавание не запущено: isPracticing = false');
+        return;
+      }
+
+      if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+        alert('Ваш браузер не поддерживает распознавание речи. Используйте Google Chrome.');
+        console.error('SpeechRecognition не поддерживается браузером');
+        return;
+      }
+
+      try {
+        if (recognition) {
+          recognition.stop();
+          recognition = null;
+        }
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = true;
+
+        document.getElementById('transcript').textContent = `Составьте предложение в Present Simple.`;
+        console.log('Ожидается предложение в Present Simple');
+
+        recognition.onstart = function() {
+          console.log('Распознавание речи успешно началось');
+          if (!startTime) startTime = new Date();
+          toggleListeningIndicator(true);
+          document.getElementById('endButtons').style.display = 'none';
+        };
+
+        recognition.onresult = function(event) {
+          console.log('Получены результаты распознавания:', event.results);
+          let transcript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              transcript += event.results[i][0].transcript;
+            }
+          }
+          transcript = transcript.trim();
+
+          if (transcript && transcript !== lastTranscript) {
+            document.getElementById('transcript').textContent = `Вы сказали: ${transcript}`;
+            console.log('Сказанный текст:', transcript);
+
+            const isDuplicate = logEntries.some(entry => entry.text === transcript);
+            if (!isDuplicate) {
+              const result = isPresentSimple(transcript);
+              if (result.isCorrect) {
+                correctCount++;
+                document.getElementById('transcript').textContent += ' - Правильно!';
+              } else {
+                document.getElementById('transcript').textContent += ' - Неправильно!';
+              }
+              totalAttempts++;
+              document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
+              addToLog(transcript, result, false);
+            } else {
+              document.getElementById('transcript').textContent += ' - Дубликат!';
+              addToLog(transcript, { isCorrect: false }, true);
+            }
+
+            if (correctCount >= 10) {
+              isPracticing = false;
+              recognition.stop();
+              recognition = null;
+              document.getElementById('startButton').style.display = 'none';
+              document.getElementById('endButtons').style.display = 'block';
+              const pass = correctCount >= 7;
+              document.getElementById('result').textContent = `Поздравляем, ${userName}! Вы сдали с результатом ${correctCount}/10.`;
+              console.log('Практика завершена, результат:', correctCount, '/', totalAttempts, 'Сдано:', pass);
+            }
+            lastTranscript = transcript;
+          }
+        };
+
+        recognition.onerror = function(event) {
+          console.error('Ошибка распознавания речи:', event.error, event.message);
+          document.getElementById('transcript').textContent = `Ошибка: ${event.error}.`;
+          if (event.error === 'no-speech') {
+            document.getElementById('transcript').textContent += ' Речь не обнаружена. Проверьте, включен ли микрофон.';
+            console.log('Ошибка: Речь не обнаружена');
+          } else if (event.error === 'not-allowed') {
+            document.getElementById('transcript').textContent += ' Доступ к микрофону запрещен. Разрешите доступ.';
+            alert('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера (рядом с URL) и перезапустите практику.');
+            console.log('Ошибка: Доступ к микрофону запрещен');
+          } else if (event.error === 'aborted') {
+            document.getElementById('transcript').textContent += ' Распознавание прервано.';
+            console.log('Ошибка: Распознавание прервано');
+          } else if (event.error === 'network') {
+            document.getElementById('transcript').textContent += ' Ошибка сети. Проверьте подключение.';
+            console.log('Ошибка: Проблемы с сетью');
+          } else {
+            document.getElementById('transcript').textContent += ` Ошибка: ${event.message || ''}`;
+            console.log('Неизвестная ошибка распознавания:', event.message);
+          }
+        };
+
+        recognition.onend = function() {
+          console.log('Распознавание речи завершено');
+          toggleListeningIndicator(false);
+          if (isPracticing && correctCount < 10) {
+            console.log('Перезапуск распознавания через 2 секунды');
+            setTimeout(startRecognition, 2000);
+          }
+        };
+
+        console.log('Запуск SpeechRecognition...');
+        recognition.start();
+      } catch (error) {
+        console.error('Ошибка инициализации SpeechRecognition:', error);
+        document.getElementById('transcript').textContent = `Ошибка инициализации: ${error.message}. Попробуйте снова.`;
+      }
+    }
+
+    async function startPractice() {
       console.log('Запуск практики');
+      const micAccess = await checkMicAccess();
+      if (!micAccess) {
+        alert('Не удалось получить доступ к микрофону. Разрешите доступ в настройках браузера и попробуйте снова.');
+        console.error('Нет доступа к микрофону, практика не запущена');
+        return;
+      }
+
       if (recognition) {
         recognition.stop();
         recognition = null;
