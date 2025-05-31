@@ -287,6 +287,7 @@
 
       if (firstWord === 'do' || firstWord === 'does') {
         if (words.length < 3) return { isCorrect: false, error: 'Вопрос неполный', correction: 'Добавьте глагол, например: "Do you like?"' };
+        console.log('Вопрос в Present Simple распознан как корректный:', spokenText);
         return { isCorrect: true };
       }
 
@@ -332,46 +333,18 @@
       const isThirdPersonSingular = ['he', 'she', 'it'].includes(subject) || (!['you', 'we', 'they', 'i'].includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
       console.log('Подлежащее третьего лица единственного числа:', isThirdPersonSingular);
       if (isThirdPersonSingular) {
-        if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has' && verb !== 'goes') {
+        if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has' && verb !== 'goes' && verb !== 'does') {
           const correctedVerb = verb.endsWith('o') || verb.endsWith('s') || verb.endsWith('sh') || verb.endsWith('ch') || verb.endsWith('x') || verb.endsWith('z') ? `${verb}es` : `${verb}s`;
           return { isCorrect: false, error: `Отсутствует "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${correctedVerb}"` };
         }
       } else {
-        if ((verb.endsWith('s') || verb.endsWith('es')) && verb !== 'goes' && !verb.endsWith('ss')) {
+        if ((verb.endsWith('s') || verb.endsWith('es')) && verb !== 'goes' && verb !== 'does' && !verb.endsWith('ss')) {
           return { isCorrect: false, error: `Лишнее "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${verb.replace(/es$|s$/, '')}"` };
         }
       }
 
       console.log('Предложение распознано как корректное:', spokenText);
       return { isCorrect: true };
-    }
-
-    function addToLog(spokenText, result, isDuplicate) {
-      console.log('Добавление записи в протокол:', spokenText, 'Результат:', result, 'Дубликат:', isDuplicate);
-      const logEntriesDiv = document.getElementById('log-entries');
-      if (!logEntriesDiv) {
-        console.error('Элемент #log-entries не найден в DOM');
-        return;
-      }
-      const entry = document.createElement('div');
-      entry.className = 'log-entry';
-      const detectedTense = detectTense(spokenText);
-      let logMessage = `Сказано: "${spokenText}"`;
-      
-      if (isDuplicate) {
-        logMessage += ` | <span class="duplicate">Дубликат</span>`;
-      } else {
-        logMessage += ` | Время: ${detectedTense} | ${detectedTense === 'Present Simple' ? '' : 'Нужно: Present Simple | '} <span class="${result.isCorrect ? 'correct' : 'incorrect'}">${result.isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
-        if (!result.isCorrect) {
-          logMessage += ` | Ошибка: ${result.error} | Правильно: ${result.correction}`;
-        }
-      }
-      
-      entry.innerHTML = logMessage;
-      logEntriesDiv.appendChild(entry);
-      logEntries.push({ text: spokenText, isCorrect: result.isCorrect, isDuplicate, tense: detectedTense, error: result.error, correction: result.correction });
-      document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
-      console.log('Запись успешно добавлена в протокол:', logMessage);
     }
 
     function toggleListeningIndicator(isListening) {
