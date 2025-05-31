@@ -126,62 +126,59 @@
 
     function startTopic() {
       userName = document.getElementById('userName').value.trim();
+      console.log('Попытка начать тему. Введенное имя:', userName);
       if (!userName) {
         alert('Пожалуйста, введите ваше имя!');
         return;
       }
-      console.log('Пользователь:', userName, 'Тема: Present Simple');
-      document.getElementById('setup').style.display = 'none';
-      document.getElementById('practice').style.display = 'block';
+      const setupDiv = document.getElementById('setup');
+      const practiceDiv = document.getElementById('practice');
+      if (setupDiv && practiceDiv) {
+        setupDiv.style.display = 'none';
+        practiceDiv.style.display = 'block';
+        console.log('Переход к практике успешно выполнен для пользователя:', userName);
+      } else {
+        console.error('Ошибка: Элементы #setup или #practice не найдены в DOM');
+        alert('Произошла ошибка при переходе к практике. Проверьте код.');
+      }
     }
 
     function isPresentSimple(spokenText) {
-      // Приводим текст к нижнему регистру для анализа
       spokenText = spokenText.trim().toLowerCase();
-      // Убираем точку в конце, если есть
       if (spokenText.endsWith('.')) spokenText = spokenText.slice(0, -1);
 
-      // Разбиваем предложение на слова
       const words = spokenText.split(/\s+/);
-
-      // Проверка минимальной длины предложения
       if (words.length < 2) return false;
 
-      // Список подлежащих
       const subjects = ['i', 'you', 'he', 'she', 'it', 'we', 'they'];
       const firstWord = words[0];
       const secondWord = words[1];
 
       // Проверка на вопрос (начинается с "do" или "does")
       if (firstWord === 'do' || firstWord === 'does') {
-        // Пример: "do you like", "does he play"
         if (words.length < 3) return false;
         const subject = words[1];
         if (!subjects.includes(subject)) return false;
-        // После подлежащего должен идти глагол (упрощенная проверка)
         return true;
       }
 
-      // Проверка на отрицание (начинается с подлежащего, затем "don't" или "doesn't")
+      // Проверка на отрицание (подлежащее + "don't" или "doesn't")
       if (subjects.includes(firstWord)) {
         if (secondWord === "don't" || secondWord === "doesn't") {
-          // Пример: "i don't like", "he doesn't play"
           if (words.length < 3) return false;
           return true;
         }
 
         // Проверка на утверждение (подлежащее + глагол)
-        // Пример: "i like", "he plays"
         if (words.length < 2) return false;
 
-        // Проверка правильной формы глагола для "he/she/it"
+        // Проверка формы глагола для "he/she/it"
         if (['he', 'she', 'it'].includes(firstWord)) {
-          // Глагол должен заканчиваться на "s" или "es" (упрощенная проверка)
           return secondWord.endsWith('s') || secondWord.endsWith('es');
         }
 
         // Для остальных подлежащих (I, you, we, they) глагол без "s"
-        return !secondWord.endsWith('s') || secondWord === 'goes'; // Исключение для "go"
+        return !secondWord.endsWith('s') || secondWord === 'goes';
       }
 
       return false;
@@ -193,7 +190,6 @@
       entry.className = 'log-entry';
       entry.innerHTML = `Сказано: "${spokenText}" | <span class="${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
       logEntries.appendChild(entry);
-      // Прокручиваем вниз, чтобы видеть последние записи
       document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
     }
 
@@ -216,7 +212,7 @@
 
         recognition.onstart = function() {
           console.log('Распознавание речи началось');
-          document.get personally.getElementById('transcript').textContent = `Составьте предложение в Present Simple.`;
+          document.getElementById('transcript').textContent = `Составьте предложение в Present Simple.`;
         };
 
         recognition.onresult = function(event) {
@@ -234,7 +230,6 @@
           totalAttempts++;
           document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
 
-          // Добавляем запись в протокол
           addToLog(spokenText, isCorrect);
 
           if (totalAttempts >= 10) {
@@ -284,21 +279,16 @@
     }
 
     async function sendToTelegram() {
-      const botToken = 'YOUR_BOT_TOKEN'; // Замените на ваш токен Telegram-бота
-      const chatId = 'YOUR_CHAT_ID'; // Замените на ваш chat ID
+      const botToken = 'YOUR_BOT_TOKEN';
+      const chatId = 'YOUR_CHAT_ID';
       const pass = correctCount >= 7;
       const message = `Результаты ELC English Trainer\nИмя: ${userName}\nТема: Present Simple\nПравильно: ${correctCount}/${totalAttempts}\nИтог: ${pass ? 'Сдано' : 'Не сдано'}`;
 
       try {
         const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: message
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: message })
         });
         if (response.ok) {
           alert('Результаты отправлены в Telegram!');
