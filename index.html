@@ -123,6 +123,7 @@
     let correctCount = 0;
     let totalAttempts = 0;
     let recognition = null;
+    let isPracticing = false;
 
     function startTopic() {
       userName = document.getElementById('userName').value.trim();
@@ -153,13 +154,8 @@
       const firstWord = words[0];
       const secondWord = words[1];
 
-      // Будущее время (will)
       if (firstWord === 'will' || secondWord === 'will') return 'Future';
-
-      // Прошедшее время (упрощенная проверка: ed)
       if (words.some(word => word.endsWith('ed'))) return 'Past';
-
-      // Present Simple (если нет других маркеров)
       return 'Present Simple';
     }
 
@@ -174,10 +170,8 @@
       const firstWord = words[0];
       const secondWord = words[1];
 
-      // Исключаем будущее время
       if (firstWord === 'will' || secondWord === 'will') return false;
 
-      // Проверка на вопрос (начинается с "do" или "does")
       if (firstWord === 'do' || firstWord === 'does') {
         if (words.length < 3) return false;
         const subject = words[1];
@@ -185,23 +179,19 @@
         return true;
       }
 
-      // Проверка на отрицание (подлежащее + "don't" или "doesn't")
       if (subjects.includes(firstWord)) {
         if (secondWord === "don't" || secondWord === "doesn't") {
           if (words.length < 3) return false;
           return true;
         }
 
-        // Проверка на утверждение (подлежащее + глагол)
         if (words.length < 2) return false;
 
-        // Проверка формы глагола для "he/she/it"
         if (['he', 'she', 'it'].includes(firstWord)) {
           if (!secondWord.endsWith('s') && !secondWord.endsWith('es') && secondWord !== 'has') return false;
           return true;
         }
 
-        // Для остальных подлежащих (I, you, we, they) глагол без "s"
         if (secondWord.endsWith('s') && secondWord !== 'goes') return false;
         return true;
       }
@@ -220,8 +210,7 @@
       document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
     }
 
-    function startPractice() {
-      console.log('Запуск практики');
+    function startRecognition() {
       if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
         alert('Ваш браузер не поддерживает распознавание речи. Используйте Google Chrome.');
         return;
@@ -260,6 +249,7 @@
           addToLog(spokenText, isCorrect);
 
           if (correctCount >= 10) {
+            isPracticing = false;
             recognition.stop();
             document.getElementById('startButton').style.display = 'none';
             document.getElementById('sendButton').style.display = 'inline-block';
@@ -267,7 +257,9 @@
             document.getElementById('result').textContent = `Поздравляем, ${userName}! Вы сдали с результатом ${correctCount}/10.`;
             console.log('Практика завершена, результат:', correctCount, '/', totalAttempts, 'Сдано:', pass);
           } else {
-            setTimeout(startPractice, 1000);
+            setTimeout(() => {
+              if (isPracticing) startRecognition();
+            }, 500);
           }
         };
 
@@ -285,13 +277,15 @@
           } else {
             alert('Ошибка распознавания речи: ' + event.error + ' - ' + (event.message || ''));
           }
-          recognition.stop();
+          if (isPracticing) {
+            setTimeout(startRecognition, 500);
+          }
         };
 
         recognition.onend = function() {
           console.log('Распознавание речи завершено');
-          if (correctCount < 10 && !recognition) {
-            setTimeout(startPractice, 500);
+          if (isPracticing) {
+            setTimeout(startRecognition, 500);
           }
         };
 
@@ -300,12 +294,21 @@
       } catch (error) {
         console.error('Ошибка инициализации распознавания речи:', error);
         alert('Не удалось начать практику: ' + error.message);
+        if (isPracticing) {
+          setTimeout(startRecognition, 500);
+        }
       }
+    }
+
+    function startPractice() {
+      console.log('Запуск практики');
+      isPracticing = true;
+      startRecognition();
     }
 
     async function sendToTelegram() {
       const botToken = '7660930209:AAHx2T9toG1LID97XAlB8Ha1FOgeVfa53lM';
-      const chatId = '80267795'; // Личный чат, можно заменить на -4584976529 для группы
+      const chatId = '80267795';
       const pass = correctCount >= 7;
       const message = `Результаты ELC English Trainer\nИмя: ${userName}\nТема: Present Simple\nПравильно: ${correctCount}/${totalAttempts}\nИтог: ${pass ? 'Сдано' : 'Не сдано'}`;
 
