@@ -25,13 +25,29 @@
       margin: 10px;
       font-size: 16px;
       cursor: pointer;
-      background-color: #4CAF50;
-      color: white;
       border: none;
       border-radius: 4px;
     }
-    button:hover {
+    #startButton {
+      background-color: #4CAF50;
+      color: white;
+    }
+    #startButton:hover {
       background-color: #45a049;
+    }
+    #sendButton {
+      background-color: #2196F3;
+      color: white;
+    }
+    #sendButton:hover {
+      background-color: #1e87db;
+    }
+    #restartButton, #restartDuringButton {
+      background-color: #f44336;
+      color: white;
+    }
+    #restartButton:hover, #restartDuringButton:hover {
+      background-color: #da190b;
     }
     input[type="text"] {
       padding: 10px;
@@ -109,7 +125,7 @@
     <div id="setup">
       <label for="userName">Введите ваше имя:</label><br>
       <input type="text" id="userName" placeholder="Ваше имя" required><br>
-      <button onclick="startTopic()">Начать Present Simple</button>
+      <button id="startButton" onclick="startTopic()">Начать Present Simple</button>
     </div>
     <div id="practice" style="display: none;">
       <h2>Present Simple</h2>
@@ -119,8 +135,8 @@
           <li>I go to school.</li>
           <li>She plays tennis.</li>
           <li>They watch movies.</li>
-          <li>He reads books.</li>
-          <li>We study English.</li>
+          <li>My house is big.</li>
+          <li>Sasha and Anna play together.</li>
           <li>Do you like?</li>
           <li>I like.</li>
           <li>I don't like.</li>
@@ -130,13 +146,17 @@
       <button id="startButton" onclick="startPractice()">Начать практику</button>
       <div id="listeningIndicator">Слушает<span class="dot-pulse"></span></div>
       <p id="transcript">Составьте предложение в Present Simple.</p>
+      <button id="restartDuringButton" onclick="startPractice()" style="display: none;">Начать заново</button>
       <p id="score">Правильно: 0/0</p>
       <div id="log">
         <h3>Протокол:</h3>
         <div id="log-entries"></div>
       </div>
       <p id="result"></p>
-      <button id="sendButton" onclick="sendToTelegram()" style="display: none;">Отправить результаты преподавателю</button>
+      <div id="endButtons" style="display: none;">
+        <button id="sendButton" onclick="sendToTelegram()">Отправить результаты преподавателю</button>
+        <button id="restartButton" onclick="startPractice()">Начать заново</button>
+      </div>
     </div>
   </div>
 
@@ -173,7 +193,6 @@
       spokenText = spokenText.trim().toLowerCase();
       if (spokenText.endsWith('.')) spokenText = spokenText.slice(0, -1);
 
-      // Преобразование сокращений в полные формы
       spokenText = spokenText.replace(/\bi'm\b/g, 'i am');
       spokenText = spokenText.replace(/\byou're\b/g, 'you are');
       spokenText = spokenText.replace(/\bhe's\b/g, 'he is');
@@ -207,49 +226,68 @@
     function isPresentSimple(spokenText) {
       const normalizedText = normalizeText(spokenText);
       const words = normalizedText.split(/\s+/);
-      if (words.length < 2) return { isCorrect: false, error: 'Предложение слишком короткое', correction: 'Добавьте глагол, например: "I go"'};
+      if (words.length < 2) return { isCorrect: false, error: 'Предложение слишком короткое', correction: 'Добавьте глагол, например: "I go"' };
 
-      const subjects = ['i', 'you', 'he', 'she', 'it', 'we', 'they'];
       const firstWord = words[0];
       const secondWord = words[1];
+      const thirdWord = words[2] || '';
 
-      if (firstWord === 'will' || secondWord === 'will') return { isCorrect: false, error: 'Использовано будущее время', correction: 'Используйте Present Simple, например: "I go"'};
-      if (['is', 'are', 'am'].includes(firstWord) && secondWord.endsWith('ing')) return { isCorrect: false, error: 'Использовано Present Continuous', correction: 'Используйте Present Simple, например: "I go"'};
-      if (['is', 'are', 'am'].includes(secondWord) && (words[2] || '').endsWith('ing')) return { isCorrect: false, error: 'Использовано Present Continuous', correction: 'Используйте Present Simple, например: "I go"'};
+      if (firstWord === 'will' || secondWord === 'will') return { isCorrect: false, error: 'Использовано будущее время', correction: 'Используйте Present Simple, например: "I go"' };
+      if (['is', 'are', 'am'].includes(firstWord) && secondWord.endsWith('ing')) return { isCorrect: false, error: 'Использовано Present Continuous', correction: 'Используйте Present Simple, например: "I go"' };
+      if (['is', 'are', 'am'].includes(secondWord) && thirdWord.endsWith('ing')) return { isCorrect: false, error: 'Использовано Present Continuous', correction: 'Используйте Present Simple, например: "I go"' };
 
       if (firstWord === 'do' || firstWord === 'does') {
-        if (words.length < 3) return { isCorrect: false, error: 'Вопрос неполный', correction: 'Добавьте глагол, например: "Do you like?"'};
-        const subject = words[1];
-        if (!subjects.includes(subject)) return { isCorrect: false, error: 'Неправильное подлежащее', correction: 'Используйте подлежащее, например: "Do you like?"'};
+        if (words.length < 3) return { isCorrect: false, error: 'Вопрос неполный', correction: 'Добавьте глагол, например: "Do you like?"' };
         return { isCorrect: true };
       }
 
-      if (subjects.includes(firstWord)) {
-        if (secondWord === "do" && words[2] === "not") {
-          if (words.length < 4) return { isCorrect: false, error: 'Отрицание неполное', correction: 'Добавьте глагол, например: "I do not like"'};
-          return { isCorrect: true };
+      const subjectWords = [];
+      let verbIndex = -1;
+      for (let i = 0; i < words.length; i++) {
+        if (['do', 'does', 'is', 'are', 'am'].includes(words[i]) || !words[i].match(/^(and|or|the|a|my|your|his|her|its|our|their)$/)) {
+          verbIndex = i;
+          break;
         }
-        if (secondWord === "does" && words[2] === "not") {
-          if (words.length < 4) return { isCorrect: false, error: 'Отрицание неполное', correction: 'Добавьте глагол, например: "She does not like"'};
-          return { isCorrect: true };
-        }
+        subjectWords.push(words[i]);
+      }
 
-        if (words.length < 2) return { isCorrect: false, error: 'Предложение неполное', correction: 'Добавьте глагол, например: "I go"'};
+      if (verbIndex === -1 || verbIndex >= words.length - 1) return { isCorrect: false, error: 'Предложение неполное', correction: 'Добавьте глагол, например: "I go"' };
 
-        if (['he', 'she', 'it'].includes(firstWord)) {
-          if (!secondWord.endsWith('s') && !secondWord.endsWith('es') && secondWord !== 'has') {
-            return { isCorrect: false, error: `Отсутствует "s/es" для "${firstWord}"`, correction: `Правильно: "${firstWord} ${secondWord}s"` };
-          }
-          return { isCorrect: true };
-        }
+      const subject = subjectWords.join(' ');
+      const verb = words[verbIndex];
+      const nextWord = words[verbIndex + 1] || '';
 
-        if (secondWord.endsWith('s') && secondWord !== 'goes') {
-          return { isCorrect: false, error: `Лишнее "s" для "${firstWord}"`, correction: `Правильно: "${firstWord} ${secondWord.replace(/s$/, '')}"` };
-        }
+      if (['is', 'are', 'am'].includes(verb)) {
+        if (subject === '') return { isCorrect: false, error: 'Отсутствует подлежащее', correction: 'Добавьте подлежащее, например: "My house is big"' };
+        if (verb === 'is' && !['he', 'she', 'it'].includes(subject) && !subject.includes(' ')) return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "are" или "am", например: "${subject} are big"` };
+        if (verb === 'are' && !['you', 'we', 'they'].includes(subject) && !subject.includes(' ')) return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is" или "am", например: "${subject} is big"` };
+        if (verb === 'am' && subject !== 'i') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is" или "are", например: "${subject} is big"` };
         return { isCorrect: true };
       }
 
-      return { isCorrect: false, error: 'Неправильное подлежащее', correction: 'Используйте подлежащее, например: "I go"' };
+      if (subject === '') return { isCorrect: false, error: 'Отсутствует подлежащее', correction: 'Добавьте подлежащее, например: "I go"' };
+
+      if (verb === 'do' && nextWord === 'not') {
+        if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} do not like"` };
+        return { isCorrect: true };
+      }
+      if (verb === 'does' && nextWord === 'not') {
+        if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} does not like"` };
+        return { isCorrect: true };
+      }
+
+      const isThirdPersonSingular = ['he', 'she', 'it'].includes(subject) || (!['you', 'we', 'they', 'i'].includes(subject) && !subject.includes(' and '));
+      if (isThirdPersonSingular) {
+        if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has') {
+          return { isCorrect: false, error: `Отсутствует "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${verb}s"` };
+        }
+      } else {
+        if (verb.endsWith('s') && verb !== 'goes') {
+          return { isCorrect: false, error: `Лишнее "s" для "${subject}"`, correction: `Правильно: "${subject} ${verb.replace(/s$/, '')}"` };
+        }
+      }
+
+      return { isCorrect: true };
     }
 
     function addToLog(spokenText, result, isDuplicate) {
@@ -276,7 +314,9 @@
 
     function toggleListeningIndicator(isListening) {
       const indicator = document.getElementById('listeningIndicator');
+      const restartDuringButton = document.getElementById('restartDuringButton');
       indicator.style.display = isListening ? 'block' : 'none';
+      restartDuringButton.style.display = isListening ? 'inline-block' : 'none';
     }
 
     function startRecognition() {
@@ -302,6 +342,7 @@
           console.log('Распознавание речи началось');
           if (!startTime) startTime = new Date();
           toggleListeningIndicator(true);
+          document.getElementById('endButtons').style.display = 'none';
         };
 
         recognition.onresult = function(event) {
@@ -338,7 +379,7 @@
               isPracticing = false;
               recognition.stop();
               document.getElementById('startButton').style.display = 'none';
-              document.getElementById('sendButton').style.display = 'inline-block';
+              document.getElementById('endButtons').style.display = 'block';
               const pass = correctCount >= 7;
               document.getElementById('result').textContent = `Поздравляем, ${userName}! Вы сдали с результатом ${correctCount}/10.`;
               console.log('Практика завершена, результат:', correctCount, '/', totalAttempts, 'Сдано:', pass);
@@ -396,6 +437,9 @@
       logEntries = [];
       document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
       document.getElementById('log-entries').innerHTML = '';
+      document.getElementById('result').textContent = '';
+      document.getElementById('startButton').style.display = 'none';
+      document.getElementById('endButtons').style.display = 'none';
       startRecognition();
     }
 
