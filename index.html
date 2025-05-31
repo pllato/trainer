@@ -143,6 +143,26 @@
       }
     }
 
+    function detectTense(spokenText) {
+      spokenText = spokenText.trim().toLowerCase();
+      if (spokenText.endsWith('.')) spokenText = spokenText.slice(0, -1);
+
+      const words = spokenText.split(/\s+/);
+      if (words.length < 2) return 'Unknown';
+
+      const firstWord = words[0];
+      const secondWord = words[1];
+
+      // Будущее время (will)
+      if (firstWord === 'will' || secondWord === 'will') return 'Future';
+
+      // Прошедшее время (упрощенная проверка: ed)
+      if (words.some(word => word.endsWith('ed'))) return 'Past';
+
+      // Present Simple (если нет других маркеров)
+      return 'Present Simple';
+    }
+
     function isPresentSimple(spokenText) {
       spokenText = spokenText.trim().toLowerCase();
       if (spokenText.endsWith('.')) spokenText = spokenText.slice(0, -1);
@@ -153,6 +173,9 @@
       const subjects = ['i', 'you', 'he', 'she', 'it', 'we', 'they'];
       const firstWord = words[0];
       const secondWord = words[1];
+
+      // Исключаем будущее время
+      if (firstWord === 'will' || secondWord === 'will') return false;
 
       // Проверка на вопрос (начинается с "do" или "does")
       if (firstWord === 'do' || firstWord === 'does') {
@@ -174,11 +197,13 @@
 
         // Проверка формы глагола для "he/she/it"
         if (['he', 'she', 'it'].includes(firstWord)) {
-          return secondWord.endsWith('s') || secondWord.endsWith('es');
+          if (!secondWord.endsWith('s') && !secondWord.endsWith('es') && secondWord !== 'has') return false;
+          return true;
         }
 
         // Для остальных подлежащих (I, you, we, they) глагол без "s"
-        return !secondWord.endsWith('s') || secondWord === 'goes';
+        if (secondWord.endsWith('s') && secondWord !== 'goes') return false;
+        return true;
       }
 
       return false;
@@ -188,7 +213,9 @@
       const logEntries = document.getElementById('log-entries');
       const entry = document.createElement('div');
       entry.className = 'log-entry';
-      entry.innerHTML = `Сказано: "${spokenText}" | <span class="${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
+      const detectedTense = detectTense(spokenText);
+      const logMessage = `Сказано: "${spokenText}" | Время: ${detectedTense} | ${detectedTense === 'Present Simple' ? '' : 'Нужно: Present Simple | '} <span class="${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
+      entry.innerHTML = logMessage;
       logEntries.appendChild(entry);
       document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
     }
@@ -232,14 +259,12 @@
 
           addToLog(spokenText, isCorrect);
 
-          if (totalAttempts >= 10) {
+          if (correctCount >= 10) {
             recognition.stop();
             document.getElementById('startButton').style.display = 'none';
             document.getElementById('sendButton').style.display = 'inline-block';
             const pass = correctCount >= 7;
-            document.getElementById('result').textContent = pass
-              ? `Поздравляем, ${userName}! Вы сдали с результатом ${correctCount}/10.`
-              : `К сожалению, ${userName}. Ваш результат ${correctCount}/10. Нужно 7/10 для сдачи.`;
+            document.getElementById('result').textContent = `Поздравляем, ${userName}! Вы сдали с результатом ${correctCount}/10.`;
             console.log('Практика завершена, результат:', correctCount, '/', totalAttempts, 'Сдано:', pass);
           } else {
             setTimeout(startPractice, 1000);
@@ -265,7 +290,7 @@
 
         recognition.onend = function() {
           console.log('Распознавание речи завершено');
-          if (totalAttempts < 10 && !recognition) {
+          if (correctCount < 10 && !recognition) {
             setTimeout(startPractice, 500);
           }
         };
@@ -279,8 +304,8 @@
     }
 
     async function sendToTelegram() {
-      const botToken = 'YOUR_BOT_TOKEN';
-      const chatId = 'YOUR_CHAT_ID';
+      const botToken = '7660930209:AAHx2T9toG1LID97XAlB8Ha1FOgeVfa53lM';
+      const chatId = '80267795'; // Личный чат, можно заменить на -4584976529 для группы
       const pass = correctCount >= 7;
       const message = `Результаты ELC English Trainer\nИмя: ${userName}\nТема: Present Simple\nПравильно: ${correctCount}/${totalAttempts}\nИтог: ${pass ? 'Сдано' : 'Не сдано'}`;
 
