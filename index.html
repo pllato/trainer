@@ -19,6 +19,7 @@
       padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
+      margin: 5px;
     }
     input[type="text"] {
       padding: 10px;
@@ -57,6 +58,7 @@
   <h1>ELC English Speaking Trainer - Debug Version</h1>
   <div>
     <button id="startButton" onclick="startPractice()">Начать практику (голос)</button>
+    <button id="stopButton" onclick="stopPractice()" style="display: none;">Остановить практику</button>
     <div id="listeningIndicator">Слушает<span class="dot-pulse"></span></div>
     <p>Или введите предложение вручную:</p>
     <input type="text" id="manualInput" placeholder="Введите предложение">
@@ -93,9 +95,11 @@
       spokenText = spokenText.replace(/\bdon't\b/g, 'do not');
       spokenText = spokenText.replace(/\bdoesn't\b/g, 'does not');
 
+      // Исправление ошибок распознавания
       spokenText = spokenText.replace(/\bmyhouse\b/g, 'my house');
       spokenText = spokenText.replace(/\bsashaandanna\b/g, 'sasha and anna');
       spokenText = spokenText.replace(/\bbetterandsasha\b/g, 'better and sasha');
+      spokenText = spokenText.replace(/\bmy\s*house\b/g, 'my house');
 
       console.log('Нормализованный текст:', spokenText);
       return spokenText.trim();
@@ -107,7 +111,6 @@
       return false;
     }
 
-    // Упрощенная проверка "to be" в Present Simple
     function checkToBePresentTense(subject, verb) {
       console.log('Проверка "to be": subject=', subject, 'verb=', verb);
       
@@ -126,9 +129,8 @@
       return { isCorrect: true };
     }
 
-    // Упрощенная проверка обычных глаголов в Present Simple
     function checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex) {
-      console.log('Проверка Present Simple: subject=', subject, 'verb=', verb);
+      console.log('Проверка Present Simple: subject=', subject, 'verb=', verb, 'nextWord=', nextWord);
 
       const isThirdPersonSingular = subject === 'he' || subject === 'she' || subject === 'it' || 
         (subject !== 'i' && subject !== 'you' && subject !== 'we' && subject !== 'they' && 
@@ -334,6 +336,18 @@
       }
     }
 
+    function stopPractice() {
+      if (recognition) {
+        recognition.stop();
+        recognition = null;
+      }
+      isPracticing = false;
+      document.getElementById('startButton').style.display = 'inline-block';
+      document.getElementById('stopButton').style.display = 'none';
+      toggleListeningIndicator(false);
+      document.getElementById('transcript').textContent = 'Практика остановлена. Вы можете начать заново или использовать ручной ввод.';
+    }
+
     async function startPractice() {
       console.log('Запуск практики');
       const micAccess = await checkMicAccess();
@@ -349,6 +363,7 @@
       }
       isPracticing = true;
       document.getElementById('startButton').style.display = 'none';
+      document.getElementById('stopButton').style.display = 'inline-block';
       startRecognition();
     }
   </script>
