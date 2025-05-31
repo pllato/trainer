@@ -269,6 +269,63 @@
       return 'Present Simple';
     }
 
+    // Проверка форм "to be" в Present Simple (is/are/am)
+    function checkToBePresentTense(subject, verb) {
+      const singularSubjects = ['he', 'she', 'it'];
+      const pluralSubjects = ['you', 'we', 'they'];
+      const firstSubjectWord = subject.split(' ')[0];
+      const isSingular = singularSubjects.includes(firstSubjectWord) || (!pluralSubjects.includes(firstSubjectWord) && !subject.includes(' and ') && !subject.includes(' or '));
+      console.log('Проверка "to be": isSingular=', isSingular, 'subject=', subject, 'verb=', verb);
+
+      if (verb === 'is' && !isSingular) return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "are" или "am", например: "${subject} are big"` };
+      if (verb === 'are' && isSingular && firstSubjectWord !== 'you') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is", например: "${subject} is big"` };
+      if (verb === 'am' && firstSubjectWord !== 'i') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is" или "are", например: "${subject} is big"` };
+      
+      console.log('Предложение с "to be" в Present Simple распознано как корректное:', subject, verb);
+      return { isCorrect: true };
+    }
+
+    // Проверка обычных глаголов в Present Simple (например, "I go", "she drives")
+    function checkPresentSimpleTense(subject, verb, nextWord) {
+      const singularSubjects = ['he', 'she', 'it'];
+      const nonThirdPersonSubjects = ['i', 'you', 'we', 'they'];
+      const firstSubjectWord = subject.split(' ')[0];
+      const isThirdPersonSingular = singularSubjects.includes(firstSubjectWord) || (!nonThirdPersonSubjects.includes(firstSubjectWord) && !subject.includes(' and ') && !subject.includes(' or '));
+      console.log('Проверка Present Simple: isThirdPersonSingular=', isThirdPersonSingular, 'subject=', subject, 'verb=', verb);
+
+      if (verb === 'do' && nextWord === 'not') {
+        if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} do not like"` };
+        return { isCorrect: true };
+      }
+      if (verb === 'does' && nextWord === 'not') {
+        if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} does not like"` };
+        return { isCorrect: true };
+      }
+
+      if (isThirdPersonSingular) {
+        if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has' && verb !== 'goes' && verb !== 'does') {
+          const correctedVerb = verb.endsWith('o') || verb.endsWith('s') || verb.endsWith('sh') || verb.endsWith('ch') || verb.endsWith('x') || verb.endsWith('z') ? `${verb}es` : `${verb}s`;
+          console.log(`Ошибка: ожидается окончание "s/es" для "${subject}", исправлено на "${correctedVerb}"`);
+          return { isCorrect: false, error: `Отсутствует "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${correctedVerb}"` };
+        }
+      } else {
+        if ((verb.endsWith('s') || verb.endsWith('es')) && verb !== 'goes' && verb !== 'does' && !verb.endsWith('ss')) {
+          console.log(`Ошибка: лишнее окончание "s/es" для "${subject}"`);
+          return { isCorrect: false, error: `Лишнее "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${verb.replace(/es$|s$/, '')}"` };
+        }
+      }
+
+      console.log('Предложение в Present Simple распознано как корректное:', subject, verb);
+      return { isCorrect: true };
+    }
+
+    // Проверка Present Continuous (например, "I am going")
+    function checkPresentContinuousTense(firstWord, secondWord, thirdWord) {
+      if (['is', 'are', 'am'].includes(firstWord) && secondWord.endsWith('ing')) return true;
+      if (['is', 'are', 'am'].includes(secondWord) && thirdWord.endsWith('ing')) return true;
+      return false;
+    }
+
     function isPresentSimple(spokenText) {
       const normalizedText = normalizeText(spokenText);
       const words = normalizedText.split(/\s+/);
@@ -279,16 +336,22 @@
       const secondWord = words[1];
       const thirdWord = words[2] || '';
 
+      // Проверка на будущее время
       if (firstWord === 'will' || secondWord === 'will') return { isCorrect: false, error: 'Использовано будущее время', correction: 'Используйте Present Simple, например: "I go"' };
-      if (['is', 'are', 'am'].includes(firstWord) && secondWord.endsWith('ing')) return { isCorrect: false, error: 'Использовано Present Continuous', correction: 'Используйте Present Simple, например: "I go"' };
-      if (['is', 'are', 'am'].includes(secondWord) && thirdWord.endsWith('ing')) return { isCorrect: false, error: 'Использовано Present Continuous', correction: 'Используйте Present Simple, например: "I go"' };
 
+      // Проверка на Present Continuous
+      if (checkPresentContinuousTense(firstWord, secondWord, thirdWord)) {
+        return { isCorrect: false, error: 'Использовано Present Continuous', correction: 'Используйте Present Simple, например: "I go"' };
+      }
+
+      // Проверка вопросов с do/does
       if (firstWord === 'do' || firstWord === 'does') {
         if (words.length < 3) return { isCorrect: false, error: 'Вопрос неполный', correction: 'Добавьте глагол, например: "Do you like?"' };
         console.log('Вопрос в Present Simple распознан как корректный:', spokenText);
         return { isCorrect: true };
       }
 
+      // Определение подлежащего и глагола
       const subjectWords = [];
       let verbIndex = -1;
       for (let i = 0; i < words.length; i++) {
@@ -308,46 +371,13 @@
 
       if (subject === '') return { isCorrect: false, error: 'Отсутствует подлежащее', correction: 'Добавьте подлежащее, например: "I go"' };
 
+      // Проверка предложений с "to be"
       if (['is', 'are', 'am'].includes(verb)) {
-        const singularSubjects = ['he', 'she', 'it'];
-        const pluralSubjects = ['you', 'we', 'they'];
-        const isSingular = singularSubjects.includes(subject) || (!pluralSubjects.includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
-        if (verb === 'is' && !isSingular) return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "are" или "am", например: "${subject} are big"` };
-        if (verb === 'are' && isSingular && subject !== 'you') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is", например: "${subject} is big"` };
-        if (verb === 'am' && subject !== 'i') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is" или "are", например: "${subject} is big"` };
-        console.log('Предложение с "to be" распознано как корректное:', spokenText);
-        return { isCorrect: true };
+        return checkToBePresentTense(subject, verb);
       }
 
-      if (verb === 'do' && nextWord === 'not') {
-        if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} do not like"` };
-        return { isCorrect: true };
-      }
-      if (verb === 'does' && nextWord === 'not') {
-        if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} does not like"` };
-        return { isCorrect: true };
-      }
-
-      const singularSubjects = ['he', 'she', 'it'];
-      const nonThirdPersonSubjects = ['i', 'you', 'we', 'they'];
-      const isThirdPersonSingular = singularSubjects.includes(subject) || (!nonThirdPersonSubjects.includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
-      console.log('Подлежащее третьего лица единственного числа:', isThirdPersonSingular);
-
-      if (isThirdPersonSingular) {
-        if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has' && verb !== 'goes' && verb !== 'does') {
-          const correctedVerb = verb.endsWith('o') || verb.endsWith('s') || verb.endsWith('sh') || verb.endsWith('ch') || verb.endsWith('x') || verb.endsWith('z') ? `${verb}es` : `${verb}s`;
-          console.log(`Ошибка: ожидается окончание "s/es" для "${subject}", исправлено на "${correctedVerb}"`);
-          return { isCorrect: false, error: `Отсутствует "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${correctedVerb}"` };
-        }
-      } else {
-        if ((verb.endsWith('s') || verb.endsWith('es')) && verb !== 'goes' && verb !== 'does' && !verb.endsWith('ss')) {
-          console.log(`Ошибка: лишнее окончание "s/es" для "${subject}"`);
-          return { isCorrect: false, error: `Лишнее "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${verb.replace(/es$|s$/, '')}"` };
-        }
-      }
-
-      console.log('Предложение распознано как корректное:', spokenText);
-      return { isCorrect: true };
+      // Проверка обычных глаголов в Present Simple
+      return checkPresentSimpleTense(subject, verb, nextWord);
     }
 
     function addToLog(spokenText, result, isDuplicate) {
