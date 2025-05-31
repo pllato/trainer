@@ -273,24 +273,22 @@
     function checkToBePresentTense(subject, verb) {
       const singularSubjects = ['he', 'she', 'it'];
       const pluralSubjects = ['you', 'we', 'they'];
-      const firstSubjectWord = subject.split(' ')[0];
-      const isSingular = singularSubjects.includes(firstSubjectWord) || (!pluralSubjects.includes(firstSubjectWord) && !subject.includes(' and ') && !subject.includes(' or '));
+      const isSingular = singularSubjects.includes(subject) || (!pluralSubjects.includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
       console.log('Проверка "to be": isSingular=', isSingular, 'subject=', subject, 'verb=', verb);
 
       if (verb === 'is' && !isSingular) return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "are" или "am", например: "${subject} are big"` };
-      if (verb === 'are' && isSingular && firstSubjectWord !== 'you') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is", например: "${subject} is big"` };
-      if (verb === 'am' && firstSubjectWord !== 'i') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is" или "are", например: "${subject} is big"` };
+      if (verb === 'are' && isSingular && subject !== 'you') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is", например: "${subject} is big"` };
+      if (verb === 'am' && subject !== 'i') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is" или "are", например: "${subject} is big"` };
       
       console.log('Предложение с "to be" в Present Simple распознано как корректное:', subject, verb);
       return { isCorrect: true };
     }
 
     // Проверка обычных глаголов в Present Simple (например, "I go", "she drives")
-    function checkPresentSimpleTense(subject, verb, nextWord) {
+    function checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex) {
       const singularSubjects = ['he', 'she', 'it'];
       const nonThirdPersonSubjects = ['i', 'you', 'we', 'they'];
-      const firstSubjectWord = subject.split(' ')[0];
-      const isThirdPersonSingular = singularSubjects.includes(firstSubjectWord) || (!nonThirdPersonSubjects.includes(firstSubjectWord) && !subject.includes(' and ') && !subject.includes(' or '));
+      const isThirdPersonSingular = singularSubjects.includes(subject) || (!nonThirdPersonSubjects.includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
       console.log('Проверка Present Simple: isThirdPersonSingular=', isThirdPersonSingular, 'subject=', subject, 'verb=', verb);
 
       if (verb === 'do' && nextWord === 'not') {
@@ -377,7 +375,7 @@
       }
 
       // Проверка обычных глаголов в Present Simple
-      return checkPresentSimpleTense(subject, verb, nextWord);
+      return checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex);
     }
 
     function addToLog(spokenText, result, isDuplicate) {
