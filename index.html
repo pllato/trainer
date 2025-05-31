@@ -180,7 +180,6 @@
     let startTime = null;
     let logEntries = [];
 
-    // Проверка доступа к микрофону
     async function checkMicAccess() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -192,7 +191,6 @@
       }
     }
 
-    // Переход к практике
     function startTopic() {
       userName = document.getElementById('userName').value.trim();
       console.log('Попытка начать тему. Введенное имя:', userName);
@@ -212,7 +210,6 @@
       }
     }
 
-    // Выход из практики
     function exitPractice() {
       console.log('Выход из практики');
       if (recognition) {
@@ -237,7 +234,6 @@
       toggleListeningIndicator(false);
     }
 
-    // Нормализация текста
     function normalizeText(spokenText) {
       spokenText = spokenText.trim().toLowerCase();
       if (spokenText.endsWith('.')) spokenText = spokenText.slice(0, -1);
@@ -252,11 +248,15 @@
       spokenText = spokenText.replace(/\bdon't\b/g, 'do not');
       spokenText = spokenText.replace(/\bdoesn't\b/g, 'does not');
 
+      // Исправление возможных ошибок распознавания (например, "myhouse" → "my house")
+      spokenText = spokenText.replace(/\bmyhouse\b/g, 'my house');
+      spokenText = spokenText.replace(/\bsashaandanna\b/g, 'sasha and anna');
+      spokenText = spokenText.replace(/\bbetterandsasha\b/g, 'better and sasha');
+
       console.log('Нормализованный текст:', spokenText);
       return spokenText.trim();
     }
 
-    // Определение времени предложения
     function detectTense(spokenText) {
       const normalizedText = normalizeText(spokenText);
       const words = normalizedText.split(/\s+/);
@@ -278,8 +278,10 @@
     function checkToBePresentTense(subject, verb) {
       const singularSubjects = ['he', 'she', 'it'];
       const pluralSubjects = ['you', 'we', 'they'];
-      const isSingular = singularSubjects.includes(subject) || (!pluralSubjects.includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
-      console.log('Проверка "to be": isSingular=', isSingular, 'subject=', subject, 'verb=', verb);
+      // Учитываем, что подлежащее может быть сложным
+      const isPlural = subject.includes(' and ') || subject.includes(' or ') || pluralSubjects.includes(subject);
+      const isSingular = singularSubjects.includes(subject) || (!isPlural && subject !== 'i' && subject !== 'you');
+      console.log('Проверка "to be": isSingular=', isSingular, 'isPlural=', isPlural, 'subject=', subject, 'verb=', verb);
 
       if (verb === 'is' && !isSingular) return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "are" или "am", например: "${subject} are big"` };
       if (verb === 'are' && isSingular && subject !== 'you') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is", например: "${subject} is big"` };
@@ -293,8 +295,9 @@
     function checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex) {
       const singularSubjects = ['he', 'she', 'it'];
       const nonThirdPersonSubjects = ['i', 'you', 'we', 'they'];
-      const isThirdPersonSingular = singularSubjects.includes(subject) || (!nonThirdPersonSubjects.includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
-      console.log('Проверка Present Simple: isThirdPersonSingular=', isThirdPersonSingular, 'subject=', subject, 'verb=', verb);
+      const isPlural = subject.includes(' and ') || subject.includes(' or ') || nonThirdPersonSubjects.includes(subject);
+      const isThirdPersonSingular = singularSubjects.includes(subject) || (!isPlural && subject !== 'i' && subject !== 'you');
+      console.log('Проверка Present Simple: isThirdPersonSingular=', isThirdPersonSingular, 'isPlural=', isPlural, 'subject=', subject, 'verb=', verb);
 
       if (verb === 'do' && nextWord === 'not') {
         if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} do not like"` };
@@ -331,7 +334,6 @@
       return false;
     }
 
-    // Главная функция проверки Present Simple
     function isPresentSimple(spokenText) {
       const normalizedText = normalizeText(spokenText);
       const words = normalizedText.split(/\s+/);
@@ -389,7 +391,6 @@
       return checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex);
     }
 
-    // Добавление записи в протокол
     function addToLog(spokenText, result, isDuplicate) {
       console.log('Добавление записи в протокол:', spokenText, 'Результат:', result, 'Дубликат:', isDuplicate);
       const logEntriesDiv = document.getElementById('log-entries');
@@ -418,7 +419,6 @@
       console.log('Запись успешно добавлена в протокол:', logMessage);
     }
 
-    // Управление индикатором "Слушает"
     function toggleListeningIndicator(isListening) {
       const indicator = document.getElementById('listeningIndicator');
       const duringButtons = document.getElementById('duringButtons');
@@ -426,7 +426,6 @@
       duringButtons.style.display = isListening ? 'block' : 'none';
     }
 
-    // Запуск распознавания речи
     function startRecognition() {
       if (!isPracticing) {
         console.log('Распознавание не запущено: isPracticing = false');
@@ -547,7 +546,6 @@
       }
     }
 
-    // Начало практики
     async function startPractice() {
       console.log('Запуск практики');
       const micAccess = await checkMicAccess();
@@ -576,7 +574,6 @@
       startRecognition();
     }
 
-    // Отправка отчета в Telegram
     async function sendToTelegram() {
       console.log('Отправка отчета в Telegram');
       const endTime = new Date();
