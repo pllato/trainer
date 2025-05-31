@@ -1,47 +1,9 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base href="/">
   <title>ELC English Speaking Trainer</title>
   <style>
     body {
@@ -159,17 +121,12 @@
         return;
       }
 
-      // Проверка HTTPS или localhost
-      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        alert('Для работы распознавания речи требуется HTTPS. Запустите сайт через HTTPS или локально на localhost.');
-        return;
-      }
-
       try {
         recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.lang = 'en-US';
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
+        recognition.continuous = false;
 
         expectedSentence = presentExamples[Math.floor(Math.random() * presentExamples.length)];
         document.getElementById('transcript').textContent = `Скажите: ${expectedSentence}`;
@@ -210,23 +167,25 @@
         };
 
         recognition.onerror = function(event) {
-          console.error('Ошибка распознавания речи:', event.error);
+          console.error('Ошибка распознавания речи:', event.error, event.message);
           document.getElementById('transcript').textContent = `Ошибка: ${event.error}. Попробуйте снова.`;
           if (event.error === 'no-speech') {
             alert('Речь не обнаружена. Проверьте, работает ли ваш микрофон, и попробуйте снова.');
           } else if (event.error === 'not-allowed') {
             alert('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера (рядом с URL) или в системных настройках.');
+          } else if (event.error === 'aborted') {
+            alert('Распознавание прервано. Убедитесь, что микрофон разрешен, и перезапустите практику.');
           } else if (event.error === 'network') {
             alert('Ошибка сети. Проверьте подключение к интернету и попробуйте снова.');
           } else {
-            alert('Ошибка распознавания речи: ' + event.error);
+            alert('Ошибка распознавания речи: ' + event.error + ' - ' + (event.message || ''));
           }
           recognition.stop();
         };
 
         recognition.onend = function() {
           console.log('Распознавание речи завершено');
-          if (totalAttempts < 10) {
+          if (totalAttempts < 10 && !recognition) {
             setTimeout(startPractice, 500);
           }
         };
