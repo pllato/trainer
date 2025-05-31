@@ -331,16 +331,19 @@
       }
 
       const singularSubjects = ['he', 'she', 'it'];
-      const pluralSubjects = ['you', 'we', 'they', 'i'];
-      const isThirdPersonSingular = singularSubjects.includes(subject) || (!pluralSubjects.includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
+      const nonThirdPersonSubjects = ['i', 'you', 'we', 'they'];
+      const isThirdPersonSingular = singularSubjects.includes(subject) || (!nonThirdPersonSubjects.includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
       console.log('Подлежащее третьего лица единственного числа:', isThirdPersonSingular);
+
       if (isThirdPersonSingular) {
         if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has' && verb !== 'goes' && verb !== 'does') {
           const correctedVerb = verb.endsWith('o') || verb.endsWith('s') || verb.endsWith('sh') || verb.endsWith('ch') || verb.endsWith('x') || verb.endsWith('z') ? `${verb}es` : `${verb}s`;
+          console.log(`Ошибка: ожидается окончание "s/es" для "${subject}", исправлено на "${correctedVerb}"`);
           return { isCorrect: false, error: `Отсутствует "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${correctedVerb}"` };
         }
       } else {
         if ((verb.endsWith('s') || verb.endsWith('es')) && verb !== 'goes' && verb !== 'does' && !verb.endsWith('ss')) {
+          console.log(`Ошибка: лишнее окончание "s/es" для "${subject}"`);
           return { isCorrect: false, error: `Лишнее "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${verb.replace(/es$|s$/, '')}"` };
         }
       }
