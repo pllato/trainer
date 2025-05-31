@@ -3,109 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <base href="/">
-  <title>ELC English Speaking Trainer</title>
+  <title>ELC English Speaking Trainer - Minimal Version</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
       margin: 20px;
-      background-color: #f0f0f0;
-    }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    button {
-      padding: 10px 20px;
-      margin: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      border: none;
-      border-radius: 4px;
-    }
-    #startButton {
-      background-color: #4CAF50;
-      color: white;
-    }
-    #startButton:hover {
-      background-color: #45a049;
-    }
-    #sendButton {
-      background-color: #2196F3;
-      color: white;
-    }
-    #sendButton:hover {
-      background-color: #1e87db;
-    }
-    #restartButton, #restartDuringButton {
-      background-color: #f44336;
-      color: white;
-    }
-    #restartButton:hover, #restartDuringButton:hover {
-      background-color: #da190b;
-    }
-    #exitButton, #exitDuringButton {
-      background-color: #9e9e9e;
-      color: white;
-    }
-    #exitButton:hover, #exitDuringButton:hover {
-      background-color: #8c8c8c;
-    }
-    input[type="text"] {
-      padding: 10px;
-      font-size: 16px;
-      margin: 10px;
-      width: 200px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
     }
     #transcript {
       margin: 20px 0;
       font-size: 18px;
       color: #333;
     }
-    #score {
-      font-size: 20px;
-      font-weight: bold;
-    }
-    #examples {
-      margin: 20px 0;
-      text-align: left;
-    }
-    #result {
-      font-size: 18px;
-      margin-top: 20px;
-      font-weight: bold;
-    }
-    #log {
-      margin-top: 20px;
-      text-align: left;
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
-      padding: 10px;
-      border-radius: 4px;
-      background-color: #f9f9f9;
-    }
-    .log-entry {
-      margin-bottom: 5px;
-    }
-    .correct {
-      color: green;
-      font-weight: bold;
-    }
-    .incorrect {
-      color: red;
-      font-weight: bold;
-    }
-    .duplicate {
-      color: orange;
-      font-weight: bold;
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
     }
     #listeningIndicator {
       display: none;
@@ -124,62 +37,27 @@
       66% { content: '...'; }
       100% { content: '.'; }
     }
+    .correct {
+      color: green;
+      font-weight: bold;
+    }
+    .incorrect {
+      color: red;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>ELC English Speaking Trainer</h1>
-    <div id="setup">
-      <label for="userName">Введите ваше имя:</label><br>
-      <input type="text" id="userName" placeholder="Ваше имя" required><br>
-      <button id="startButton" onclick="startTopic()">Начать Present Simple</button>
-    </div>
-    <div id="practice" style="display: none;">
-      <h2>Present Simple</h2>
-      <div id="examples">
-        <h3>Примеры:</h3>
-        <ul id="example-list">
-          <li>I go to school.</li>
-          <li>She plays tennis.</li>
-          <li>They watch movies.</li>
-          <li>My house is big.</li>
-          <li>Sasha and Anna play together.</li>
-          <li>Do you like?</li>
-          <li>I like.</li>
-          <li>I don't like.</li>
-          <li>He doesn't like.</li>
-        </ul>
-      </div>
-      <button id="startButton" onclick="startPractice()">Начать практику</button>
-      <div id="listeningIndicator">Слушает<span class="dot-pulse"></span></div>
-      <p id="transcript">Составьте предложение в Present Simple.</p>
-      <div id="duringButtons" style="display: none;">
-        <button id="restartDuringButton" onclick="startPractice()">Начать заново</button>
-        <button id="exitDuringButton" onclick="exitPractice()">Выйти</button>
-      </div>
-      <p id="score">Правильно: 0/0</p>
-      <div id="log">
-        <h3>Протокол:</h3>
-        <div id="log-entries"></div>
-      </div>
-      <p id="result"></p>
-      <div id="endButtons" style="display: none;">
-        <button id="sendButton" onclick="sendToTelegram()">Отправить результаты преподавателю</button>
-        <button id="restartButton" onclick="startPractice()">Начать заново</button>
-        <button id="exitButton" onclick="exitPractice()">Выйти</button>
-      </div>
-    </div>
-  </div>
+  <h1>ELC English Speaking Trainer - Minimal Version</h1>
+  <button id="startButton" onclick="startPractice()">Начать практику</button>
+  <div id="listeningIndicator">Слушает<span class="dot-pulse"></span></div>
+  <p id="transcript">Составьте предложение в Present Simple.</p>
 
   <script>
-    let userName = '';
-    let correctCount = 0;
-    let totalAttempts = 0;
     let recognition = null;
     let isPracticing = false;
-    let startTime = null;
-    let logEntries = [];
 
+    // Проверка доступа к микрофону
     async function checkMicAccess() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -191,49 +69,7 @@
       }
     }
 
-    function startTopic() {
-      userName = document.getElementById('userName').value.trim();
-      console.log('Попытка начать тему. Введенное имя:', userName);
-      if (!userName) {
-        alert('Пожалуйста, введите ваше имя!');
-        return;
-      }
-      const setupDiv = document.getElementById('setup');
-      const practiceDiv = document.getElementById('practice');
-      if (setupDiv && practiceDiv) {
-        setupDiv.style.display = 'none';
-        practiceDiv.style.display = 'block';
-        console.log('Переход к практике успешно выполнен для пользователя:', userName);
-      } else {
-        console.error('Ошибка: Элементы #setup или #practice не найдены в DOM');
-        alert('Произошла ошибка при переходе к практике. Проверьте код.');
-      }
-    }
-
-    function exitPractice() {
-      console.log('Выход из практики');
-      if (recognition) {
-        recognition.stop();
-        recognition = null;
-      }
-      isPracticing = false;
-      correctCount = 0;
-      totalAttempts = 0;
-      startTime = null;
-      logEntries = [];
-      document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
-      document.getElementById('log-entries').innerHTML = '';
-      document.getElementById('result').textContent = '';
-      document.getElementById('transcript').textContent = `Составьте предложение в Present Simple.`;
-      document.getElementById('setup').style.display = 'block';
-      document.getElementById('practice').style.display = 'none';
-      document.getElementById('startButton').style.display = 'inline-block';
-      document.getElementById('endButtons').style.display = 'none';
-      document.getElementById('duringButtons').style.display = 'none';
-      document.getElementById('userName').value = '';
-      toggleListeningIndicator(false);
-    }
-
+    // Нормализация текста
     function normalizeText(spokenText) {
       spokenText = spokenText.trim().toLowerCase();
       if (spokenText.endsWith('.')) spokenText = spokenText.slice(0, -1);
@@ -248,7 +84,7 @@
       spokenText = spokenText.replace(/\bdon't\b/g, 'do not');
       spokenText = spokenText.replace(/\bdoesn't\b/g, 'does not');
 
-      // Исправление возможных ошибок распознавания (например, "myhouse" → "my house")
+      // Исправление ошибок распознавания
       spokenText = spokenText.replace(/\bmyhouse\b/g, 'my house');
       spokenText = spokenText.replace(/\bsashaandanna\b/g, 'sasha and anna');
       spokenText = spokenText.replace(/\bbetterandsasha\b/g, 'better and sasha');
@@ -257,35 +93,24 @@
       return spokenText.trim();
     }
 
-    function detectTense(spokenText) {
-      const normalizedText = normalizeText(spokenText);
-      const words = normalizedText.split(/\s+/);
-      if (words.length < 2) return 'Unknown';
-
-      const firstWord = words[0];
-      const secondWord = words[1];
-      const thirdWord = words[2] || '';
-
-      if (['is', 'are', 'am'].includes(firstWord) && secondWord.endsWith('ing')) return 'Present Continuous';
-      if (['is', 'are', 'am'].includes(secondWord) && thirdWord.endsWith('ing')) return 'Present Continuous';
-
-      if (firstWord === 'will' || secondWord === 'will') return 'Future';
-      if (words.some(word => word.endsWith('ed'))) return 'Past';
-      return 'Present Simple';
+    // Проверка Present Continuous
+    function checkPresentContinuousTense(firstWord, secondWord, thirdWord) {
+      if (['is', 'are', 'am'].includes(firstWord) && secondWord.endsWith('ing')) return true;
+      if (['is', 'are', 'am'].includes(secondWord) && thirdWord.endsWith('ing')) return true;
+      return false;
     }
 
     // Проверка форм "to be" в Present Simple
     function checkToBePresentTense(subject, verb) {
       const singularSubjects = ['he', 'she', 'it'];
       const pluralSubjects = ['you', 'we', 'they'];
-      // Учитываем, что подлежащее может быть сложным
       const isPlural = subject.includes(' and ') || subject.includes(' or ') || pluralSubjects.includes(subject);
       const isSingular = singularSubjects.includes(subject) || (!isPlural && subject !== 'i' && subject !== 'you');
       console.log('Проверка "to be": isSingular=', isSingular, 'isPlural=', isPlural, 'subject=', subject, 'verb=', verb);
 
-      if (verb === 'is' && !isSingular) return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "are" или "am", например: "${subject} are big"` };
-      if (verb === 'are' && isSingular && subject !== 'you') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is", например: "${subject} is big"` };
-      if (verb === 'am' && subject !== 'i') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is" или "are", например: "${subject} is big"` };
+      if (verb === 'is' && !isSingular) return { isCorrect: false, error: 'Неправильная форма "to be"', correction: `Используйте "are" или "am", например: "${subject} are big"` };
+      if (verb === 'are' && isSingular && subject !== 'you') return { isCorrect: false, error: 'Неправильная форма "to be"', correction: `Используйте "is", например: "${subject} is big"` };
+      if (verb === 'am' && subject !== 'i') return { isCorrect: false, error: 'Неправильная форма "to be"', correction: `Используйте "is" или "are", например: "${subject} is big"` };
       
       console.log('Предложение с "to be" в Present Simple распознано как корректное:', subject, verb);
       return { isCorrect: true };
@@ -313,25 +138,16 @@
       if (isThirdPersonSingular) {
         if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has' && verb !== 'goes' && verb !== 'does') {
           const correctedVerb = verb.endsWith('o') || verb.endsWith('s') || verb.endsWith('sh') || verb.endsWith('ch') || verb.endsWith('x') || verb.endsWith('z') ? `${verb}es` : `${verb}s`;
-          console.log(`Ошибка: ожидается окончание "s/es" для "${subject}", исправлено на "${correctedVerb}"`);
           return { isCorrect: false, error: `Отсутствует "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${correctedVerb}"` };
         }
       } else {
         if ((verb.endsWith('s') || verb.endsWith('es')) && verb !== 'goes' && verb !== 'does' && !verb.endsWith('ss')) {
-          console.log(`Ошибка: лишнее окончание "s/es" для "${subject}"`);
           return { isCorrect: false, error: `Лишнее "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${verb.replace(/es$|s$/, '')}"` };
         }
       }
 
       console.log('Предложение в Present Simple распознано как корректное:', subject, verb);
       return { isCorrect: true };
-    }
-
-    // Проверка Present Continuous
-    function checkPresentContinuousTense(firstWord, secondWord, thirdWord) {
-      if (['is', 'are', 'am'].includes(firstWord) && secondWord.endsWith('ing')) return true;
-      if (['is', 'are', 'am'].includes(secondWord) && thirdWord.endsWith('ing')) return true;
-      return false;
     }
 
     function isPresentSimple(spokenText) {
@@ -391,39 +207,9 @@
       return checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex);
     }
 
-    function addToLog(spokenText, result, isDuplicate) {
-      console.log('Добавление записи в протокол:', spokenText, 'Результат:', result, 'Дубликат:', isDuplicate);
-      const logEntriesDiv = document.getElementById('log-entries');
-      if (!logEntriesDiv) {
-        console.error('Элемент #log-entries не найден в DOM');
-        return;
-      }
-      const entry = document.createElement('div');
-      entry.className = 'log-entry';
-      const detectedTense = detectTense(spokenText);
-      let logMessage = `Сказано: "${spokenText}"`;
-      
-      if (isDuplicate) {
-        logMessage += ` | <span class="duplicate">Дубликат</span>`;
-      } else {
-        logMessage += ` | Время: ${detectedTense} | ${detectedTense === 'Present Simple' ? '' : 'Нужно: Present Simple | '} <span class="${result.isCorrect ? 'correct' : 'incorrect'}">${result.isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
-        if (!result.isCorrect) {
-          logMessage += ` | Ошибка: ${result.error} | Правильно: ${result.correction}`;
-        }
-      }
-      
-      entry.innerHTML = logMessage;
-      logEntriesDiv.appendChild(entry);
-      logEntries.push({ text: spokenText, isCorrect: result.isCorrect, isDuplicate, tense: detectedTense, error: result.error, correction: result.correction });
-      document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
-      console.log('Запись успешно добавлена в протокол:', logMessage);
-    }
-
     function toggleListeningIndicator(isListening) {
       const indicator = document.getElementById('listeningIndicator');
-      const duringButtons = document.getElementById('duringButtons');
       indicator.style.display = isListening ? 'block' : 'none';
-      duringButtons.style.display = isListening ? 'block' : 'none';
     }
 
     function startRecognition() {
@@ -454,9 +240,7 @@
 
         recognition.onstart = function() {
           console.log('Распознавание речи успешно началось');
-          if (!startTime) startTime = new Date();
           toggleListeningIndicator(true);
-          document.getElementById('endButtons').style.display = 'none';
         };
 
         recognition.onresult = function(event) {
@@ -471,40 +255,19 @@
 
           if (transcript) {
             console.log('Распознанный текст:', transcript);
-            document.getElementById('transcript').textContent = `Вы сказали: ${transcript}`;
-            const isDuplicate = logEntries.some(entry => entry.text.toLowerCase() === transcript.toLowerCase());
-            console.log('Является ли дубликатом:', isDuplicate);
-
-            if (!isDuplicate) {
-              const result = isPresentSimple(transcript);
-              console.log('Результат проверки Present Simple:', result);
-              if (result.isCorrect) {
-                correctCount++;
-                document.getElementById('transcript').textContent += ' - Правильно!';
-              } else {
-                document.getElementById('transcript').textContent += ' - Неправильно!';
-              }
-              totalAttempts++;
-              document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
-              addToLog(transcript, result, false);
+            const result = isPresentSimple(transcript);
+            let message = `Вы сказали: "${transcript}"`;
+            if (result.isCorrect) {
+              message += ` <span class="correct">Правильно!</span>`;
             } else {
-              document.getElementById('transcript').textContent += ' - Дубликат!';
-              addToLog(transcript, { isCorrect: false }, true);
+              message += ` <span class="incorrect">Неправильно!</span> Ошибка: ${result.error}. Правильно: ${result.correction}`;
             }
-
-            if (correctCount >= 10) {
-              isPracticing = false;
-              recognition.stop();
-              recognition = null;
-              document.getElementById('startButton').style.display = 'none';
-              document.getElementById('endButtons').style.display = 'block';
-              const pass = correctCount >= 7;
-              document.getElementById('result').textContent = `Поздравляем, ${userName}! Вы сдали с результатом ${correctCount}/10.`;
-              console.log('Практика завершена, результат:', correctCount, '/', totalAttempts, 'Сдано:', pass);
-            }
+            document.getElementById('transcript').innerHTML = message;
           } else {
             console.log('Пустой текст распознавания, пропускаем');
           }
+
+          setTimeout(startRecognition, 2000);
         };
 
         recognition.onerror = function(event) {
@@ -512,27 +275,22 @@
           document.getElementById('transcript').textContent = `Ошибка: ${event.error}.`;
           if (event.error === 'no-speech') {
             document.getElementById('transcript').textContent += ' Речь не обнаружена. Проверьте, включен ли микрофон.';
-            console.log('Ошибка: Речь не обнаружена');
           } else if (event.error === 'not-allowed') {
             document.getElementById('transcript').textContent += ' Доступ к микрофону запрещен. Разрешите доступ.';
             alert('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера (рядом с URL) и перезапустите практику.');
-            console.log('Ошибка: Доступ к микрофону запрещен');
           } else if (event.error === 'aborted') {
             document.getElementById('transcript').textContent += ' Распознавание прервано.';
-            console.log('Ошибка: Распознавание прервано');
           } else if (event.error === 'network') {
             document.getElementById('transcript').textContent += ' Ошибка сети. Проверьте подключение.';
-            console.log('Ошибка: Проблемы с сетью');
           } else {
             document.getElementById('transcript').textContent += ` Ошибка: ${event.message || ''}`;
-            console.log('Неизвестная ошибка распознавания:', event.message);
           }
         };
 
         recognition.onend = function() {
           console.log('Распознавание речи завершено');
           toggleListeningIndicator(false);
-          if (isPracticing && correctCount < 10) {
+          if (isPracticing) {
             console.log('Перезапуск распознавания через 2 секунды');
             setTimeout(startRecognition, 2000);
           }
@@ -560,77 +318,8 @@
         recognition = null;
       }
       isPracticing = true;
-      correctCount = 0;
-      totalAttempts = 0;
-      startTime = new Date();
-      logEntries = [];
-      document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
-      document.getElementById('log-entries').innerHTML = '';
-      document.getElementById('result').textContent = '';
-      document.getElementById('transcript').textContent = `Составьте предложение в Present Simple.`;
       document.getElementById('startButton').style.display = 'none';
-      document.getElementById('endButtons').style.display = 'none';
-      document.getElementById('duringButtons').style.display = 'block';
       startRecognition();
-    }
-
-    async function sendToTelegram() {
-      console.log('Отправка отчета в Telegram');
-      const endTime = new Date();
-      const durationMs = endTime - startTime;
-      const durationMin = Math.floor(durationMs / 60000);
-      const durationSec = Math.floor((durationMs % 60000) / 1000);
-      const accuracy = totalAttempts > 0 ? ((correctCount / totalAttempts) * 100).toFixed(1) : 0;
-
-      let protocol = '### Протокол:\n';
-      if (logEntries.length === 0) {
-        protocol += 'Протокол пуст.\n';
-      } else {
-        logEntries.forEach((entry, index) => {
-          if (entry.isDuplicate) {
-            protocol += `- ${index + 1}. "${entry.text}" - Дубликат\n`;
-          } else {
-            const status = entry.isCorrect ? 'Правильно' : 'Неправильно';
-            const tenseInfo = entry.isCorrect ? '' : ` (Время: ${entry.tense})`;
-            const errorInfo = entry.isCorrect ? '' : ` | Ошибка: ${entry.error} | Правильно: ${entry.correction}`;
-            protocol += `- ${index + 1}. "${entry.text}" - ${status}${tenseInfo}${errorInfo}\n`;
-          }
-        });
-      }
-
-      const message = `**Отчет по тренировке ELC English Trainer**\n` +
-                      `**Имя:** ${userName}\n` +
-                      `**Тема:** Present Simple\n` +
-                      `**Время начала:** ${startTime.toLocaleString('ru-RU', { timeZone: 'Asia/Yekaterinburg' })}\n` +
-                      `**Время окончания:** ${endTime.toLocaleString('ru-RU', { timeZone: 'Asia/Yekaterinburg' })}\n` +
-                      `**Продолжительность:** ${durationMin} мин ${durationSec} сек\n` +
-                      `**Всего попыток:** ${totalAttempts}\n` +
-                      `**Правильно:** ${correctCount}\n` +
-                      `**Точность:** ${accuracy}%\n` +
-                      `${protocol}` +
-                      `**Итог:** ${correctCount >= 7 ? 'Сдано' : 'Не сдано'}`;
-
-      const botToken = '7660930209:AAHx2T9toG1LID97XAlB8Ha1FOgeVfa53lM';
-      const chatId = '80267795';
-
-      try {
-        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' })
-        });
-        if (response.ok) {
-          alert('Результаты отправлены преподавателю!');
-          console.log('Отчет успешно отправлен в Telegram');
-        } else {
-          const errorData = await response.json();
-          console.error('Ошибка Telegram API:', errorData);
-          alert('Не удалось отправить результаты в Telegram: ' + errorData.description);
-        }
-      } catch (error) {
-        console.error('Ошибка отправки в Telegram:', error);
-        alert('Ошибка отправки результатов в Telegram: ' + error.message);
-      }
     }
   </script>
 </body>
