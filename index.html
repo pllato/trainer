@@ -49,6 +49,13 @@
     #restartButton:hover, #restartDuringButton:hover {
       background-color: #da190b;
     }
+    #exitButton, #exitDuringButton {
+      background-color: #9e9e9e;
+      color: white;
+    }
+    #exitButton:hover, #exitDuringButton:hover {
+      background-color: #8c8c8c;
+    }
     input[type="text"] {
       padding: 10px;
       font-size: 16px;
@@ -146,7 +153,10 @@
       <button id="startButton" onclick="startPractice()">Начать практику</button>
       <div id="listeningIndicator">Слушает<span class="dot-pulse"></span></div>
       <p id="transcript">Составьте предложение в Present Simple.</p>
-      <button id="restartDuringButton" onclick="startPractice()" style="display: none;">Начать заново</button>
+      <div id="duringButtons" style="display: none;">
+        <button id="restartDuringButton" onclick="startPractice()">Начать заново</button>
+        <button id="exitDuringButton" onclick="exitPractice()">Выйти</button>
+      </div>
       <p id="score">Правильно: 0/0</p>
       <div id="log">
         <h3>Протокол:</h3>
@@ -156,6 +166,7 @@
       <div id="endButtons" style="display: none;">
         <button id="sendButton" onclick="sendToTelegram()">Отправить результаты преподавателю</button>
         <button id="restartButton" onclick="startPractice()">Начать заново</button>
+        <button id="exitButton" onclick="exitPractice()">Выйти</button>
       </div>
     </div>
   </div>
@@ -187,6 +198,27 @@
         console.error('Ошибка: Элементы #setup или #practice не найдены в DOM');
         alert('Произошла ошибка при переходе к практике. Проверьте код.');
       }
+    }
+
+    function exitPractice() {
+      recognition?.stop();
+      isPracticing = false;
+      correctCount = 0;
+      totalAttempts = 0;
+      lastTranscript = '';
+      startTime = null;
+      logEntries = [];
+      document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
+      document.getElementById('log-entries').innerHTML = '';
+      document.getElementById('result').textContent = '';
+      document.getElementById('transcript').textContent = `Составьте предложение в Present Simple.`;
+      document.getElementById('setup').style.display = 'block';
+      document.getElementById('practice').style.display = 'none';
+      document.getElementById('startButton').style.display = 'inline-block';
+      document.getElementById('endButtons').style.display = 'none';
+      document.getElementById('duringButtons').style.display = 'none';
+      document.getElementById('userName').value = ''; // Очищаем поле имени
+      toggleListeningIndicator(false);
     }
 
     function normalizeText(spokenText) {
@@ -314,9 +346,9 @@
 
     function toggleListeningIndicator(isListening) {
       const indicator = document.getElementById('listeningIndicator');
-      const restartDuringButton = document.getElementById('restartDuringButton');
+      const duringButtons = document.getElementById('duringButtons');
       indicator.style.display = isListening ? 'block' : 'none';
-      restartDuringButton.style.display = isListening ? 'inline-block' : 'none';
+      duringButtons.style.display = isListening ? 'block' : 'none';
     }
 
     function startRecognition() {
