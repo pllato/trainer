@@ -68,7 +68,6 @@
     let recognition = null;
     let isPracticing = false;
 
-    // Проверка доступа к микрофону
     async function checkMicAccess() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -80,7 +79,6 @@
       }
     }
 
-    // Нормализация текста
     function normalizeText(spokenText) {
       spokenText = spokenText.trim().toLowerCase();
       if (spokenText.endsWith('.')) spokenText = spokenText.slice(0, -1);
@@ -95,7 +93,6 @@
       spokenText = spokenText.replace(/\bdon't\b/g, 'do not');
       spokenText = spokenText.replace(/\bdoesn't\b/g, 'does not');
 
-      // Исправление ошибок распознавания
       spokenText = spokenText.replace(/\bmyhouse\b/g, 'my house');
       spokenText = spokenText.replace(/\bsashaandanna\b/g, 'sasha and anna');
       spokenText = spokenText.replace(/\bbetterandsasha\b/g, 'better and sasha');
@@ -104,36 +101,40 @@
       return spokenText.trim();
     }
 
-    // Проверка Present Continuous
     function checkPresentContinuousTense(firstWord, secondWord, thirdWord) {
       if (['is', 'are', 'am'].includes(firstWord) && secondWord.endsWith('ing')) return true;
       if (['is', 'are', 'am'].includes(secondWord) && thirdWord.endsWith('ing')) return true;
       return false;
     }
 
-    // Проверка форм "to be" в Present Simple
+    // Упрощенная проверка "to be" в Present Simple
     function checkToBePresentTense(subject, verb) {
-      const singularSubjects = ['he', 'she', 'it'];
-      const pluralSubjects = ['you', 'we', 'they'];
-      const isPlural = subject.includes(' and ') || subject.includes(' or ') || pluralSubjects.includes(subject);
-      const isSingular = singularSubjects.includes(subject) || (!isPlural && subject !== 'i' && subject !== 'you');
-      console.log('Проверка "to be": isSingular=', isSingular, 'isPlural=', isPlural, 'subject=', subject, 'verb=', verb);
-
-      if (verb === 'is' && !isSingular) return { isCorrect: false, error: 'Неправильная форма "to be"', correction: `Используйте "are" или "am", например: "${subject} are big"` };
-      if (verb === 'are' && isSingular && subject !== 'you') return { isCorrect: false, error: 'Неправильная форма "to be"', correction: `Используйте "is", например: "${subject} is big"` };
-      if (verb === 'am' && subject !== 'i') return { isCorrect: false, error: 'Неправильная форма "to be"', correction: `Используйте "is" или "are", например: "${subject} is big"` };
+      console.log('Проверка "to be": subject=', subject, 'verb=', verb);
       
+      if (subject === 'i') {
+        if (verb !== 'am') return { isCorrect: false, error: 'Для "I" используйте "am"', correction: `Правильно: "I am"` };
+      } else if (subject === 'he' || subject === 'she' || subject === 'it') {
+        if (verb !== 'is') return { isCorrect: false, error: 'Для "he/she/it" используйте "is"', correction: `Правильно: "${subject} is"` };
+      } else if (subject === 'you' || subject === 'we' || subject === 'they' || subject.includes(' and ') || subject.includes(' or ')) {
+        if (verb !== 'are') return { isCorrect: false, error: 'Для множественного числа или "you" используйте "are"', correction: `Правильно: "${subject} are"` };
+      } else {
+        // Для сложных подлежащих (например, "my house") считаем третьим лицом единственного числа
+        if (verb !== 'is') return { isCorrect: false, error: 'Для подлежащего используйте "is"', correction: `Правильно: "${subject} is"` };
+      }
+
       console.log('Предложение с "to be" в Present Simple распознано как корректное:', subject, verb);
       return { isCorrect: true };
     }
 
-    // Проверка обычных глаголов в Present Simple
+    // Упрощенная проверка обычных глаголов в Present Simple
     function checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex) {
-      const singularSubjects = ['he', 'she', 'it'];
-      const nonThirdPersonSubjects = ['i', 'you', 'we', 'they'];
-      const isPlural = subject.includes(' and ') || subject.includes(' or ') || nonThirdPersonSubjects.includes(subject);
-      const isThirdPersonSingular = singularSubjects.includes(subject) || (!isPlural && subject !== 'i' && subject !== 'you');
-      console.log('Проверка Present Simple: isThirdPersonSingular=', isThirdPersonSingular, 'isPlural=', isPlural, 'subject=', subject, 'verb=', verb);
+      console.log('Проверка Present Simple: subject=', subject, 'verb=', verb);
+
+      const isThirdPersonSingular = subject === 'he' || subject === 'she' || subject === 'it' || 
+        (subject !== 'i' && subject !== 'you' && subject !== 'we' && subject !== 'they' && 
+         !subject.includes(' and ') && !subject.includes(' or '));
+
+      console.log('isThirdPersonSingular:', isThirdPersonSingular);
 
       if (verb === 'do' && nextWord === 'not') {
         if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} do not like"` };
@@ -182,7 +183,7 @@
       if (firstWord === 'do' || firstWord === 'does') {
         if (words.length < 3) return { isCorrect: false, error: 'Вопрос неполный', correction: 'Добавьте глагол, например: "Do you like?"' };
         const subject = words[1];
-        const isThirdPersonSingular = ['he', 'she', 'it'].includes(subject);
+        const isThirdPersonSingular = subject === 'he' || subject === 'she' || subject === 'it';
         if (firstWord === 'do' && isThirdPersonSingular) return { isCorrect: false, error: 'Для третьего лица единственного числа используйте "does"', correction: `Правильно: "Does ${subject} like?"` };
         if (firstWord === 'does' && !isThirdPersonSingular && subject !== 'you') return { isCorrect: false, error: 'Для подлежащих "I", "we", "they" используйте "do"', correction: `Правильно: "Do ${subject} like?"` };
         console.log('Вопрос в Present Simple распознан как корректный:', spokenText);
@@ -218,7 +219,6 @@
       return checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex);
     }
 
-    // Функция для проверки текста, введенного вручную
     function checkManualInput() {
       const transcript = document.getElementById('manualInput').value;
       if (transcript) {
