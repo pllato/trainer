@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ELC English Speaking Trainer - Minimal Version</title>
+  <title>ELC English Speaking Trainer - Debug Version</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -19,6 +19,12 @@
       padding: 10px 20px;
       font-size: 16px;
       cursor: pointer;
+    }
+    input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+      width: 300px;
     }
     #listeningIndicator {
       display: none;
@@ -48,9 +54,14 @@
   </style>
 </head>
 <body>
-  <h1>ELC English Speaking Trainer - Minimal Version</h1>
-  <button id="startButton" onclick="startPractice()">Начать практику</button>
-  <div id="listeningIndicator">Слушает<span class="dot-pulse"></span></div>
+  <h1>ELC English Speaking Trainer - Debug Version</h1>
+  <div>
+    <button id="startButton" onclick="startPractice()">Начать практику (голос)</button>
+    <div id="listeningIndicator">Слушает<span class="dot-pulse"></span></div>
+    <p>Или введите предложение вручную:</p>
+    <input type="text" id="manualInput" placeholder="Введите предложение">
+    <button onclick="checkManualInput()">Проверить</button>
+  </div>
   <p id="transcript">Составьте предложение в Present Simple.</p>
 
   <script>
@@ -207,6 +218,24 @@
       return checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex);
     }
 
+    // Функция для проверки текста, введенного вручную
+    function checkManualInput() {
+      const transcript = document.getElementById('manualInput').value;
+      if (transcript) {
+        console.log('Ручной ввод:', transcript);
+        const result = isPresentSimple(transcript);
+        let message = `Вы ввели: "${transcript}"`;
+        if (result.isCorrect) {
+          message += ` <span class="correct">Правильно!</span>`;
+        } else {
+          message += ` <span class="incorrect">Неправильно!</span> Ошибка: ${result.error}. Правильно: ${result.correction}`;
+        }
+        document.getElementById('transcript').innerHTML = message;
+      } else {
+        document.getElementById('transcript').textContent = 'Введите предложение для проверки.';
+      }
+    }
+
     function toggleListeningIndicator(isListening) {
       const indicator = document.getElementById('listeningIndicator');
       indicator.style.display = isListening ? 'block' : 'none';
@@ -219,7 +248,7 @@
       }
 
       if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
-        alert('Ваш браузер не поддерживает распознавание речи. Используйте Google Chrome.');
+        alert('Ваш браузер не поддерживает распознавание речи. Используйте Google Chrome или ручной ввод.');
         console.error('SpeechRecognition не поддерживается браузером');
         return;
       }
@@ -265,6 +294,7 @@
             document.getElementById('transcript').innerHTML = message;
           } else {
             console.log('Пустой текст распознавания, пропускаем');
+            document.getElementById('transcript').textContent = 'Ничего не распознано. Попробуйте снова или используйте ручной ввод.';
           }
 
           setTimeout(startRecognition, 2000);
@@ -274,9 +304,9 @@
           console.error('Ошибка распознавания речи:', event.error, event.message);
           document.getElementById('transcript').textContent = `Ошибка: ${event.error}.`;
           if (event.error === 'no-speech') {
-            document.getElementById('transcript').textContent += ' Речь не обнаружена. Проверьте, включен ли микрофон.';
+            document.getElementById('transcript').textContent += ' Речь не обнаружена. Проверьте, включен ли микрофон, или используйте ручной ввод.';
           } else if (event.error === 'not-allowed') {
-            document.getElementById('transcript').textContent += ' Доступ к микрофону запрещен. Разрешите доступ.';
+            document.getElementById('transcript').textContent += ' Доступ к микрофону запрещен. Разрешите доступ или используйте ручной ввод.';
             alert('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера (рядом с URL) и перезапустите практику.');
           } else if (event.error === 'aborted') {
             document.getElementById('transcript').textContent += ' Распознавание прервано.';
@@ -300,7 +330,7 @@
         recognition.start();
       } catch (error) {
         console.error('Ошибка инициализации SpeechRecognition:', error);
-        document.getElementById('transcript').textContent = `Ошибка инициализации: ${error.message}. Попробуйте снова.`;
+        document.getElementById('transcript').textContent = `Ошибка инициализации: ${error.message}. Попробуйте снова или используйте ручной ввод.`;
       }
     }
 
@@ -308,7 +338,7 @@
       console.log('Запуск практики');
       const micAccess = await checkMicAccess();
       if (!micAccess) {
-        alert('Не удалось получить доступ к микрофону. Разрешите доступ в настройках браузера и попробуйте снова.');
+        alert('Не удалось получить доступ к микрофону. Разрешите доступ в настройках браузера или используйте ручной ввод.');
         console.error('Нет доступа к микрофону, практика не запущена');
         return;
       }
