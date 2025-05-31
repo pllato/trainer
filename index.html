@@ -80,6 +80,10 @@
       color: red;
       font-weight: bold;
     }
+    .duplicate {
+      color: orange;
+      font-weight: bold;
+    }
     #listeningIndicator {
       display: none;
       font-size: 16px;
@@ -165,11 +169,27 @@
       }
     }
 
-    function detectTense(spokenText) {
+    function normalizeText(spokenText) {
       spokenText = spokenText.trim().toLowerCase();
       if (spokenText.endsWith('.')) spokenText = spokenText.slice(0, -1);
 
-      const words = spokenText.split(/\s+/);
+      // Преобразование сокращений в полные формы
+      spokenText = spokenText.replace(/\bi'm\b/g, 'i am');
+      spokenText = spokenText.replace(/\byou're\b/g, 'you are');
+      spokenText = spokenText.replace(/\bhe's\b/g, 'he is');
+      spokenText = spokenText.replace(/\bshe's\b/g, 'she is');
+      spokenText = spokenText.replace(/\bit's\b/g, 'it is');
+      spokenText = spokenText.replace(/\bwe're\b/g, 'we are');
+      spokenText = spokenText.replace(/\bthey're\b/g, 'they are');
+      spokenText = spokenText.replace(/\bdon't\b/g, 'do not');
+      spokenText = spokenText.replace(/\bdoesn't\b/g, 'does not');
+
+      return spokenText.trim();
+    }
+
+    function detectTense(spokenText) {
+      const normalizedText = normalizeText(spokenText);
+      const words = normalizedText.split(/\s+/);
       if (words.length < 2) return 'Unknown';
 
       const firstWord = words[0];
@@ -186,10 +206,8 @@
     }
 
     function isPresentSimple(spokenText) {
-      spokenText = spokenText.trim().toLowerCase();
-      if (spokenText.endsWith('.')) spokenText = spokenText.slice(0, -1);
-
-      const words = spokenText.split(/\s+/);
+      const normalizedText = normalizeText(spokenText);
+      const words = normalizedText.split(/\s+/);
       if (words.length < 2) return false;
 
       const subjects = ['i', 'you', 'he', 'she', 'it', 'we', 'they'];
@@ -208,8 +226,12 @@
       }
 
       if (subjects.includes(firstWord)) {
-        if (secondWord === "don't" || secondWord === "doesn't") {
-          if (words.length < 3) return false;
+        if (secondWord === "do" && words[2] === "not") {
+          if (words.length < 4) return false;
+          return true;
+        }
+        if (secondWord === "does" && words[2] === "not") {
+          if (words.length < 4) return false;
           return true;
         }
 
@@ -227,15 +249,20 @@
       return false;
     }
 
-    function addToLog(spokenText, isCorrect) {
+    function addToLog(spokenText, isCorrect, isDuplicate) {
       const logEntriesDiv = document.getElementById('log-entries');
       const entry = document.createElement('div');
       entry.className = 'log-entry';
       const detectedTense = detectTense(spokenText);
-      const logMessage = `Сказано: "${spokenText}" | Время: ${detectedTense} | ${detectedTense === 'Present Simple' ? '' : 'Нужно: Present Simple | '} <span class="${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
+      let logMessage = `Сказано: "${spokenText}"`;
+      if (!isDuplicate) {
+        logMessage += ` | Время: ${detectedTense} | ${detectedTense === 'Present Simple' ? '' : 'Нужно: Present Simple | '} <span class="${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
+      } else {
+        logMessage += ` | <span class="duplicate">Дубликат</span>`;
+      }
       entry.innerHTML = logMessage;
       logEntriesDiv.appendChild(entry);
-      logEntries.push({ text: spokenText, isCorrect, isRepeat: logEntries.some(e => e.text === spokenText), tense: detectedTense });
+      logEntries.push({ text: spokenText, isCorrect, isDuplicate, tense: detectedTense });
       document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
     }
 
@@ -282,17 +309,22 @@
             document.getElementById('transcript').textContent = `Вы сказали: ${transcript}`;
             console.log('Сказанный текст:', transcript);
 
-            const isCorrect = isPresentSimple(transcript);
-            if (isCorrect) {
-              correctCount++;
-              document.getElementById('transcript').textContent += ' - Правильно!';
+            const isDuplicate = logEntries.some(entry => entry.text === transcript);
+            if (!isDuplicate) {
+              const isCorrect = isPresentSimple(transcript);
+              if (isCorrect) {
+                correctCount++;
+                document.getElementById('transcript').textContent += ' - Правильно!';
+              } else {
+                document.getElementById('transcript').textContent += ' - Неправильно!';
+              }
+              totalAttempts++;
+              document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
+              addToLog(transcript, isCorrect, false);
             } else {
-              document.getElementById('transcript').textContent += ' - Неправильно!';
+              document.getElementById('transcript').textContent += ' - Дубликат!';
+              addToLog(transcript, false, true);
             }
-            totalAttempts++;
-            document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
-
-            addToLog(transcript, isCorrect);
 
             if (correctCount >= 10) {
               isPracticing = false;
@@ -368,10 +400,13 @@
 
       let protocol = '### Протокол:\n';
       logEntries.forEach((entry, index) => {
-        const status = entry.isCorrect ? 'Правильно' : 'Неправильно';
-        const repeat = entry.isRepeat ? ' (Повтор)' : '';
-        const tenseInfo = entry.isCorrect ? '' : ` (Время: ${entry.tense})`;
-        protocol += `- ${index + 1}. "${entry.text}" - ${status}${tenseInfo}${repeat}\n`;
+        if (entry.isDuplicate) {
+          protocol += `- ${index + 1}. "${entry.text}" - Дубликат\n`;
+        } else {
+          const status = entry.isCorrect ? 'Правильно' : 'Неправильно';
+          const tenseInfo = entry.isCorrect ? '' : ` (Время: ${entry.tense})`;
+          protocol += `- ${index + 1}. "${entry.text}" - ${status}${tenseInfo}\n`;
+        }
       });
 
       const message = `**Отчет по тренировке ELC English Trainer**\n` +
