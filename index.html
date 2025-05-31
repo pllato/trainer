@@ -300,19 +300,21 @@
 
       if (verbIndex === -1 || verbIndex >= words.length - 1) return { isCorrect: false, error: 'Предложение неполное', correction: 'Добавьте глагол, например: "I go"' };
 
-      const subject = subjectWords.join(' ');
+      const subject = subjectWords.join(' ').trim();
       const verb = words[verbIndex];
       const nextWord = words[verbIndex + 1] || '';
 
+      if (subject === '') return { isCorrect: false, error: 'Отсутствует подлежащее', correction: 'Добавьте подлежащее, например: "I go"' };
+
       if (['is', 'are', 'am'].includes(verb)) {
-        if (subject === '') return { isCorrect: false, error: 'Отсутствует подлежащее', correction: 'Добавьте подлежащее, например: "My house is big"' };
-        if (verb === 'is' && !['he', 'she', 'it'].includes(subject) && !subject.includes(' ')) return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "are" или "am", например: "${subject} are big"` };
-        if (verb === 'are' && !['you', 'we', 'they'].includes(subject) && !subject.includes(' ')) return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is" или "am", например: "${subject} is big"` };
+        const singularSubjects = ['he', 'she', 'it'];
+        const pluralSubjects = ['you', 'we', 'they'];
+        const isSingular = singularSubjects.includes(subject) || (!pluralSubjects.includes(subject) && !subject.includes(' and '));
+        if (verb === 'is' && !isSingular) return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "are" или "am", например: "${subject} are big"` };
+        if (verb === 'are' && isSingular && subject !== 'you') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is", например: "${subject} is big"` };
         if (verb === 'am' && subject !== 'i') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is" или "are", например: "${subject} is big"` };
         return { isCorrect: true };
       }
-
-      if (subject === '') return { isCorrect: false, error: 'Отсутствует подлежащее', correction: 'Добавьте подлежащее, например: "I go"' };
 
       if (verb === 'do' && nextWord === 'not') {
         if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} do not like"` };
@@ -323,40 +325,19 @@
         return { isCorrect: true };
       }
 
-      const isThirdPersonSingular = ['he', 'she', 'it'].includes(subject) || (!['you', 'we', 'they', 'i'].includes(subject) && !subject.includes(' and '));
+      const isThirdPersonSingular = ['he', 'she', 'it'].includes(subject) || (!['you', 'we', 'they', 'i'].includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
       if (isThirdPersonSingular) {
-        if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has') {
-          return { isCorrect: false, error: `Отсутствует "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${verb}s"` };
+        if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has' && verb !== 'goes') {
+          const correctedVerb = verb.endsWith('o') || verb.endsWith('s') || verb.endsWith('sh') || verb.endsWith('ch') || verb.endsWith('x') || verb.endsWith('z') ? `${verb}es` : `${verb}s`;
+          return { isCorrect: false, error: `Отсутствует "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${correctedVerb}"` };
         }
       } else {
-        if (verb.endsWith('s') && verb !== 'goes') {
-          return { isCorrect: false, error: `Лишнее "s" для "${subject}"`, correction: `Правильно: "${subject} ${verb.replace(/s$/, '')}"` };
+        if ((verb.endsWith('s') || verb.endsWith('es')) && verb !== 'goes' && !verb.endsWith('ss')) {
+          return { isCorrect: false, error: `Лишнее "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${verb.replace(/es$|s$/, '')}"` };
         }
       }
 
       return { isCorrect: true };
-    }
-
-    function addToLog(spokenText, result, isDuplicate) {
-      const logEntriesDiv = document.getElementById('log-entries');
-      const entry = document.createElement('div');
-      entry.className = 'log-entry';
-      const detectedTense = detectTense(spokenText);
-      let logMessage = `Сказано: "${spokenText}"`;
-      
-      if (isDuplicate) {
-        logMessage += ` | <span class="duplicate">Дубликат</span>`;
-      } else {
-        logMessage += ` | Время: ${detectedTense} | ${detectedTense === 'Present Simple' ? '' : 'Нужно: Present Simple | '} <span class="${result.isCorrect ? 'correct' : 'incorrect'}">${result.isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
-        if (!result.isCorrect) {
-          logMessage += ` | Ошибка: ${result.error} | Правильно: ${result.correction}`;
-        }
-      }
-      
-      entry.innerHTML = logMessage;
-      logEntriesDiv.appendChild(entry);
-      logEntries.push({ text: spokenText, isCorrect: result.isCorrect, isDuplicate, tense: detectedTense, error: result.error, correction: result.correction });
-      document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
     }
 
     function toggleListeningIndicator(isListening) {
