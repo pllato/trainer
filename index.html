@@ -80,6 +80,23 @@
       color: red;
       font-weight: bold;
     }
+    #listeningIndicator {
+      display: none;
+      font-size: 16px;
+      color: #4CAF50;
+      margin: 10px 0;
+    }
+    .dot-pulse::after {
+      content: '...';
+      display: inline-block;
+      animation: dotPulse 1.5s infinite;
+    }
+    @keyframes dotPulse {
+      0% { content: '.'; }
+      33% { content: '..'; }
+      66% { content: '...'; }
+      100% { content: '.'; }
+    }
   </style>
 </head>
 <body>
@@ -107,6 +124,7 @@
         </ul>
       </div>
       <button id="startButton" onclick="startPractice()">Начать практику</button>
+      <div id="listeningIndicator">Слушает<span class="dot-pulse"></span></div>
       <p id="transcript">Составьте предложение в Present Simple.</p>
       <p id="score">Правильно: 0/0</p>
       <div id="log">
@@ -124,6 +142,7 @@
     let totalAttempts = 0;
     let recognition = null;
     let isPracticing = false;
+    let lastTranscript = '';
 
     function startTopic() {
       userName = document.getElementById('userName').value.trim();
@@ -210,6 +229,11 @@
       document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
     }
 
+    function toggleListeningIndicator(isListening) {
+      const indicator = document.getElementById('listeningIndicator');
+      indicator.style.display = isListening ? 'block' : 'none';
+    }
+
     function startRecognition() {
       if (!isPracticing) return;
 
@@ -219,47 +243,59 @@
       }
 
       try {
-        recognition?.stop(); // Остановка предыдущей сессии
+        recognition?.stop();
         recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.lang = 'en-US';
-        recognition.interimResults = false;
+        recognition.interimResults = true;
         recognition.maxAlternatives = 1;
-        recognition.continuous = false;
+        recognition.continuous = true;
 
         document.getElementById('transcript').textContent = `Составьте предложение в Present Simple.`;
         console.log('Ожидается предложение в Present Simple');
 
         recognition.onstart = function() {
           console.log('Распознавание речи началось');
+          toggleListeningIndicator(true);
         };
 
+        let interimTranscript = '';
         recognition.onresult = function(event) {
-          const spokenText = event.results[0][0].transcript.trim();
-          document.getElementById('transcript').textContent = `Вы сказали: ${spokenText}`;
-          console.log('Сказанный текст:', spokenText);
-
-          const isCorrect = isPresentSimple(spokenText);
-          if (isCorrect) {
-            correctCount++;
-            document.getElementById('transcript').textContent += ' - Правильно!';
-          } else {
-            document.getElementById('transcript').textContent += ' - Неправильно!';
+          let transcript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              transcript += event.results[i][0].transcript;
+            } else {
+              interimTranscript = event.results[i][0].transcript;
+            }
           }
-          totalAttempts++;
-          document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
+          transcript = (transcript + ' ' + interimTranscript).trim();
 
-          addToLog(spokenText, isCorrect);
+          if (transcript && transcript !== lastTranscript) {
+            document.getElementById('transcript').textContent = `Вы сказали: ${transcript}`;
+            console.log('Сказанный текст:', transcript);
 
-          if (correctCount >= 10) {
-            isPracticing = false;
-            recognition.stop();
-            document.getElementById('startButton').style.display = 'none';
-            document.getElementById('sendButton').style.display = 'inline-block';
-            const pass = correctCount >= 7;
-            document.getElementById('result').textContent = `Поздравляем, ${userName}! Вы сдали с результатом ${correctCount}/10.`;
-            console.log('Практика завершена, результат:', correctCount, '/', totalAttempts, 'Сдано:', pass);
-          } else {
-            setTimeout(startRecognition, 1000); // Увеличенная задержка для стабильности
+            const isCorrect = isPresentSimple(transcript);
+            if (isCorrect) {
+              correctCount++;
+              document.getElementById('transcript').textContent += ' - Правильно!';
+            } else {
+              document.getElementById('transcript').textContent += ' - Неправильно!';
+            }
+            totalAttempts++;
+            document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
+
+            addToLog(transcript, isCorrect);
+
+            if (correctCount >= 10) {
+              isPracticing = false;
+              recognition.stop();
+              document.getElementById('startButton').style.display = 'none';
+              document.getElementById('sendButton').style.display = 'inline-block';
+              const pass = correctCount >= 7;
+              document.getElementById('result').textContent = `Поздравляем, ${userName}! Вы сдали с результатом ${correctCount}/10.`;
+              console.log('Практика завершена, результат:', correctCount, '/', totalAttempts, 'Сдано:', pass);
+            }
+            lastTranscript = transcript;
           }
         };
 
@@ -267,9 +303,9 @@
           console.error('Ошибка распознавания речи:', event.error, event.message);
           document.getElementById('transcript').textContent = `Ошибка: ${event.error}.`;
           if (event.error === 'no-speech') {
-            document.getElementById('transcript').textContent += ' Речь не обнаружена. Проверьте микрофон.';
+            document.getElementById('transcript').textContent += ' Речь не обнаружена. Говорите громче.';
           } else if (event.error === 'not-allowed') {
-            document.getElementById('transcript').textContent += ' Доступ к микрофону запрещен. Разрешите доступ в настройках.';
+            document.getElementById('transcript').textContent += ' Доступ к микрофону запрещен. Разрешите доступ.';
             alert('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера и перезапустите практику.');
           } else if (event.error === 'aborted') {
             document.getElementById('transcript').textContent += ' Распознавание прервано. Перезапуск...';
@@ -278,15 +314,16 @@
           } else {
             document.getElementById('transcript').textContent += ` Ошибка: ${event.message || ''}`;
           }
-          if (isPracticing) {
-            setTimeout(startRecognition, 1500); // Задержка перед перезапуском
+          if (isPracticing && correctCount < 10) {
+            setTimeout(startRecognition, 2000);
           }
         };
 
         recognition.onend = function() {
           console.log('Распознавание речи завершено');
+          toggleListeningIndicator(false);
           if (isPracticing && correctCount < 10) {
-            setTimeout(startRecognition, 1000);
+            setTimeout(startRecognition, 2000);
           }
         };
 
@@ -296,7 +333,7 @@
         console.error('Ошибка инициализации распознавания речи:', error);
         document.getElementById('transcript').textContent = `Ошибка инициализации: ${error.message}. Перезапуск...`;
         if (isPracticing) {
-          setTimeout(startRecognition, 1500);
+          setTimeout(startRecognition, 2000);
         }
       }
     }
@@ -304,10 +341,11 @@
     function startPractice() {
       console.log('Запуск практики');
       isPracticing = true;
-      correctCount = 0; // Сброс счетчика при новом запуске
+      correctCount = 0;
       totalAttempts = 0;
+      lastTranscript = '';
       document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
-      document.getElementById('log-entries').innerHTML = ''; // Очистка протокола
+      document.getElementById('log-entries').innerHTML = '';
       startRecognition();
     }
 
