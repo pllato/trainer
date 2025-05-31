@@ -309,7 +309,7 @@
       if (['is', 'are', 'am'].includes(verb)) {
         const singularSubjects = ['he', 'she', 'it'];
         const pluralSubjects = ['you', 'we', 'they'];
-        const isSingular = singularSubjects.includes(subject) || (!pluralSubjects.includes(subject) && !subject.includes(' and '));
+        const isSingular = singularSubjects.includes(subject) || (!pluralSubjects.includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
         if (verb === 'is' && !isSingular) return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "are" или "am", например: "${subject} are big"` };
         if (verb === 'are' && isSingular && subject !== 'you') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is", например: "${subject} is big"` };
         if (verb === 'am' && subject !== 'i') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is" или "are", например: "${subject} is big"` };
@@ -390,13 +390,16 @@
           }
           transcript = transcript.trim();
 
-          if (transcript && transcript !== lastTranscript) {
+          if (transcript) {
+            console.log('Распознанный текст:', transcript, 'Сравнение с последним:', lastTranscript);
             document.getElementById('transcript').textContent = `Вы сказали: ${transcript}`;
-            console.log('Сказанный текст:', transcript);
+            const isDuplicate = lastTranscript && transcript === lastTranscript;
+            lastTranscript = transcript;
+            console.log('Является ли дубликатом:', isDuplicate);
 
-            const isDuplicate = logEntries.some(entry => entry.text === transcript);
             if (!isDuplicate) {
               const result = isPresentSimple(transcript);
+              console.log('Результат проверки Present Simple:', result);
               if (result.isCorrect) {
                 correctCount++;
                 document.getElementById('transcript').textContent += ' - Правильно!';
@@ -406,9 +409,11 @@
               totalAttempts++;
               document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
               addToLog(transcript, result, false);
+              console.log('Добавлена запись в протокол:', transcript);
             } else {
               document.getElementById('transcript').textContent += ' - Дубликат!';
               addToLog(transcript, { isCorrect: false }, true);
+              console.log('Добавлена запись в протокол (дубликат):', transcript);
             }
 
             if (correctCount >= 10) {
@@ -421,7 +426,8 @@
               document.getElementById('result').textContent = `Поздравляем, ${userName}! Вы сдали с результатом ${correctCount}/10.`;
               console.log('Практика завершена, результат:', correctCount, '/', totalAttempts, 'Сдано:', pass);
             }
-            lastTranscript = transcript;
+          } else {
+            console.log('Пустой текст распознавания, пропускаем');
           }
         };
 
@@ -502,16 +508,20 @@
       const accuracy = totalAttempts > 0 ? ((correctCount / totalAttempts) * 100).toFixed(1) : 0;
 
       let protocol = '### Протокол:\n';
-      logEntries.forEach((entry, index) => {
-        if (entry.isDuplicate) {
-          protocol += `- ${index + 1}. "${entry.text}" - Дубликат\n`;
-        } else {
-          const status = entry.isCorrect ? 'Правильно' : 'Неправильно';
-          const tenseInfo = entry.isCorrect ? '' : ` (Время: ${entry.tense})`;
-          const errorInfo = entry.isCorrect ? '' : ` | Ошибка: ${entry.error} | Правильно: ${entry.correction}`;
-          protocol += `- ${index + 1}. "${entry.text}" - ${status}${tenseInfo}${errorInfo}\n`;
-        }
-      });
+      if (logEntries.length === 0) {
+        protocol += 'Протокол пуст.\n';
+      } else {
+        logEntries.forEach((entry, index) => {
+          if (entry.isDuplicate) {
+            protocol += `- ${index + 1}. "${entry.text}" - Дубликат\n`;
+          } else {
+            const status = entry.isCorrect ? 'Правильно' : 'Неправильно';
+            const tenseInfo = entry.isCorrect ? '' : ` (Время: ${entry.tense})`;
+            const errorInfo = entry.isCorrect ? '' : ` | Ошибка: ${entry.error} | Правильно: ${entry.correction}`;
+            protocol += `- ${index + 1}. "${entry.text}" - ${status}${tenseInfo}${errorInfo}\n`;
+          }
+        });
+      }
 
       const message = `**Отчет по тренировке ELC English Trainer**\n` +
                       `**Имя:** ${userName}\n` +
