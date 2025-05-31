@@ -180,6 +180,7 @@
     let startTime = null;
     let logEntries = [];
 
+    // Проверка доступа к микрофону
     async function checkMicAccess() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -191,6 +192,7 @@
       }
     }
 
+    // Переход к практике
     function startTopic() {
       userName = document.getElementById('userName').value.trim();
       console.log('Попытка начать тему. Введенное имя:', userName);
@@ -210,6 +212,7 @@
       }
     }
 
+    // Выход из практики
     function exitPractice() {
       console.log('Выход из практики');
       if (recognition) {
@@ -234,6 +237,7 @@
       toggleListeningIndicator(false);
     }
 
+    // Нормализация текста
     function normalizeText(spokenText) {
       spokenText = spokenText.trim().toLowerCase();
       if (spokenText.endsWith('.')) spokenText = spokenText.slice(0, -1);
@@ -252,6 +256,7 @@
       return spokenText.trim();
     }
 
+    // Определение времени предложения
     function detectTense(spokenText) {
       const normalizedText = normalizeText(spokenText);
       const words = normalizedText.split(/\s+/);
@@ -269,7 +274,7 @@
       return 'Present Simple';
     }
 
-    // Проверка форм "to be" в Present Simple (is/are/am)
+    // Проверка форм "to be" в Present Simple
     function checkToBePresentTense(subject, verb) {
       const singularSubjects = ['he', 'she', 'it'];
       const pluralSubjects = ['you', 'we', 'they'];
@@ -284,7 +289,7 @@
       return { isCorrect: true };
     }
 
-    // Проверка обычных глаголов в Present Simple (например, "I go", "she drives")
+    // Проверка обычных глаголов в Present Simple
     function checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex) {
       const singularSubjects = ['he', 'she', 'it'];
       const nonThirdPersonSubjects = ['i', 'you', 'we', 'they'];
@@ -293,10 +298,12 @@
 
       if (verb === 'do' && nextWord === 'not') {
         if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} do not like"` };
+        if (isThirdPersonSingular) return { isCorrect: false, error: 'Для третьего лица единственного числа используйте "does not"', correction: `Правильно: "${subject} does not like"` };
         return { isCorrect: true };
       }
       if (verb === 'does' && nextWord === 'not') {
         if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} does not like"` };
+        if (!isThirdPersonSingular && subject !== 'you') return { isCorrect: false, error: 'Для подлежащих "I", "we", "they" используйте "do not"', correction: `Правильно: "${subject} do not like"` };
         return { isCorrect: true };
       }
 
@@ -317,13 +324,14 @@
       return { isCorrect: true };
     }
 
-    // Проверка Present Continuous (например, "I am going")
+    // Проверка Present Continuous
     function checkPresentContinuousTense(firstWord, secondWord, thirdWord) {
       if (['is', 'are', 'am'].includes(firstWord) && secondWord.endsWith('ing')) return true;
       if (['is', 'are', 'am'].includes(secondWord) && thirdWord.endsWith('ing')) return true;
       return false;
     }
 
+    // Главная функция проверки Present Simple
     function isPresentSimple(spokenText) {
       const normalizedText = normalizeText(spokenText);
       const words = normalizedText.split(/\s+/);
@@ -334,17 +342,20 @@
       const secondWord = words[1];
       const thirdWord = words[2] || '';
 
-      // Проверка на будущее время
+      // Исключение других времен
       if (firstWord === 'will' || secondWord === 'will') return { isCorrect: false, error: 'Использовано будущее время', correction: 'Используйте Present Simple, например: "I go"' };
-
-      // Проверка на Present Continuous
       if (checkPresentContinuousTense(firstWord, secondWord, thirdWord)) {
         return { isCorrect: false, error: 'Использовано Present Continuous', correction: 'Используйте Present Simple, например: "I go"' };
       }
+      if (words.some(word => word.endsWith('ed'))) return { isCorrect: false, error: 'Использовано прошлое время', correction: 'Используйте Present Simple, например: "I go"' };
 
       // Проверка вопросов с do/does
       if (firstWord === 'do' || firstWord === 'does') {
         if (words.length < 3) return { isCorrect: false, error: 'Вопрос неполный', correction: 'Добавьте глагол, например: "Do you like?"' };
+        const subject = words[1];
+        const isThirdPersonSingular = ['he', 'she', 'it'].includes(subject);
+        if (firstWord === 'do' && isThirdPersonSingular) return { isCorrect: false, error: 'Для третьего лица единственного числа используйте "does"', correction: `Правильно: "Does ${subject} like?"` };
+        if (firstWord === 'does' && !isThirdPersonSingular && subject !== 'you') return { isCorrect: false, error: 'Для подлежащих "I", "we", "they" используйте "do"', correction: `Правильно: "Do ${subject} like?"` };
         console.log('Вопрос в Present Simple распознан как корректный:', spokenText);
         return { isCorrect: true };
       }
@@ -378,6 +389,7 @@
       return checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex);
     }
 
+    // Добавление записи в протокол
     function addToLog(spokenText, result, isDuplicate) {
       console.log('Добавление записи в протокол:', spokenText, 'Результат:', result, 'Дубликат:', isDuplicate);
       const logEntriesDiv = document.getElementById('log-entries');
@@ -406,6 +418,7 @@
       console.log('Запись успешно добавлена в протокол:', logMessage);
     }
 
+    // Управление индикатором "Слушает"
     function toggleListeningIndicator(isListening) {
       const indicator = document.getElementById('listeningIndicator');
       const duringButtons = document.getElementById('duringButtons');
@@ -413,6 +426,7 @@
       duringButtons.style.display = isListening ? 'block' : 'none';
     }
 
+    // Запуск распознавания речи
     function startRecognition() {
       if (!isPracticing) {
         console.log('Распознавание не запущено: isPracticing = false');
@@ -533,6 +547,7 @@
       }
     }
 
+    // Начало практики
     async function startPractice() {
       console.log('Запуск практики');
       const micAccess = await checkMicAccess();
@@ -561,6 +576,7 @@
       startRecognition();
     }
 
+    // Отправка отчета в Telegram
     async function sendToTelegram() {
       console.log('Отправка отчета в Telegram');
       const endTime = new Date();
