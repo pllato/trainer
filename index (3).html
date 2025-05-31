@@ -1,0 +1,273 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ELC English Speaking Trainer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+      background-color: #f0f0f0;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+      width: 200px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    #transcript {
+      margin: 20px 0;
+      font-size: 18px;
+      color: #333;
+    }
+    #score {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #examples {
+      margin: 20px 0;
+      text-align: left;
+    }
+    #result {
+      font-size: 18px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ELC English Speaking Trainer</h1>
+    <div id="setup">
+      <label for="userName">Введите ваше имя:</label><br>
+      <input type="text" id="userName" placeholder="Ваше имя" required><br>
+      <button onclick="startTopic()">Начать Present Simple</button>
+    </div>
+    <div id="practice" style="display: none;">
+      <h2>Present Simple</h2>
+      <div id="examples">
+        <h3>Примеры:</h3>
+        <ul id="example-list">
+          <li>I go to school.</li>
+          <li>She plays tennis.</li>
+          <li>They watch movies.</li>
+          <li>He reads books.</li>
+          <li>We study English.</li>
+        </ul>
+      </div>
+      <button id="startButton" onclick="startPractice()">Начать практику</button>
+      <p id="transcript">Нажмите "Начать практику", чтобы начать.</p>
+      <p id="score">Правильно: 0/0</p>
+      <p id="result"></p>
+      <button id="sendButton" onclick="sendToTelegram()" style="display: none;">Отправить результаты в Telegram</button>
+    </div>
+  </div>
+
+  <script>
+    const presentExamples = [
+      "I go to school.",
+      "She plays tennis.",
+      "They watch movies.",
+      "He reads books.",
+      "We study English."
+    ];
+    let userName = '';
+    let correctCount = 0;
+    let totalAttempts = 0;
+    let recognition = null;
+    let expectedSentence = '';
+
+    function startTopic() {
+      userName = document.getElementById('userName').value.trim();
+      if (!userName) {
+        alert('Пожалуйста, введите ваше имя!');
+        return;
+      }
+      console.log('Пользователь:', userName, 'Тема: Present Simple');
+      document.getElementById('setup').style.display = 'none';
+      document.getElementById('practice').style.display = 'block';
+    }
+
+    function startPractice() {
+      console.log('Запуск практики');
+      if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+        alert('Ваш браузер не поддерживает распознавание речи. Используйте Google Chrome.');
+        return;
+      }
+
+      // Проверка HTTPS или localhost
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        alert('Для работы распознавания речи требуется HTTPS. Запустите сайт через HTTPS или локально на localhost.');
+        return;
+      }
+
+      try {
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        expectedSentence = presentExamples[Math.floor(Math.random() * presentExamples.length)];
+        document.getElementById('transcript').textContent = `Скажите: ${expectedSentence}`;
+        console.log('Ожидаемое предложение:', expectedSentence);
+
+        recognition.onstart = function() {
+          console.log('Распознавание речи началось');
+          document.getElementById('transcript').textContent = `Скажите: ${expectedSentence}`;
+        };
+
+        recognition.onresult = function(event) {
+          const spokenText = event.results[0][0].transcript.trim().toLowerCase();
+          const expectedText = expectedSentence.toLowerCase();
+          document.getElementById('transcript').textContent = `Вы сказали: ${spokenText}`;
+          console.log('Сказанный текст:', spokenText, 'Ожидаемый текст:', expectedText);
+
+          if (spokenText === expectedText) {
+            correctCount++;
+            document.getElementById('transcript').textContent += ' - Правильно!';
+          } else {
+            document.getElementById('transcript').textContent += ' - Попробуйте снова!';
+          }
+          totalAttempts++;
+          document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
+
+          if (totalAttempts >= 10) {
+            recognition.stop();
+            document.getElementById('startButton').style.display = 'none';
+            document.getElementById('sendButton').style.display = 'inline-block';
+            const pass = correctCount >= 7;
+            document.getElementById('result').textContent = pass
+              ? `Поздравляем, ${userName}! Вы сдали с результатом ${correctCount}/10.`
+              : `К сожалению, ${userName}. Ваш результат ${correctCount}/10. Нужно 7/10 для сдачи.`;
+            console.log('Практика завершена, результат:', correctCount, '/', totalAttempts, 'Сдано:', pass);
+          } else {
+            setTimeout(startPractice, 1000);
+          }
+        };
+
+        recognition.onerror = function(event) {
+          console.error('Ошибка распознавания речи:', event.error);
+          document.getElementById('transcript').textContent = `Ошибка: ${event.error}. Попробуйте снова.`;
+          if (event.error === 'no-speech') {
+            alert('Речь не обнаружена. Проверьте, работает ли ваш микрофон, и попробуйте снова.');
+          } else if (event.error === 'not-allowed') {
+            alert('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера (рядом с URL) или в системных настройках.');
+          } else if (event.error === 'network') {
+            alert('Ошибка сети. Проверьте подключение к интернету и попробуйте снова.');
+          } else {
+            alert('Ошибка распознавания речи: ' + event.error);
+          }
+          recognition.stop();
+        };
+
+        recognition.onend = function() {
+          console.log('Распознавание речи завершено');
+          if (totalAttempts < 10) {
+            setTimeout(startPractice, 500);
+          }
+        };
+
+        recognition.start();
+        console.log('Распознавание запущено');
+      } catch (error) {
+        console.error('Ошибка инициализации распознавания речи:', error);
+        alert('Не удалось начать практику: ' + error.message);
+      }
+    }
+
+    async function sendToTelegram() {
+      const botToken = 'YOUR_BOT_TOKEN'; // Замените на ваш токен Telegram-бота
+      const chatId = 'YOUR_CHAT_ID'; // Замените на ваш chat ID
+      const pass = correctCount >= 7;
+      const message = `Результаты ELC English Trainer\nИмя: ${userName}\nТема: Present Simple\nПравильно: ${correctCount}/${totalAttempts}\nИтог: ${pass ? 'Сдано' : 'Не сдано'}`;
+
+      try {
+        const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message
+          })
+        });
+        if (response.ok) {
+          alert('Результаты отправлены в Telegram!');
+        } else {
+          const errorData = await response.json();
+          console.error('Ошибка Telegram API:', errorData);
+          alert('Не удалось отправить результаты в Telegram: ' + errorData.description);
+        }
+      } catch (error) {
+        console.error('Ошибка отправки в Telegram:', error);
+        alert('Ошибка отправки результатов в Telegram: ' + error.message);
+      }
+    }
+  </script>
+</body>
+</html>
