@@ -330,7 +330,9 @@
         return { isCorrect: true };
       }
 
-      const isThirdPersonSingular = ['he', 'she', 'it'].includes(subject) || (!['you', 'we', 'they', 'i'].includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
+      const singularSubjects = ['he', 'she', 'it'];
+      const pluralSubjects = ['you', 'we', 'they', 'i'];
+      const isThirdPersonSingular = singularSubjects.includes(subject) || (!pluralSubjects.includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
       console.log('Подлежащее третьего лица единственного числа:', isThirdPersonSingular);
       if (isThirdPersonSingular) {
         if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has' && verb !== 'goes' && verb !== 'does') {
