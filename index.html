@@ -250,6 +250,7 @@
       spokenText = spokenText.replace(/\bdon't\b/g, 'do not');
       spokenText = spokenText.replace(/\bdoesn't\b/g, 'does not');
 
+      console.log('Нормализованный текст:', spokenText);
       return spokenText.trim();
     }
 
@@ -273,6 +274,7 @@
     function isPresentSimple(spokenText) {
       const normalizedText = normalizeText(spokenText);
       const words = normalizedText.split(/\s+/);
+      console.log('Проверка Present Simple для:', normalizedText, 'Слова:', words);
       if (words.length < 2) return { isCorrect: false, error: 'Предложение слишком короткое', correction: 'Добавьте глагол, например: "I go"' };
 
       const firstWord = words[0];
@@ -303,6 +305,7 @@
       const subject = subjectWords.join(' ').trim();
       const verb = words[verbIndex];
       const nextWord = words[verbIndex + 1] || '';
+      console.log('Подлежащее:', subject, 'Глагол:', verb, 'Следующее слово:', nextWord);
 
       if (subject === '') return { isCorrect: false, error: 'Отсутствует подлежащее', correction: 'Добавьте подлежащее, например: "I go"' };
 
@@ -313,6 +316,7 @@
         if (verb === 'is' && !isSingular) return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "are" или "am", например: "${subject} are big"` };
         if (verb === 'are' && isSingular && subject !== 'you') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is", например: "${subject} is big"` };
         if (verb === 'am' && subject !== 'i') return { isCorrect: false, error: 'Неправильная форма глагола "to be"', correction: `Используйте "is" или "are", например: "${subject} is big"` };
+        console.log('Предложение с "to be" распознано как корректное:', spokenText);
         return { isCorrect: true };
       }
 
@@ -326,6 +330,7 @@
       }
 
       const isThirdPersonSingular = ['he', 'she', 'it'].includes(subject) || (!['you', 'we', 'they', 'i'].includes(subject) && !subject.includes(' and ') && !subject.includes(' or '));
+      console.log('Подлежащее третьего лица единственного числа:', isThirdPersonSingular);
       if (isThirdPersonSingular) {
         if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has' && verb !== 'goes') {
           const correctedVerb = verb.endsWith('o') || verb.endsWith('s') || verb.endsWith('sh') || verb.endsWith('ch') || verb.endsWith('x') || verb.endsWith('z') ? `${verb}es` : `${verb}s`;
@@ -337,7 +342,36 @@
         }
       }
 
+      console.log('Предложение распознано как корректное:', spokenText);
       return { isCorrect: true };
+    }
+
+    function addToLog(spokenText, result, isDuplicate) {
+      console.log('Добавление записи в протокол:', spokenText, 'Результат:', result, 'Дубликат:', isDuplicate);
+      const logEntriesDiv = document.getElementById('log-entries');
+      if (!logEntriesDiv) {
+        console.error('Элемент #log-entries не найден в DOM');
+        return;
+      }
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      const detectedTense = detectTense(spokenText);
+      let logMessage = `Сказано: "${spokenText}"`;
+      
+      if (isDuplicate) {
+        logMessage += ` | <span class="duplicate">Дубликат</span>`;
+      } else {
+        logMessage += ` | Время: ${detectedTense} | ${detectedTense === 'Present Simple' ? '' : 'Нужно: Present Simple | '} <span class="${result.isCorrect ? 'correct' : 'incorrect'}">${result.isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
+        if (!result.isCorrect) {
+          logMessage += ` | Ошибка: ${result.error} | Правильно: ${result.correction}`;
+        }
+      }
+      
+      entry.innerHTML = logMessage;
+      logEntriesDiv.appendChild(entry);
+      logEntries.push({ text: spokenText, isCorrect: result.isCorrect, isDuplicate, tense: detectedTense, error: result.error, correction: result.correction });
+      document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
+      console.log('Запись успешно добавлена в протокол:', logMessage);
     }
 
     function toggleListeningIndicator(isListening) {
@@ -391,10 +425,9 @@
           transcript = transcript.trim();
 
           if (transcript) {
-            console.log('Распознанный текст:', transcript, 'Сравнение с последним:', lastTranscript);
+            console.log('Распознанный текст:', transcript);
             document.getElementById('transcript').textContent = `Вы сказали: ${transcript}`;
-            const isDuplicate = lastTranscript && transcript === lastTranscript;
-            lastTranscript = transcript;
+            const isDuplicate = logEntries.some(entry => entry.text.toLowerCase() === transcript.toLowerCase());
             console.log('Является ли дубликатом:', isDuplicate);
 
             if (!isDuplicate) {
@@ -409,11 +442,9 @@
               totalAttempts++;
               document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
               addToLog(transcript, result, false);
-              console.log('Добавлена запись в протокол:', transcript);
             } else {
               document.getElementById('transcript').textContent += ' - Дубликат!';
               addToLog(transcript, { isCorrect: false }, true);
-              console.log('Добавлена запись в протокол (дубликат):', transcript);
             }
 
             if (correctCount >= 10) {
