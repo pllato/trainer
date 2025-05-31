@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ELC English Speaking Trainer - Debug Version</title>
+  <title>ELC English Speaking Trainer - Simple Working Version</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -55,7 +55,7 @@
   </style>
 </head>
 <body>
-  <h1>ELC English Speaking Trainer - Debug Version</h1>
+  <h1>ELC English Speaking Trainer - Simple Working Version</h1>
   <div>
     <button id="startButton" onclick="startPractice()">Начать практику (голос)</button>
     <button id="stopButton" onclick="stopPractice()" style="display: none;">Остановить практику</button>
@@ -95,7 +95,6 @@
       spokenText = spokenText.replace(/\bdon't\b/g, 'do not');
       spokenText = spokenText.replace(/\bdoesn't\b/g, 'does not');
 
-      // Исправление ошибок распознавания
       spokenText = spokenText.replace(/\bmyhouse\b/g, 'my house');
       spokenText = spokenText.replace(/\bsashaandanna\b/g, 'sasha and anna');
       spokenText = spokenText.replace(/\bbetterandsasha\b/g, 'better and sasha');
@@ -112,8 +111,6 @@
     }
 
     function checkToBePresentTense(subject, verb) {
-      console.log('Проверка "to be": subject=', subject, 'verb=', verb);
-      
       if (subject === 'i') {
         if (verb !== 'am') return { isCorrect: false, error: 'Для "I" используйте "am"', correction: `Правильно: "I am"` };
       } else if (subject === 'he' || subject === 'she' || subject === 'it') {
@@ -123,54 +120,42 @@
       } else {
         if (verb !== 'is') return { isCorrect: false, error: 'Для подлежащего используйте "is"', correction: `Правильно: "${subject} is"` };
       }
-
-      console.log('Предложение с "to be" в Present Simple распознано как корректное:', subject, verb);
       return { isCorrect: true };
     }
 
     function checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex) {
-      console.log('Проверка Present Simple: subject=', subject, 'verb=', verb, 'nextWord=', nextWord);
-
       const isThirdPersonSingular = subject === 'he' || subject === 'she' || subject === 'it' || 
         (subject !== 'i' && subject !== 'you' && subject !== 'we' && subject !== 'they' && 
          !subject.includes(' and ') && !subject.includes(' or '));
 
-      console.log('isThirdPersonSingular:', isThirdPersonSingular);
-
       if (verb === 'do' && nextWord === 'not') {
-        console.log('Обнаружено отрицание с "do not"');
         if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} do not like"` };
         if (isThirdPersonSingular) return { isCorrect: false, error: 'Для третьего лица единственного числа используйте "does not"', correction: `Правильно: "${subject} does not like"` };
         return { isCorrect: true };
       }
       if (verb === 'does' && nextWord === 'not') {
-        console.log('Обнаружено отрицание с "does not"');
         if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} does not like"` };
         if (!isThirdPersonSingular && subject !== 'you') return { isCorrect: false, error: 'Для подлежащих "I", "we", "they" используйте "do not"', correction: `Правильно: "${subject} do not like"` };
         return { isCorrect: true };
       }
 
       if (isThirdPersonSingular) {
-        console.log('Подлежащее - третье лицо единственного числа, проверяем окончание глагола');
         if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has' && verb !== 'goes' && verb !== 'does') {
           const correctedVerb = verb.endsWith('o') || verb.endsWith('s') || verb.endsWith('sh') || verb.endsWith('ch') || verb.endsWith('x') || verb.endsWith('z') ? `${verb}es` : `${verb}s`;
           return { isCorrect: false, error: `Отсутствует "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${correctedVerb}"` };
         }
       } else {
-        console.log('Подлежащее - НЕ третье лицо единственного числа, проверяем отсутствие окончания "s/es"');
         if ((verb.endsWith('s') || verb.endsWith('es')) && verb !== 'goes' && verb !== 'does' && !verb.endsWith('ss')) {
           return { isCorrect: false, error: `Лишнее "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${verb.replace(/es$|s$/, '')}"` };
         }
       }
 
-      console.log('Предложение в Present Simple распознано как корректное:', subject, verb);
       return { isCorrect: true };
     }
 
     function isPresentSimple(spokenText) {
       const normalizedText = normalizeText(spokenText);
       const words = normalizedText.split(/\s+/);
-      console.log('Проверка Present Simple для:', normalizedText, 'Слова:', words);
       if (words.length < 2) return { isCorrect: false, error: 'Предложение слишком короткое', correction: 'Добавьте глагол, например: "I go"' };
 
       const firstWord = words[0];
@@ -186,13 +171,11 @@
 
       // Проверка вопросов с do/does
       if (firstWord === 'do' || firstWord === 'does') {
-        console.log('Обнаружен вопрос с "do" или "does"');
         if (words.length < 3) return { isCorrect: false, error: 'Вопрос неполный', correction: 'Добавьте глагол, например: "Do you like?"' };
         const subject = words[1];
         const isThirdPersonSingular = subject === 'he' || subject === 'she' || subject === 'it';
         if (firstWord === 'do' && isThirdPersonSingular) return { isCorrect: false, error: 'Для третьего лица единственного числа используйте "does"', correction: `Правильно: "Does ${subject} like?"` };
         if (firstWord === 'does' && !isThirdPersonSingular && subject !== 'you') return { isCorrect: false, error: 'Для подлежащих "I", "we", "they" используйте "do"', correction: `Правильно: "Do ${subject} like?"` };
-        console.log('Вопрос в Present Simple распознан как корректный:', spokenText);
         return { isCorrect: true };
       }
 
@@ -212,7 +195,6 @@
       const subject = subjectWords.join(' ').trim();
       const verb = words[verbIndex];
       const nextWord = words[verbIndex + 1] || '';
-      console.log('Подлежащее:', subject, 'Глагол:', verb, 'Следующее слово:', nextWord);
 
       if (subject === '') return { isCorrect: false, error: 'Отсутствует подлежащее', correction: 'Добавьте подлежащее, например: "I go"' };
 
@@ -228,7 +210,6 @@
     function checkManualInput() {
       const transcript = document.getElementById('manualInput').value;
       if (transcript) {
-        console.log('Ручной ввод:', transcript);
         const result = isPresentSimple(transcript);
         let message = `Вы ввели: "${transcript}"`;
         if (result.isCorrect) {
@@ -271,15 +252,12 @@
         recognition.continuous = true;
 
         document.getElementById('transcript').textContent = `Составьте предложение в Present Simple.`;
-        console.log('Ожидается предложение в Present Simple');
 
         recognition.onstart = function() {
-          console.log('Распознавание речи успешно началось');
           toggleListeningIndicator(true);
         };
 
         recognition.onresult = function(event) {
-          console.log('Получены результаты распознавания:', event.results);
           let transcript = '';
           for (let i = event.resultIndex; i < event.results.length; i++) {
             if (event.results[i].isFinal) {
@@ -289,7 +267,6 @@
           transcript = transcript.trim();
 
           if (transcript) {
-            console.log('Распознанный текст:', transcript);
             const result = isPresentSimple(transcript);
             let message = `Вы сказали: "${transcript}"`;
             if (result.isCorrect) {
@@ -299,7 +276,6 @@
             }
             document.getElementById('transcript').innerHTML = message;
           } else {
-            console.log('Пустой текст распознавания, пропускаем');
             document.getElementById('transcript').textContent = 'Ничего не распознано. Попробуйте снова или используйте ручной ввод.';
           }
 
@@ -307,7 +283,6 @@
         };
 
         recognition.onerror = function(event) {
-          console.error('Ошибка распознавания речи:', event.error, event.message);
           document.getElementById('transcript').textContent = `Ошибка: ${event.error}.`;
           if (event.error === 'no-speech') {
             document.getElementById('transcript').textContent += ' Речь не обнаружена. Проверьте, включен ли микрофон, или используйте ручной ввод.';
@@ -324,15 +299,12 @@
         };
 
         recognition.onend = function() {
-          console.log('Распознавание речи завершено');
           toggleListeningIndicator(false);
           if (isPracticing) {
-            console.log('Перезапуск распознавания через 2 секунды');
             setTimeout(startRecognition, 2000);
           }
         };
 
-        console.log('Запуск SpeechRecognition...');
         recognition.start();
       } catch (error) {
         console.error('Ошибка инициализации SpeechRecognition:', error);
@@ -353,7 +325,6 @@
     }
 
     async function startPractice() {
-      console.log('Запуск практики');
       const micAccess = await checkMicAccess();
       if (!micAccess) {
         alert('Не удалось получить доступ к микрофону. Разрешите доступ в настройках браузера или используйте ручной ввод.');
