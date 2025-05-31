@@ -177,7 +177,6 @@
     let totalAttempts = 0;
     let recognition = null;
     let isPracticing = false;
-    let lastTranscript = '';
     let startTime = null;
     let logEntries = [];
 
@@ -220,7 +219,6 @@
       isPracticing = false;
       correctCount = 0;
       totalAttempts = 0;
-      lastTranscript = '';
       startTime = null;
       logEntries = [];
       document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
@@ -350,6 +348,34 @@
 
       console.log('Предложение распознано как корректное:', spokenText);
       return { isCorrect: true };
+    }
+
+    function addToLog(spokenText, result, isDuplicate) {
+      console.log('Добавление записи в протокол:', spokenText, 'Результат:', result, 'Дубликат:', isDuplicate);
+      const logEntriesDiv = document.getElementById('log-entries');
+      if (!logEntriesDiv) {
+        console.error('Элемент #log-entries не найден в DOM');
+        return;
+      }
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      const detectedTense = detectTense(spokenText);
+      let logMessage = `Сказано: "${spokenText}"`;
+      
+      if (isDuplicate) {
+        logMessage += ` | <span class="duplicate">Дубликат</span>`;
+      } else {
+        logMessage += ` | Время: ${detectedTense} | ${detectedTense === 'Present Simple' ? '' : 'Нужно: Present Simple | '} <span class="${result.isCorrect ? 'correct' : 'incorrect'}">${result.isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
+        if (!result.isCorrect) {
+          logMessage += ` | Ошибка: ${result.error} | Правильно: ${result.correction}`;
+        }
+      }
+      
+      entry.innerHTML = logMessage;
+      logEntriesDiv.appendChild(entry);
+      logEntries.push({ text: spokenText, isCorrect: result.isCorrect, isDuplicate, tense: detectedTense, error: result.error, correction: result.correction });
+      document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
+      console.log('Запись успешно добавлена в протокол:', logMessage);
     }
 
     function toggleListeningIndicator(isListening) {
@@ -495,7 +521,6 @@
       isPracticing = true;
       correctCount = 0;
       totalAttempts = 0;
-      lastTranscript = '';
       startTime = new Date();
       logEntries = [];
       document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
