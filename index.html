@@ -100,10 +100,14 @@
           <li>They watch movies.</li>
           <li>He reads books.</li>
           <li>We study English.</li>
+          <li>Do you like?</li>
+          <li>I like.</li>
+          <li>I don't like.</li>
+          <li>He doesn't like.</li>
         </ul>
       </div>
       <button id="startButton" onclick="startPractice()">Начать практику</button>
-      <p id="transcript">Нажмите "Начать практику", чтобы начать.</p>
+      <p id="transcript">Составьте предложение в Present Simple.</p>
       <p id="score">Правильно: 0/0</p>
       <div id="log">
         <h3>Протокол:</h3>
@@ -115,18 +119,10 @@
   </div>
 
   <script>
-    const presentExamples = [
-      "I go to school.",
-      "She plays tennis.",
-      "They watch movies.",
-      "He reads books.",
-      "We study English."
-    ];
     let userName = '';
     let correctCount = 0;
     let totalAttempts = 0;
     let recognition = null;
-    let expectedSentence = '';
 
     function startTopic() {
       userName = document.getElementById('userName').value.trim();
@@ -139,11 +135,63 @@
       document.getElementById('practice').style.display = 'block';
     }
 
-    function addToLog(spokenText, expectedText, isCorrect) {
+    function isPresentSimple(spokenText) {
+      // Приводим текст к нижнему регистру для анализа
+      spokenText = spokenText.trim().toLowerCase();
+      // Убираем точку в конце, если есть
+      if (spokenText.endsWith('.')) spokenText = spokenText.slice(0, -1);
+
+      // Разбиваем предложение на слова
+      const words = spokenText.split(/\s+/);
+
+      // Проверка минимальной длины предложения
+      if (words.length < 2) return false;
+
+      // Список подлежащих
+      const subjects = ['i', 'you', 'he', 'she', 'it', 'we', 'they'];
+      const firstWord = words[0];
+      const secondWord = words[1];
+
+      // Проверка на вопрос (начинается с "do" или "does")
+      if (firstWord === 'do' || firstWord === 'does') {
+        // Пример: "do you like", "does he play"
+        if (words.length < 3) return false;
+        const subject = words[1];
+        if (!subjects.includes(subject)) return false;
+        // После подлежащего должен идти глагол (упрощенная проверка)
+        return true;
+      }
+
+      // Проверка на отрицание (начинается с подлежащего, затем "don't" или "doesn't")
+      if (subjects.includes(firstWord)) {
+        if (secondWord === "don't" || secondWord === "doesn't") {
+          // Пример: "i don't like", "he doesn't play"
+          if (words.length < 3) return false;
+          return true;
+        }
+
+        // Проверка на утверждение (подлежащее + глагол)
+        // Пример: "i like", "he plays"
+        if (words.length < 2) return false;
+
+        // Проверка правильной формы глагола для "he/she/it"
+        if (['he', 'she', 'it'].includes(firstWord)) {
+          // Глагол должен заканчиваться на "s" или "es" (упрощенная проверка)
+          return secondWord.endsWith('s') || secondWord.endsWith('es');
+        }
+
+        // Для остальных подлежащих (I, you, we, they) глагол без "s"
+        return !secondWord.endsWith('s') || secondWord === 'goes'; // Исключение для "go"
+      }
+
+      return false;
+    }
+
+    function addToLog(spokenText, isCorrect) {
       const logEntries = document.getElementById('log-entries');
       const entry = document.createElement('div');
       entry.className = 'log-entry';
-      entry.innerHTML = `Ожидалось: "${expectedText}" | Сказано: "${spokenText}" | <span class="${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
+      entry.innerHTML = `Сказано: "${spokenText}" | <span class="${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
       logEntries.appendChild(entry);
       // Прокручиваем вниз, чтобы видеть последние записи
       document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
@@ -163,33 +211,31 @@
         recognition.maxAlternatives = 1;
         recognition.continuous = false;
 
-        expectedSentence = presentExamples[Math.floor(Math.random() * presentExamples.length)];
-        document.getElementById('transcript').textContent = `Скажите: ${expectedSentence}`;
-        console.log('Ожидаемое предложение:', expectedSentence);
+        document.getElementById('transcript').textContent = `Составьте предложение в Present Simple.`;
+        console.log('Ожидается предложение в Present Simple');
 
         recognition.onstart = function() {
           console.log('Распознавание речи началось');
-          document.getElementById('transcript').textContent = `Скажите: ${expectedSentence}`;
+          document.get personally.getElementById('transcript').textContent = `Составьте предложение в Present Simple.`;
         };
 
         recognition.onresult = function(event) {
-          const spokenText = event.results[0][0].transcript.trim().toLowerCase();
-          const expectedText = expectedSentence.toLowerCase();
+          const spokenText = event.results[0][0].transcript.trim();
           document.getElementById('transcript').textContent = `Вы сказали: ${spokenText}`;
-          console.log('Сказанный текст:', spokenText, 'Ожидаемый текст:', expectedText);
+          console.log('Сказанный текст:', spokenText);
 
-          const isCorrect = spokenText === expectedText;
+          const isCorrect = isPresentSimple(spokenText);
           if (isCorrect) {
             correctCount++;
             document.getElementById('transcript').textContent += ' - Правильно!';
           } else {
-            document.getElementById('transcript').textContent += ' - Попробуйте снова!';
+            document.getElementById('transcript').textContent += ' - Неправильно!';
           }
           totalAttempts++;
           document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
 
           // Добавляем запись в протокол
-          addToLog(spokenText, expectedSentence, isCorrect);
+          addToLog(spokenText, isCorrect);
 
           if (totalAttempts >= 10) {
             recognition.stop();
