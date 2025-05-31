@@ -59,6 +59,27 @@
       margin-top: 20px;
       font-weight: bold;
     }
+    #log {
+      margin-top: 20px;
+      text-align: left;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+    }
+    .log-entry {
+      margin-bottom: 5px;
+    }
+    .correct {
+      color: green;
+      font-weight: bold;
+    }
+    .incorrect {
+      color: red;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -84,6 +105,10 @@
       <button id="startButton" onclick="startPractice()">Начать практику</button>
       <p id="transcript">Нажмите "Начать практику", чтобы начать.</p>
       <p id="score">Правильно: 0/0</p>
+      <div id="log">
+        <h3>Протокол:</h3>
+        <div id="log-entries"></div>
+      </div>
       <p id="result"></p>
       <button id="sendButton" onclick="sendToTelegram()" style="display: none;">Отправить результаты в Telegram</button>
     </div>
@@ -112,6 +137,16 @@
       console.log('Пользователь:', userName, 'Тема: Present Simple');
       document.getElementById('setup').style.display = 'none';
       document.getElementById('practice').style.display = 'block';
+    }
+
+    function addToLog(spokenText, expectedText, isCorrect) {
+      const logEntries = document.getElementById('log-entries');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `Ожидалось: "${expectedText}" | Сказано: "${spokenText}" | <span class="${isCorrect ? 'correct' : 'incorrect'}">${isCorrect ? 'Правильно' : 'Неправильно'}</span>`;
+      logEntries.appendChild(entry);
+      // Прокручиваем вниз, чтобы видеть последние записи
+      document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
     }
 
     function startPractice() {
@@ -143,7 +178,8 @@
           document.getElementById('transcript').textContent = `Вы сказали: ${spokenText}`;
           console.log('Сказанный текст:', spokenText, 'Ожидаемый текст:', expectedText);
 
-          if (spokenText === expectedText) {
+          const isCorrect = spokenText === expectedText;
+          if (isCorrect) {
             correctCount++;
             document.getElementById('transcript').textContent += ' - Правильно!';
           } else {
@@ -151,6 +187,9 @@
           }
           totalAttempts++;
           document.getElementById('score').textContent = `Правильно: ${correctCount}/${totalAttempts}`;
+
+          // Добавляем запись в протокол
+          addToLog(spokenText, expectedSentence, isCorrect);
 
           if (totalAttempts >= 10) {
             recognition.stop();
