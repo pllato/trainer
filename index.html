@@ -70,25 +70,25 @@
         </select>
         <select id="structureSelect">
             <option value="I _______ .">I _______ .</option>
-            <option value="He/She/It _______s .">He/She/It _______s .</option>
-            <option value="We/You/They _______ .">We/You/They _______ .</option>
+            <option value="He She It _______s .">He She It _______s .</option>
+            <option value="We You They _______ .">We You They _______ .</option>
             <option value="I don’t _______ .">I don’t _______ .</option>
-            <option value="He/She/It doesn’t _______ .">He/She/It doesn’t _______ .</option>
-            <option value="We/You/They don’t _______ .">We/You/They don’t _______ .</option>
+            <option value="He She It doesn’t _______ .">He She It doesn’t _______ .</option>
+            <option value="We You They don’t _______ .">We You They don’t _______ .</option>
             <option value="Do I _______ ?">Do I _______ ?</option>
-            <option value="Does he/she/it _______ ?">Does he/she/it _______ ?</option>
-            <option value="Do we/you/they _______ ?">Do we/you/they _______ ?</option>
+            <option value="Does he she it _______ ?">Does he she it _______ ?</option>
+            <option value="Do we you they _______ ?">Do we you they _______ ?</option>
             <option value="Yes, I _______ .">Yes, I _______ .</option>
-            <option value="Yes, he/she/it _______s .">Yes, he/she/it _______s .</option>
+            <option value="Yes, he she it _______s .">Yes, he she it _______s .</option>
             <option value="No, I don’t _______ .">No, I don’t _______ .</option>
-            <option value="No, he/she/it doesn’t _______ .">No, he/she/it doesn’t _______ .</option>
+            <option value="No, he she it doesn’t _______ .">No, he she it doesn’t _______ .</option>
             <option value="Where do I _______ ?">Where do I _______ ?</option>
-            <option value="What does he/she/it _______ ?">What does he/she/it _______ ?</option>
-            <option value="When do we/you/they _______ ?">When do we/you/they _______ ?</option>
+            <option value="What does he she it _______ ?">What does he she it _______ ?</option>
+            <option value="When do we you they _______ ?">When do we you they _______ ?</option>
         </select>
         <div class="examples">
             <h3>Examples of verbs to use:</h3>
-            <p>work, play, eat, run, study, walk, talk, read, write, drink</p>
+            <p>work, play, eat, run, study, walk, talk, read, write, drink, like</p>
         </div>
         <div id="currentStructure">Select a structure to start.</div>
         <button id="startButton">Start Practice</button>
@@ -202,12 +202,15 @@
             const structureWords = structure.toLowerCase().split(/\s+/);
 
             // Extract the expected position of the verb (where _______ is)
-            let verbPosition = structureWords.indexOf('_______');
-            if (verbPosition === -1) return false;
+            let verbPosition = structureWords.indexOf('_______s');
+            if (verbPosition === -1) {
+                verbPosition = structureWords.indexOf('_______');
+                if (verbPosition === -1) return false;
+            }
 
             // Adjust structure words to exclude punctuation for length comparison
-            const structureWordsWithoutPunctuation = structureWords.filter(word => word !== '.' && word !== '?');
-            const expectedLength = structureWordsWithoutPunctuation.length;
+            const structureWordsWithoutPunctuation = structureWords.filter(word => word !== '.' && word !== '?' && word !== '_______s' && word !== '_______');
+            const expectedLength = structureWordsWithoutPunctuation.length + 1; // +1 for the verb
 
             // Check if the spoken sentence has at least the expected number of words (excluding punctuation)
             if (spokenWords.length < expectedLength - 1) return false;
@@ -217,20 +220,60 @@
 
             // Verify the fixed parts of the sentence match
             let structureMatches = true;
-            for (let i = 0; i < structureWords.length; i++) {
-                if (i === verbPosition) continue; // Skip the verb slot
-                if (structureWords[i] === '.' || structureWords[i] === '?') continue; // Skip punctuation
+            let subjectPosition = 0;
 
-                let expectedWord = structureWords[i];
-                let spokenWord = spokenWords[i] || '';
+            // Special handling for structures with multiple subjects (e.g., "he she it")
+            const multipleSubjectStructures = [
+                'he she it _______s .',
+                'he she it doesn’t _______ .',
+                'does he she it _______ ?',
+                'yes, he she it _______s .',
+                'no, he she it doesn’t _______ .',
+                'what does he she it _______ ?'
+            ];
 
-                // Handle special characters (e.g., "don’t" vs "don't")
-                expectedWord = expectedWord.replace(/[^a-z]/g, '');
-                spokenWord = spokenWord.replace(/[^a-z]/g, '');
+            const multipleSubjectStructures2 = [
+                'we you they _______ .',
+                'we you they don’t _______ .',
+                'do we you they _______ ?',
+                'yes, we you they _______ .',
+                'no, we you they don’t _______ .',
+                'when do we you they _______ ?'
+            ];
 
-                if (expectedWord && expectedWord !== spokenWord) {
+            structure = structure.toLowerCase();
+            if (multipleSubjectStructures.includes(structure)) {
+                // Check if the first word is one of the allowed subjects
+                const allowedSubjects = ['he', 'she', 'it'];
+                if (!allowedSubjects.includes(spokenWords[0])) {
                     structureMatches = false;
-                    break;
+                }
+                subjectPosition = 0; // Subject is the first word
+            } else if (multipleSubjectStructures2.includes(structure)) {
+                // Check if the first word (or later for questions) is one of the allowed subjects
+                const allowedSubjects = ['we', 'you', 'they'];
+                const subjectIndex = structureWords[0] === 'do' || structureWords[0] === 'when' ? 1 : 0;
+                if (!allowedSubjects.includes(spokenWords[subjectIndex])) {
+                    structureMatches = false;
+                }
+                subjectPosition = subjectIndex;
+            } else {
+                // For single-subject structures, compare all fixed parts
+                for (let i = 0; i < structureWords.length; i++) {
+                    if (i === verbPosition) continue; // Skip the verb slot
+                    if (structureWords[i] === '.' || structureWords[i] === '?') continue; // Skip punctuation
+
+                    let expectedWord = structureWords[i];
+                    let spokenWord = spokenWords[i] || '';
+
+                    // Handle special characters (e.g., "don’t" vs "don't")
+                    expectedWord = expectedWord.replace(/[^a-z]/g, '');
+                    spokenWord = spokenWord.replace(/[^a-z]/g, '');
+
+                    if (expectedWord && expectedWord !== spokenWord && !['he', 'she', 'it', 'we', 'you', 'they'].includes(expectedWord)) {
+                        structureMatches = false;
+                        break;
+                    }
                 }
             }
 
@@ -239,30 +282,30 @@
             // Validate the verb form based on the structure
             const baseVerbStructures = [
                 'i _______ .',
-                'we/you/they _______ .',
+                'we you they _______ .',
                 'i don’t _______ .',
-                'he/she/it doesn’t _______ .',
-                'we/you/they don’t _______ .',
+                'he she it doesn’t _______ .',
+                'we you they don’t _______ .',
                 'do i _______ ?',
-                'does he/she/it _______ ?',
-                'do we/you/they _______ ?',
+                'does he she it _______ ?',
+                'do we you they _______ ?',
                 'no, i don’t _______ .',
-                'no, he/she/it doesn’t _______ .',
+                'no, he she it doesn’t _______ .',
                 'where do i _______ ?',
-                'what does he/she/it _______ ?',
-                'when do we/you/they _______ ?'
+                'what does he she it _______ ?',
+                'when do we you they _______ ?'
             ];
 
             const verbSStructures = [
-                'he/she/it _______s .',
-                'yes, he/she/it _______s .'
+                'he she it _______s .',
+                'yes, he she it _______s .'
             ];
 
             const yesBaseVerbStructures = [
-                'yes, i _______ .'
+                'yes, i _______ .',
+                'yes, we you they _______ .'
             ];
 
-            structure = structure.toLowerCase();
             if (baseVerbStructures.includes(structure)) {
                 return isValidBaseVerb(spokenVerb) && !spokenVerb.endsWith('s') && !spokenVerb.endsWith('es');
             } else if (verbSStructures.includes(structure)) {
