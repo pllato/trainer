@@ -54,6 +54,11 @@
             margin: 20px 0;
             text-align: left;
         }
+        #currentStructure {
+            font-size: 18px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -61,14 +66,31 @@
         <h1>ELC English Speaking Trainer</h1>
         <select id="tenseSelect">
             <option value="present">Present Simple</option>
-            <option value="past">Past Simple</option>
+            <!-- Add more tenses later -->
         </select>
-        <div class="examples" id="examples">
-            <h3>Examples:</h3>
-            <p id="example1"></p>
-            <p id="example2"></p>
-            <p id="example3"></p>
+        <select id="structureSelect">
+            <option value="I _______ .">I _______ .</option>
+            <option value="He/She/It _______s .">He/She/It _______s .</option>
+            <option value="We/You/They _______ .">We/You/They _______ .</option>
+            <option value="I don’t _______ .">I don’t _______ .</option>
+            <option value="He/She/It doesn’t _______ .">He/She/It doesn’t _______ .</option>
+            <option value="We/You/They don’t _______ .">We/You/They don’t _______ .</option>
+            <option value="Do I _______ ?">Do I _______ ?</option>
+            <option value="Does he/she/it _______ ?">Does he/she/it _______ ?</option>
+            <option value="Do we/you/they _______ ?">Do we/you/they _______ ?</option>
+            <option value="Yes, I _______ .">Yes, I _______ .</option>
+            <option value="Yes, he/she/it _______s .">Yes, he/she/it _______s .</option>
+            <option value="No, I don’t _______ .">No, I don’t _______ .</option>
+            <option value="No, he/she/it doesn’t _______ .">No, he/she/it doesn’t _______ .</option>
+            <option value="Where do I _______ ?">Where do I _______ ?</option>
+            <option value="What does he/she/it _______ ?">What does he/she/it _______ ?</option>
+            <option value="When do we/you/they _______ ?">When do we/you/they _______ ?</option>
+        </select>
+        <div class="examples">
+            <h3>Examples of verbs to use:</h3>
+            <p>work, play, eat, run, study, walk, talk, read, write, drink</p>
         </div>
+        <div id="currentStructure">Select a structure to start.</div>
         <button id="startButton">Start Practice</button>
         <div class="status" id="status">Correct: 0/10</div>
         <div class="status" id="listening">Press start to begin...</div>
@@ -80,31 +102,24 @@
 
     <script>
         const tenseSelect = document.getElementById('tenseSelect');
+        const structureSelect = document.getElementById('structureSelect');
         const startButton = document.getElementById('startButton');
         const status = document.getElementById('status');
         const listening = document.getElementById('listening');
         const logEntries = document.getElementById('logEntries');
-        const example1 = document.getElementById('example1');
-        const example2 = document.getElementById('example2');
-        const example3 = document.getElementById('example3');
+        const currentStructure = document.getElementById('currentStructure');
 
         let correctCount = 0;
         let recognition = null;
         let isListening = false;
-        let saidSentences = new Set();
+        let saidWords = new Set();
+        let currentVerbSlot = '';
 
-        // Update examples based on selected tense
-        function updateExamples() {
-            const tense = tenseSelect.value;
-            if (tense === 'present') {
-                example1.textContent = 'He walks to school.';
-                example2.textContent = 'They play football.';
-                example3.textContent = 'She works late.';
-            } else {
-                example1.textContent = 'He went to school.';
-                example2.textContent = 'They played football.';
-                example3.textContent = 'She worked late.';
-            }
+        // Update the displayed structure
+        function updateStructure() {
+            const structure = structureSelect.value;
+            currentStructure.textContent = structure;
+            currentVerbSlot = structure;
         }
 
         // Initialize speech recognition
@@ -115,9 +130,9 @@
             recognition.maxAlternatives = 1;
 
             recognition.onresult = (event) => {
-                const sentence = event.results[0][0].transcript.trim();
-                listening.textContent = 'Processing: ' + sentence;
-                checkSentence(sentence);
+                const spokenWord = event.results[0][0].transcript.trim().toLowerCase();
+                listening.textContent = 'Processing: ' + spokenWord;
+                checkWord(spokenWord);
             };
 
             recognition.onend = () => {
@@ -138,27 +153,27 @@
             };
         }
 
-        // Check if sentence is correct for the selected tense
-        function checkSentence(sentence) {
+        // Check if the spoken word fits the structure
+        function checkWord(word) {
             const tense = tenseSelect.value;
             let isCorrect = false;
             let logMessage = '';
 
             if (tense === 'present') {
-                isCorrect = checkPresentSimple(sentence);
-            } else {
-                isCorrect = checkPastSimple(sentence);
+                isCorrect = checkPresentSimpleWord(word, currentVerbSlot);
             }
 
-            if (saidSentences.has(sentence)) {
-                logMessage = `Repeat: "${sentence}"`;
+            const fullSentence = currentVerbSlot.replace('_______', word);
+
+            if (saidWords.has(word)) {
+                logMessage = `Repeat: "${fullSentence}"`;
             } else if (isCorrect) {
                 correctCount++;
-                saidSentences.add(sentence);
-                logMessage = `Correct: "${sentence}"`;
+                saidWords.add(word);
+                logMessage = `Correct: "${fullSentence}"`;
                 status.textContent = `Correct: ${correctCount}/10`;
             } else {
-                logMessage = `Incorrect: "${sentence}" (wrong tense or grammar)`;
+                logMessage = `Incorrect: "${fullSentence}" (wrong form)`;
             }
 
             // Add to log
@@ -175,80 +190,74 @@
             }
         }
 
-        // Improved Present Simple checker
-        function checkPresentSimple(sentence) {
-            const lowerSentence = sentence.toLowerCase();
-            const words = lowerSentence.split(/\s+/);
-            const subjects = ['i', 'you', 'he', 'she', 'it', 'we', 'they'];
-
-            // Minimum length check
-            if (words.length < 2) return false;
-
-            const subject = words[0];
-            if (!subjects.includes(subject)) return false;
-
-            // Identify the verb (second word, or third if using "does")
-            let verbIndex = 1;
-            let verb = words[verbIndex];
-            let isQuestionOrNegative = false;
-
-            // Check for "does" structure (e.g., "does he like", "he does his job")
-            if (verb === 'does' && words.length >= 3) {
-                isQuestionOrNegative = true;
-                verbIndex = 2;
-                verb = words[verbIndex];
+        // Check if the word fits the Present Simple structure
+        function checkPresentSimpleWord(word, structure) {
+            // Helper to check if a word is a valid base verb
+            function isValidBaseVerb(verb) {
+                const pastTenseIndicators = ['ed', 'was', 'were', 'went', 'did'];
+                if (!/^[a-z]+$/.test(verb)) return false;
+                return !pastTenseIndicators.some(indicator => verb === indicator || verb.endsWith(indicator));
             }
 
-            // Subject-verb agreement for Present Simple
-            if (['he', 'she', 'it'].includes(subject)) {
-                // For he/she/it, verb should end in -s or -es
-                if (isQuestionOrNegative) {
-                    // In questions/negatives with "does", the base verb is used
-                    return isValidBaseVerb(verb);
-                }
-                return verb.endsWith('s') || verb.endsWith('es');
-            } else {
-                // For I/you/we/they, use base verb (no -s or -es)
-                if (isQuestionOrNegative) {
-                    return isValidBaseVerb(verb);
-                }
-                return !verb.endsWith('s') && !verb.endsWith('es') && isValidBaseVerb(verb);
+            // Structures requiring base verb (no -s/es)
+            const baseVerbStructures = [
+                'I _______ .',
+                'We/You/They _______ .',
+                'I don’t _______ .',
+                'He/She/It doesn’t _______ .',
+                'We/You/They don’t _______ .',
+                'Do I _______ ?',
+                'Does he/she/it _______ ?',
+                'Do we/you/they _______ ?',
+                'No, I don’t _______ .',
+                'No, he/she/it doesn’t _______ .',
+                'Where do I _______ ?',
+                'What does he/she/it _______ ?',
+                'When do we/you/they _______ ?'
+            ];
+
+            // Structures requiring verb with -s/es
+            const verbSStructures = [
+                'He/She/It _______s .',
+                'Yes, he/she/it _______s .'
+            ];
+
+            // Structures requiring base verb
+            const yesBaseVerbStructures = [
+                'Yes, I _______ .'
+            ];
+
+            if (baseVerbStructures.includes(structure)) {
+                return isValidBaseVerb(word) && !word.endsWith('s') && !word.endsWith('es');
+            } else if (verbSStructures.includes(structure)) {
+                return isValidBaseVerb(word.replace(/(s|es)$/, '')) && (word.endsWith('s') || word.endsWith('es'));
+            } else if (yesBaseVerbStructures.includes(structure)) {
+                return isValidBaseVerb(word) && !word.endsWith('s') && !word.endsWith('es');
             }
-        }
 
-        // Helper to validate if a word is a plausible base verb
-        function isValidBaseVerb(verb) {
-            // List of irregular verbs that don't follow standard -s/es rules
-            const irregularVerbs = ['is', 'are', 'am', 'have', 'has'];
-            if (irregularVerbs.includes(verb)) return true;
-
-            // Basic check: verb should be alphabetic and not a past tense form
-            const pastTenseIndicators = ['ed', 'was', 'were', 'went', 'did'];
-            if (!/^[a-z]+$/.test(verb)) return false;
-            return !pastTenseIndicators.some(indicator => verb === indicator || verb.endsWith(indicator));
-        }
-
-        // Past Simple checker (unchanged)
-        function checkPastSimple(sentence) {
-            const lowerSentence = sentence.toLowerCase();
-            const words = lowerSentence.split(/\s+/);
-            const subjects = ['i', 'you', 'he', 'she', 'it', 'we', 'they'];
-            const pastVerbs = ['went', 'played', 'worked', 'walked', 'studied', 'ate', 'drank', 'read', 'wrote', 'was', 'were'];
-
-            if (words.length < 2) return false;
-            const subject = words[0];
-            const verb = words[1];
-
-            if (!subjects.includes(subject)) return false;
-            return pastVerbs.includes(verb);
+            return false;
         }
 
         // Event listeners
         tenseSelect.addEventListener('change', () => {
-            updateExamples();
             correctCount = 0;
             status.textContent = 'Correct: 0/10';
-            saidSentences.clear();
+            saidWords.clear();
+            logEntries.innerHTML = '';
+            updateStructure();
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                startButton.textContent = 'Start Practice';
+                listening.textContent = 'Press start to begin...';
+            }
+        });
+
+        structureSelect.addEventListener('change', () => {
+            updateStructure();
+            correctCount = 0;
+            status.textContent = 'Correct: 0/10';
+            saidWords.clear();
             logEntries.innerHTML = '';
             if (isListening) {
                 recognition.stop();
@@ -273,8 +282,8 @@
             }
         });
 
-        // Initialize examples
-        updateExamples();
+        // Initialize structure
+        updateStructure();
     </script>
 </body>
 </html>
