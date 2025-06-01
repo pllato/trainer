@@ -55,10 +55,10 @@
             margin: 20px 0;
             text-align: left;
         }
-        #currentStructure {
-            font-size: 18px;
+        #currentStructures {
+            font-size: 16px;
             margin: 15px 0;
-            font-weight: bold;
+            text-align: left;
         }
     </style>
 </head>
@@ -69,52 +69,21 @@
             <option value="present">Present Simple</option>
             <!-- Add more tenses later -->
         </select>
-        <select id="structureSelect">
-            <option value="I _______ . (work, play, eat)">I _______ . (work, play, eat)</option>
-            <option value="He _______s . (drink, like, jump)">He _______s . (drink, like, jump)</option>
-            <option value="She _______s . (drink, like, jump)">She _______s . (drink, like, jump)</option>
-            <option value="It _______s . (drink, like, jump)">It _______s . (drink, like, jump)</option>
-            <option value="We _______ . (work, play, eat)">We _______ . (work, play, eat)</option>
-            <option value="You _______ . (work, play, eat)">You _______ . (work, play, eat)</option>
-            <option value="They _______ . (work, play, eat)">They _______ . (work, play, eat)</option>
-            <option value="I don’t _______ . (work, play, eat)">I don’t _______ . (work, play, eat)</option>
-            <option value="He doesn’t _______ . (drink, like, jump)">He doesn’t _______ . (drink, like, jump)</option>
-            <option value="She doesn’t _______ . (drink, like, jump)">She doesn’t _______ . (drink, like, jump)</option>
-            <option value="It doesn’t _______ . (drink, like, jump)">It doesn’t _______ . (drink, like, jump)</option>
-            <option value="We don’t _______ . (work, play, eat)">We don’t _______ . (work, play, eat)</option>
-            <option value="You don’t _______ . (work, play, eat)">You don’t _______ . (work, play, eat)</option>
-            <option value="They don’t _______ . (work, play, eat)">They don’t _______ . (work, play, eat)</option>
-            <option value="Do I _______ ? (work, play, eat)">Do I _______ ? (work, play, eat)</option>
-            <option value="Does he _______ ? (drink, like, jump)">Does he _______ ? (drink, like, jump)</option>
-            <option value="Does she _______ ? (drink, like, jump)">Does she _______ ? (drink, like, jump)</option>
-            <option value="Does it _______ ? (drink, like, jump)">Does it _______ ? (drink, like, jump)</option>
-            <option value="Do we _______ ? (work, play, eat)">Do we _______ ? (work, play, eat)</option>
-            <option value="Do you _______ ? (work, play, eat)">Do you _______ ? (work, play, eat)</option>
-            <option value="Do they _______ ? (work, play, eat)">Do they _______ ? (work, play, eat)</option>
-            <option value="Yes, I _______ . (work, play, eat)">Yes, I _______ . (work, play, eat)</option>
-            <option value="Yes, he _______s . (drink, like, jump)">Yes, he _______s . (drink, like, jump)</option>
-            <option value="Yes, she _______s . (drink, like, jump)">Yes, she _______s . (drink, like, jump)</option>
-            <option value="Yes, it _______s . (drink, like, jump)">Yes, it _______s . (drink, like, jump)</option>
-            <option value="Yes, we _______ . (work, play, eat)">Yes, we _______ . (work, play, eat)</option>
-            <option value="Yes, you _______ . (work, play, eat)">Yes, you _______ . (work, play, eat)</option>
-            <option value="Yes, they _______ . (work, play, eat)">Yes, they _______ . (work, play, eat)</option>
-            <option value="No, I don’t _______ . (work, play, eat)">No, I don’t _______ . (work, play, eat)</option>
-            <option value="No, he doesn’t _______ . (drink, like, jump)">No, he doesn’t _______ . (drink, like, jump)</option>
-            <option value="No, she doesn’t _______ . (drink, like, jump)">No, she doesn’t _______ . (drink, like, jump)</option>
-            <option value="No, it doesn’t _______ . (drink, like, jump)">No, it doesn’t _______ . (drink, like, jump)</option>
-            <option value="Where do I _______ ? (work, play, eat)">Where do I _______ ? (work, play, eat)</option>
-            <option value="What does he _______ ? (drink, like, jump)">What does he _______ ? (drink, like, jump)</option>
-            <option value="What does she _______ ? (drink, like, jump)">What does she _______ ? (drink, like, jump)</option>
-            <option value="What does it _______ ? (drink, like, jump)">What does it _______ ? (drink, like, jump)</option>
-            <option value="When do we _______ ? (work, play, eat)">When do we _______ ? (work, play, eat)</option>
-            <option value="When do you _______ ? (work, play, eat)">When do you _______ ? (work, play, eat)</option>
-            <option value="When do they _______ ? (work, play, eat)">When do they _______ ? (work, play, eat)</option>
+        <select id="levelSelect">
+            <option value="1">Level 1: Beginner (Affirmative Sentences)</option>
+            <option value="2">Level 2: Elementary (Negative Sentences)</option>
+            <option value="3">Level 3: Pre-Intermediate (Yes/No Questions)</option>
+            <option value="4">Level 4: Intermediate (Short Answers)</option>
+            <option value="5">Level 5: Upper-Intermediate (Wh-Questions)</option>
         </select>
         <div class="examples">
             <h3>Examples of verbs to use:</h3>
-            <p id="exampleVerbs">Select a structure to see example verbs.</p>
+            <p id="exampleVerbs">Select a level to see example verbs.</p>
         </div>
-        <div id="currentStructure">Select a structure to start.</div>
+        <div id="currentStructures">
+            <h3>Structures to practice:</h3>
+            <ul id="structureList"></ul>
+        </div>
         <button id="startButton">Start Practice</button>
         <div class="status" id="status">Correct: 0/10</div>
         <div class="status" id="listening">Press start to begin...</div>
@@ -126,33 +95,97 @@
 
     <script>
         const tenseSelect = document.getElementById('tenseSelect');
-        const structureSelect = document.getElementById('structureSelect');
+        const levelSelect = document.getElementById('levelSelect');
         const startButton = document.getElementById('startButton');
         const status = document.getElementById('status');
         const listening = document.getElementById('listening');
         const logEntries = document.getElementById('logEntries');
-        const currentStructure = document.getElementById('currentStructure');
+        const structureList = document.getElementById('structureList');
         const exampleVerbs = document.getElementById('exampleVerbs');
 
         let correctCount = 0;
         let recognition = null;
         let isListening = false;
         let saidSentences = new Set();
-        let currentVerbSlot = '';
+        let currentStructures = [];
 
-        // Update the displayed structure and examples
-        function updateStructure() {
-            const structure = structureSelect.value;
-            currentStructure.textContent = structure;
-            currentVerbSlot = structure;
+        // Define structures for each level/theme
+        const levels = {
+            '1': [
+                'I _______ . (work, play, eat)',
+                'You _______ . (work, play, eat)',
+                'He _______s . (drink, like, jump)',
+                'She _______s . (drink, like, jump)',
+                'It _______s . (drink, like, jump)',
+                'We _______ . (work, play, eat)',
+                'You _______ . (work, play, eat)',
+                'They _______ . (work, play, eat)'
+            ],
+            '2': [
+                'I don’t _______ . (work, play, eat)',
+                'He doesn’t _______ . (drink, like, jump)',
+                'She doesn’t _______ . (drink, like, jump)',
+                'It doesn’t _______ . (drink, like, jump)',
+                'We don’t _______ . (work, play, eat)',
+                'You don’t _______ . (work, play, eat)',
+                'They don’t _______ . (work, play, eat)'
+            ],
+            '3': [
+                'Do I _______ ? (work, play, eat)',
+                'Does he _______ ? (drink, like, jump)',
+                'Does she _______ ? (drink, like, jump)',
+                'Does it _______ ? (drink, like, jump)',
+                'Do we _______ ? (work, play, eat)',
+                'Do you _______ ? (work, play, eat)',
+                'Do they _______ ? (work, play, eat)'
+            ],
+            '4': [
+                'Yes, I _______ . (work, play, eat)',
+                'Yes, he _______s . (drink, like, jump)',
+                'Yes, she _______s . (drink, like, jump)',
+                'Yes, it _______s . (drink, like, jump)',
+                'Yes, we _______ . (work, play, eat)',
+                'Yes, you _______ . (work, play, eat)',
+                'Yes, they _______ . (work, play, eat)',
+                'No, I don’t _______ . (work, play, eat)',
+                'No, he doesn’t _______ . (drink, like, jump)',
+                'No, she doesn’t _______ . (drink, like, jump)',
+                'No, it doesn’t _______ . (drink, like, jump)'
+            ],
+            '5': [
+                'Where do I _______ ? (work, play, eat)',
+                'What does he _______ ? (drink, like, jump)',
+                'What does she _______ ? (drink, like, jump)',
+                'What does it _______ ? (drink, like, jump)',
+                'When do we _______ ? (work, play, eat)',
+                'When do you _______ ? (work, play, eat)',
+                'When do they _______ ? (work, play, eat)'
+            ]
+        };
 
-            // Extract example verbs from the structure string
-            const match = structure.match(/\(([^)]+)\)/);
-            if (match) {
-                exampleVerbs.textContent = match[1];
-            } else {
-                exampleVerbs.textContent = 'Select a structure to see example verbs.';
-            }
+        // Update the displayed structures and examples
+        function updateStructures() {
+            const level = levelSelect.value;
+            currentStructures = levels[level];
+
+            // Update the structure list
+            structureList.innerHTML = '';
+            currentStructures.forEach(structure => {
+                const li = document.createElement('li');
+                li.textContent = structure;
+                structureList.appendChild(li);
+            });
+
+            // Update example verbs (combine all verbs from the current level)
+            const verbs = new Set();
+            currentStructures.forEach(structure => {
+                const match = structure.match(/\(([^)]+)\)/);
+                if (match) {
+                    const verbList = match[1].split(', ');
+                    verbList.forEach(verb => verbs.add(verb));
+                }
+            });
+            exampleVerbs.textContent = Array.from(verbs).join(', ') || 'Select a level to see example verbs.';
         }
 
         // Initialize speech recognition
@@ -186,14 +219,14 @@
             };
         }
 
-        // Check if the spoken sentence matches the structure and is correct
+        // Check if the spoken sentence matches any structure in the current theme
         function checkSentence(spokenSentence) {
             const tense = tenseSelect.value;
             let isCorrect = false;
             let logMessage = '';
 
             if (tense === 'present') {
-                isCorrect = checkPresentSimpleSentence(spokenSentence, currentVerbSlot);
+                isCorrect = currentStructures.some(structure => checkPresentSimpleSentence(spokenSentence, structure));
             }
 
             if (saidSentences.has(spokenSentence)) {
@@ -345,7 +378,7 @@
             status.textContent = 'Correct: 0/10';
             saidSentences.clear();
             logEntries.innerHTML = '';
-            updateStructure();
+            updateStructures();
             if (isListening) {
                 recognition.stop();
                 isListening = false;
@@ -354,8 +387,8 @@
             }
         });
 
-        structureSelect.addEventListener('change', () => {
-            updateStructure();
+        levelSelect.addEventListener('change', () => {
+            updateStructures();
             correctCount = 0;
             status.textContent = 'Correct: 0/10';
             saidSentences.clear();
@@ -383,8 +416,8 @@
             }
         });
 
-        // Initialize structure
-        updateStructure();
+        // Initialize structures
+        updateStructures();
     </script>
 </body>
 </html>
