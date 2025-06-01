@@ -175,30 +175,60 @@
             }
         }
 
-        // Present Simple checker
+        // Improved Present Simple checker
         function checkPresentSimple(sentence) {
             const lowerSentence = sentence.toLowerCase();
             const words = lowerSentence.split(/\s+/);
             const subjects = ['i', 'you', 'he', 'she', 'it', 'we', 'they'];
-            const verbForms = {
-                'i': ['am', 'work', 'play', 'go', 'walk', 'study', 'eat', 'drink', 'read', 'write'],
-                'you': ['are', 'work', 'play', 'go', 'walk', 'study', 'eat', 'drink', 'read', 'write'],
-                'he': ['is', 'works', 'plays', 'goes', 'walks', 'studies', 'eats', 'drinks', 'reads', 'writes'],
-                'she': ['is', 'works', 'plays', 'goes', 'walks', 'studies', 'eats', 'drinks', 'reads', 'writes'],
-                'it': ['is', 'works', 'plays', 'goes', 'walks', 'studies', 'eats', 'drinks', 'reads', 'writes'],
-                'we': ['are', 'work', 'play', 'go', 'walk', 'study', 'eat', 'drink', 'read', 'write'],
-                'they': ['are', 'work', 'play', 'go', 'walk', 'study', 'eat', 'drink', 'read', 'write']
-            };
 
+            // Minimum length check
             if (words.length < 2) return false;
-            const subject = words[0];
-            const verb = words[1];
 
+            const subject = words[0];
             if (!subjects.includes(subject)) return false;
-            return verbForms[subject].includes(verb);
+
+            // Identify the verb (second word, or third if using "does")
+            let verbIndex = 1;
+            let verb = words[verbIndex];
+            let isQuestionOrNegative = false;
+
+            // Check for "does" structure (e.g., "does he like", "he does his job")
+            if (verb === 'does' && words.length >= 3) {
+                isQuestionOrNegative = true;
+                verbIndex = 2;
+                verb = words[verbIndex];
+            }
+
+            // Subject-verb agreement for Present Simple
+            if (['he', 'she', 'it'].includes(subject)) {
+                // For he/she/it, verb should end in -s or -es
+                if (isQuestionOrNegative) {
+                    // In questions/negatives with "does", the base verb is used
+                    return isValidBaseVerb(verb);
+                }
+                return verb.endsWith('s') || verb.endsWith('es');
+            } else {
+                // For I/you/we/they, use base verb (no -s or -es)
+                if (isQuestionOrNegative) {
+                    return isValidBaseVerb(verb);
+                }
+                return !verb.endsWith('s') && !verb.endsWith('es') && isValidBaseVerb(verb);
+            }
         }
 
-        // Past Simple checker
+        // Helper to validate if a word is a plausible base verb
+        function isValidBaseVerb(verb) {
+            // List of irregular verbs that don't follow standard -s/es rules
+            const irregularVerbs = ['is', 'are', 'am', 'have', 'has'];
+            if (irregularVerbs.includes(verb)) return true;
+
+            // Basic check: verb should be alphabetic and not a past tense form
+            const pastTenseIndicators = ['ed', 'was', 'were', 'went', 'did'];
+            if (!/^[a-z]+$/.test(verb)) return false;
+            return !pastTenseIndicators.some(indicator => verb === indicator || verb.endsWith(indicator));
+        }
+
+        // Past Simple checker (unchanged)
         function checkPastSimple(sentence) {
             const lowerSentence = sentence.toLowerCase();
             const words = lowerSentence.split(/\s+/);
