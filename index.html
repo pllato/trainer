@@ -205,8 +205,12 @@
             let verbPosition = structureWords.indexOf('_______');
             if (verbPosition === -1) return false;
 
-            // Check if the spoken sentence has enough words to match the structure
-            if (spokenWords.length < structureWords.length) return false;
+            // Adjust structure words to exclude punctuation for length comparison
+            const structureWordsWithoutPunctuation = structureWords.filter(word => word !== '.' && word !== '?');
+            const expectedLength = structureWordsWithoutPunctuation.length;
+
+            // Check if the spoken sentence has at least the expected number of words (excluding punctuation)
+            if (spokenWords.length < expectedLength - 1) return false;
 
             // Extract the spoken verb at the expected position
             const spokenVerb = spokenWords[verbPosition];
@@ -215,10 +219,12 @@
             let structureMatches = true;
             for (let i = 0; i < structureWords.length; i++) {
                 if (i === verbPosition) continue; // Skip the verb slot
+                if (structureWords[i] === '.' || structureWords[i] === '?') continue; // Skip punctuation
+
                 let expectedWord = structureWords[i];
                 let spokenWord = spokenWords[i] || '';
 
-                // Handle punctuation in structure (e.g., "don’t" vs "don't", "." vs "")
+                // Handle special characters (e.g., "don’t" vs "don't")
                 expectedWord = expectedWord.replace(/[^a-z]/g, '');
                 spokenWord = spokenWord.replace(/[^a-z]/g, '');
 
@@ -231,7 +237,6 @@
             if (!structureMatches) return false;
 
             // Validate the verb form based on the structure
-            // Structures requiring base verb (no -s/es)
             const baseVerbStructures = [
                 'i _______ .',
                 'we/you/they _______ .',
@@ -248,13 +253,11 @@
                 'when do we/you/they _______ ?'
             ];
 
-            // Structures requiring verb with -s/es
             const verbSStructures = [
                 'he/she/it _______s .',
                 'yes, he/she/it _______s .'
             ];
 
-            // Structures requiring base verb for affirmative answers
             const yesBaseVerbStructures = [
                 'yes, i _______ .'
             ];
