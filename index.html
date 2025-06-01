@@ -112,7 +112,7 @@
         let correctCount = 0;
         let recognition = null;
         let isListening = false;
-        let saidWords = new Set();
+        let saidSentences = new Set();
         let currentVerbSlot = '';
 
         // Update the displayed structure
@@ -130,9 +130,9 @@
             recognition.maxAlternatives = 1;
 
             recognition.onresult = (event) => {
-                const spokenWord = event.results[0][0].transcript.trim().toLowerCase();
-                listening.textContent = 'Processing: ' + spokenWord;
-                checkWord(spokenWord);
+                const spokenSentence = event.results[0][0].transcript.trim().toLowerCase();
+                listening.textContent = 'Processing: ' + spokenSentence;
+                checkSentence(spokenSentence);
             };
 
             recognition.onend = () => {
@@ -153,27 +153,25 @@
             };
         }
 
-        // Check if the spoken word fits the structure
-        function checkWord(word) {
+        // Check if the spoken sentence matches the structure and is correct
+        function checkSentence(spokenSentence) {
             const tense = tenseSelect.value;
             let isCorrect = false;
             let logMessage = '';
 
             if (tense === 'present') {
-                isCorrect = checkPresentSimpleWord(word, currentVerbSlot);
+                isCorrect = checkPresentSimpleSentence(spokenSentence, currentVerbSlot);
             }
 
-            const fullSentence = currentVerbSlot.replace('_______', word);
-
-            if (saidWords.has(word)) {
-                logMessage = `Repeat: "${fullSentence}"`;
+            if (saidSentences.has(spokenSentence)) {
+                logMessage = `Repeat: "${spokenSentence}"`;
             } else if (isCorrect) {
                 correctCount++;
-                saidWords.add(word);
-                logMessage = `Correct: "${fullSentence}"`;
+                saidSentences.add(spokenSentence);
+                logMessage = `Correct: "${spokenSentence}"`;
                 status.textContent = `Correct: ${correctCount}/10`;
             } else {
-                logMessage = `Incorrect: "${fullSentence}" (wrong form)`;
+                logMessage = `Incorrect: "${spokenSentence}" (wrong form or structure)`;
             }
 
             // Add to log
@@ -190,8 +188,8 @@
             }
         }
 
-        // Check if the word fits the Present Simple structure
-        function checkPresentSimpleWord(word, structure) {
+        // Check if the spoken sentence matches the Present Simple structure
+        function checkPresentSimpleSentence(spokenSentence, structure) {
             // Helper to check if a word is a valid base verb
             function isValidBaseVerb(verb) {
                 const pastTenseIndicators = ['ed', 'was', 'were', 'went', 'did'];
@@ -199,40 +197,75 @@
                 return !pastTenseIndicators.some(indicator => verb === indicator || verb.endsWith(indicator));
             }
 
+            // Split the spoken sentence into words
+            const spokenWords = spokenSentence.split(/\s+/);
+            const structureWords = structure.toLowerCase().split(/\s+/);
+
+            // Extract the expected position of the verb (where _______ is)
+            let verbPosition = structureWords.indexOf('_______');
+            if (verbPosition === -1) return false;
+
+            // Check if the spoken sentence has enough words to match the structure
+            if (spokenWords.length < structureWords.length) return false;
+
+            // Extract the spoken verb at the expected position
+            const spokenVerb = spokenWords[verbPosition];
+
+            // Verify the fixed parts of the sentence match
+            let structureMatches = true;
+            for (let i = 0; i < structureWords.length; i++) {
+                if (i === verbPosition) continue; // Skip the verb slot
+                let expectedWord = structureWords[i];
+                let spokenWord = spokenWords[i] || '';
+
+                // Handle punctuation in structure (e.g., "don’t" vs "don't", "." vs "")
+                expectedWord = expectedWord.replace(/[^a-z]/g, '');
+                spokenWord = spokenWord.replace(/[^a-z]/g, '');
+
+                if (expectedWord && expectedWord !== spokenWord) {
+                    structureMatches = false;
+                    break;
+                }
+            }
+
+            if (!structureMatches) return false;
+
+            // Validate the verb form based on the structure
             // Structures requiring base verb (no -s/es)
             const baseVerbStructures = [
-                'I _______ .',
-                'We/You/They _______ .',
-                'I don’t _______ .',
-                'He/She/It doesn’t _______ .',
-                'We/You/They don’t _______ .',
-                'Do I _______ ?',
-                'Does he/she/it _______ ?',
-                'Do we/you/they _______ ?',
-                'No, I don’t _______ .',
-                'No, he/she/it doesn’t _______ .',
-                'Where do I _______ ?',
-                'What does he/she/it _______ ?',
-                'When do we/you/they _______ ?'
+                'i _______ .',
+                'we/you/they _______ .',
+                'i don’t _______ .',
+                'he/she/it doesn’t _______ .',
+                'we/you/they don’t _______ .',
+                'do i _______ ?',
+                'does he/she/it _______ ?',
+                'do we/you/they _______ ?',
+                'no, i don’t _______ .',
+                'no, he/she/it doesn’t _______ .',
+                'where do i _______ ?',
+                'what does he/she/it _______ ?',
+                'when do we/you/they _______ ?'
             ];
 
             // Structures requiring verb with -s/es
             const verbSStructures = [
-                'He/She/It _______s .',
-                'Yes, he/she/it _______s .'
+                'he/she/it _______s .',
+                'yes, he/she/it _______s .'
             ];
 
-            // Structures requiring base verb
+            // Structures requiring base verb for affirmative answers
             const yesBaseVerbStructures = [
-                'Yes, I _______ .'
+                'yes, i _______ .'
             ];
 
+            structure = structure.toLowerCase();
             if (baseVerbStructures.includes(structure)) {
-                return isValidBaseVerb(word) && !word.endsWith('s') && !word.endsWith('es');
+                return isValidBaseVerb(spokenVerb) && !spokenVerb.endsWith('s') && !spokenVerb.endsWith('es');
             } else if (verbSStructures.includes(structure)) {
-                return isValidBaseVerb(word.replace(/(s|es)$/, '')) && (word.endsWith('s') || word.endsWith('es'));
+                return isValidBaseVerb(spokenVerb.replace(/(s|es)$/, '')) && (spokenVerb.endsWith('s') || spokenVerb.endsWith('es'));
             } else if (yesBaseVerbStructures.includes(structure)) {
-                return isValidBaseVerb(word) && !word.endsWith('s') && !word.endsWith('es');
+                return isValidBaseVerb(spokenVerb) && !spokenVerb.endsWith('s') && !spokenVerb.endsWith('es');
             }
 
             return false;
@@ -242,7 +275,7 @@
         tenseSelect.addEventListener('change', () => {
             correctCount = 0;
             status.textContent = 'Correct: 0/10';
-            saidWords.clear();
+            saidSentences.clear();
             logEntries.innerHTML = '';
             updateStructure();
             if (isListening) {
@@ -257,7 +290,7 @@
             updateStructure();
             correctCount = 0;
             status.textContent = 'Correct: 0/10';
-            saidWords.clear();
+            saidSentences.clear();
             logEntries.innerHTML = '';
             if (isListening) {
                 recognition.stop();
