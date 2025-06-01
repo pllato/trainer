@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ELC English Speaking Trainer - Simple Working Version</title>
+  <title>ELC English Speaking Trainer</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -55,7 +55,7 @@
   </style>
 </head>
 <body>
-  <h1>ELC English Speaking Trainer - Simple Working Version</h1>
+  <h1>ELC English Speaking Trainer</h1>
   <div>
     <button id="startButton" onclick="startPractice()">Начать практику (голос)</button>
     <button id="stopButton" onclick="stopPractice()" style="display: none;">Остановить практику</button>
@@ -100,7 +100,6 @@
       spokenText = spokenText.replace(/\bbetterandsasha\b/g, 'better and sasha');
       spokenText = spokenText.replace(/\bmy\s*house\b/g, 'my house');
 
-      console.log('Нормализованный текст:', spokenText);
       return spokenText.trim();
     }
 
