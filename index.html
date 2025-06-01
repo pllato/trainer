@@ -1,345 +1,250 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ELC English Speaking Trainer</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
-    }
-    #transcript {
-      margin: 20px 0;
-      font-size: 18px;
-      color: #333;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      margin: 5px;
-    }
-    input[type="text"] {
-      padding: 10px;
-      font-size: 16px;
-      margin: 10px;
-      width: 300px;
-    }
-    #listeningIndicator {
-      display: none;
-      font-size: 16px;
-      color: #4CAF50;
-      margin: 10px 0;
-    }
-    .dot-pulse::after {
-      content: '...';
-      display: inline-block;
-      animation: dotPulse 1.5s infinite;
-    }
-    @keyframes dotPulse {
-      0% { content: '.'; }
-      33% { content: '..'; }
-      66% { content: '...'; }
-      100% { content: '.'; }
-    }
-    .correct {
-      color: green;
-      font-weight: bold;
-    }
-    .incorrect {
-      color: red;
-      font-weight: bold;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELC English Speaking Trainer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        select {
+            padding: 10px;
+            font-size: 16px;
+            margin: 10px;
+        }
+        #log {
+            text-align: left;
+            margin-top: 20px;
+            padding: 10px;
+            background: #e8e8e8;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .status {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .examples {
+            margin: 20px 0;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
-  <h1>ELC English Speaking Trainer</h1>
-  <div>
-    <button id="startButton" onclick="startPractice()">Начать практику (голос)</button>
-    <button id="stopButton" onclick="stopPractice()" style="display: none;">Остановить практику</button>
-    <div id="listeningIndicator">Слушает<span class="dot-pulse"></span></div>
-    <p>Или введите предложение вручную:</p>
-    <input type="text" id="manualInput" placeholder="Введите предложение">
-    <button onclick="checkManualInput()">Проверить</button>
-  </div>
-  <p id="transcript">Составьте предложение в Present Simple.</p>
+    <div class="container">
+        <h1>ELC English Speaking Trainer</h1>
+        <select id="tenseSelect">
+            <option value="present">Present Simple</option>
+            <option value="past">Past Simple</option>
+        </select>
+        <div class="examples" id="examples">
+            <h3>Examples:</h3>
+            <p id="example1"></p>
+            <p id="example2"></p>
+            <p id="example3"></p>
+        </div>
+        <button id="startButton">Start Practice</button>
+        <div class="status" id="status">Correct: 0/10</div>
+        <div class="status" id="listening">Press start to begin...</div>
+        <div id="log">
+            <h3>Practice Log:</h3>
+            <div id="logEntries"></div>
+        </div>
+    </div>
 
-  <script>
-    let recognition = null;
-    let isPracticing = false;
+    <script>
+        const tenseSelect = document.getElementById('tenseSelect');
+        const startButton = document.getElementById('startButton');
+        const status = document.getElementById('status');
+        const listening = document.getElementById('listening');
+        const logEntries = document.getElementById('logEntries');
+        const example1 = document.getElementById('example1');
+        const example2 = document.getElementById('example2');
+        const example3 = document.getElementById('example3');
 
-    async function checkMicAccess() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => track.stop());
-        return true;
-      } catch (err) {
-        console.error('Ошибка доступа к микрофону:', err);
-        return false;
-      }
-    }
+        let correctCount = 0;
+        let recognition = null;
+        let isListening = false;
+        let saidSentences = new Set();
 
-    function normalizeText(spokenText) {
-      spokenText = spokenText.trim().toLowerCase();
-      if (spokenText.endsWith('.')) spokenText = spokenText.slice(0, -1);
-
-      spokenText = spokenText.replace(/\bi'm\b/g, 'i am');
-      spokenText = spokenText.replace(/\byou're\b/g, 'you are');
-      spokenText = spokenText.replace(/\bhe's\b/g, 'he is');
-      spokenText = spokenText.replace(/\bshe's\b/g, 'she is');
-      spokenText = spokenText.replace(/\bit's\b/g, 'it is');
-      spokenText = spokenText.replace(/\bwe're\b/g, 'we are');
-      spokenText = spokenText.replace(/\bthey're\b/g, 'they are');
-      spokenText = spokenText.replace(/\bdon't\b/g, 'do not');
-      spokenText = spokenText.replace(/\bdoesn't\b/g, 'does not');
-
-      spokenText = spokenText.replace(/\bmyhouse\b/g, 'my house');
-      spokenText = spokenText.replace(/\bsashaandanna\b/g, 'sasha and anna');
-      spokenText = spokenText.replace(/\bbetterandsasha\b/g, 'better and sasha');
-      spokenText = spokenText.replace(/\bmy\s*house\b/g, 'my house');
-
-      return spokenText.trim();
-    }
-
-    function checkPresentContinuousTense(firstWord, secondWord, thirdWord) {
-      if (['is', 'are', 'am'].includes(firstWord) && secondWord.endsWith('ing')) return true;
-      if (['is', 'are', 'am'].includes(secondWord) && thirdWord.endsWith('ing')) return true;
-      return false;
-    }
-
-    function checkToBePresentTense(subject, verb) {
-      if (subject === 'i') {
-        if (verb !== 'am') return { isCorrect: false, error: 'Для "I" используйте "am"', correction: `Правильно: "I am"` };
-      } else if (subject === 'he' || subject === 'she' || subject === 'it') {
-        if (verb !== 'is') return { isCorrect: false, error: 'Для "he/she/it" используйте "is"', correction: `Правильно: "${subject} is"` };
-      } else if (subject === 'you' || subject === 'we' || subject === 'they' || subject.includes(' and ') || subject.includes(' or ')) {
-        if (verb !== 'are') return { isCorrect: false, error: 'Для множественного числа или "you" используйте "are"', correction: `Правильно: "${subject} are"` };
-      } else {
-        if (verb !== 'is') return { isCorrect: false, error: 'Для подлежащего используйте "is"', correction: `Правильно: "${subject} is"` };
-      }
-      return { isCorrect: true };
-    }
-
-    function checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex) {
-      const isThirdPersonSingular = subject === 'he' || subject === 'she' || subject === 'it' || 
-        (subject !== 'i' && subject !== 'you' && subject !== 'we' && subject !== 'they' && 
-         !subject.includes(' and ') && !subject.includes(' or '));
-
-      if (verb === 'do' && nextWord === 'not') {
-        if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} do not like"` };
-        if (isThirdPersonSingular) return { isCorrect: false, error: 'Для третьего лица единственного числа используйте "does not"', correction: `Правильно: "${subject} does not like"` };
-        return { isCorrect: true };
-      }
-      if (verb === 'does' && nextWord === 'not') {
-        if (words.length < verbIndex + 3) return { isCorrect: false, error: 'Отрицание неполное', correction: `Добавьте глагол, например: "${subject} does not like"` };
-        if (!isThirdPersonSingular && subject !== 'you') return { isCorrect: false, error: 'Для подлежащих "I", "we", "they" используйте "do not"', correction: `Правильно: "${subject} do not like"` };
-        return { isCorrect: true };
-      }
-
-      if (isThirdPersonSingular) {
-        if (!verb.endsWith('s') && !verb.endsWith('es') && verb !== 'has' && verb !== 'goes' && verb !== 'does') {
-          const correctedVerb = verb.endsWith('o') || verb.endsWith('s') || verb.endsWith('sh') || verb.endsWith('ch') || verb.endsWith('x') || verb.endsWith('z') ? `${verb}es` : `${verb}s`;
-          return { isCorrect: false, error: `Отсутствует "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${correctedVerb}"` };
-        }
-      } else {
-        if ((verb.endsWith('s') || verb.endsWith('es')) && verb !== 'goes' && verb !== 'does' && !verb.endsWith('ss')) {
-          return { isCorrect: false, error: `Лишнее "s/es" для "${subject}"`, correction: `Правильно: "${subject} ${verb.replace(/es$|s$/, '')}"` };
-        }
-      }
-
-      return { isCorrect: true };
-    }
-
-    function isPresentSimple(spokenText) {
-      const normalizedText = normalizeText(spokenText);
-      const words = normalizedText.split(/\s+/);
-      if (words.length < 2) return { isCorrect: false, error: 'Предложение слишком короткое', correction: 'Добавьте глагол, например: "I go"' };
-
-      const firstWord = words[0];
-      const secondWord = words[1];
-      const thirdWord = words[2] || '';
-
-      // Исключение других времен
-      if (firstWord === 'will' || secondWord === 'will') return { isCorrect: false, error: 'Использовано будущее время', correction: 'Используйте Present Simple, например: "I go"' };
-      if (checkPresentContinuousTense(firstWord, secondWord, thirdWord)) {
-        return { isCorrect: false, error: 'Использовано Present Continuous', correction: 'Используйте Present Simple, например: "I go"' };
-      }
-      if (words.some(word => word.endsWith('ed'))) return { isCorrect: false, error: 'Использовано прошлое время', correction: 'Используйте Present Simple, например: "I go"' };
-
-      // Проверка вопросов с do/does
-      if (firstWord === 'do' || firstWord === 'does') {
-        if (words.length < 3) return { isCorrect: false, error: 'Вопрос неполный', correction: 'Добавьте глагол, например: "Do you like?"' };
-        const subject = words[1];
-        const isThirdPersonSingular = subject === 'he' || subject === 'she' || subject === 'it';
-        if (firstWord === 'do' && isThirdPersonSingular) return { isCorrect: false, error: 'Для третьего лица единственного числа используйте "does"', correction: `Правильно: "Does ${subject} like?"` };
-        if (firstWord === 'does' && !isThirdPersonSingular && subject !== 'you') return { isCorrect: false, error: 'Для подлежащих "I", "we", "they" используйте "do"', correction: `Правильно: "Do ${subject} like?"` };
-        return { isCorrect: true };
-      }
-
-      // Определение подлежащего и глагола
-      const subjectWords = [];
-      let verbIndex = -1;
-      for (let i = 0; i < words.length; i++) {
-        if (['do', 'does', 'is', 'are', 'am'].includes(words[i]) || !words[i].match(/^(and|or|the|a|my|your|his|her|its|our|their)$/)) {
-          verbIndex = i;
-          break;
-        }
-        subjectWords.push(words[i]);
-      }
-
-      if (verbIndex === -1 || verbIndex >= words.length - 1) return { isCorrect: false, error: 'Предложение неполное', correction: 'Добавьте глагол, например: "I go"' };
-
-      const subject = subjectWords.join(' ').trim();
-      const verb = words[verbIndex];
-      const nextWord = words[verbIndex + 1] || '';
-
-      if (subject === '') return { isCorrect: false, error: 'Отсутствует подлежащее', correction: 'Добавьте подлежащее, например: "I go"' };
-
-      // Проверка предложений с "to be"
-      if (['is', 'are', 'am'].includes(verb)) {
-        return checkToBePresentTense(subject, verb);
-      }
-
-      // Проверка обычных глаголов в Present Simple
-      return checkPresentSimpleTense(subject, verb, nextWord, words, verbIndex);
-    }
-
-    function checkManualInput() {
-      const transcript = document.getElementById('manualInput').value;
-      if (transcript) {
-        const result = isPresentSimple(transcript);
-        let message = `Вы ввели: "${transcript}"`;
-        if (result.isCorrect) {
-          message += ` <span class="correct">Правильно!</span>`;
-        } else {
-          message += ` <span class="incorrect">Неправильно!</span> Ошибка: ${result.error}. Правильно: ${result.correction}`;
-        }
-        document.getElementById('transcript').innerHTML = message;
-      } else {
-        document.getElementById('transcript').textContent = 'Введите предложение для проверки.';
-      }
-    }
-
-    function toggleListeningIndicator(isListening) {
-      const indicator = document.getElementById('listeningIndicator');
-      indicator.style.display = isListening ? 'block' : 'none';
-    }
-
-    function startRecognition() {
-      if (!isPracticing) {
-        console.log('Распознавание не запущено: isPracticing = false');
-        return;
-      }
-
-      if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
-        alert('Ваш браузер не поддерживает распознавание речи. Используйте Google Chrome или ручной ввод.');
-        console.error('SpeechRecognition не поддерживается браузером');
-        return;
-      }
-
-      try {
-        if (recognition) {
-          recognition.stop();
-          recognition = null;
-        }
-        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.lang = 'en-US';
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-        recognition.continuous = true;
-
-        document.getElementById('transcript').textContent = `Составьте предложение в Present Simple.`;
-
-        recognition.onstart = function() {
-          toggleListeningIndicator(true);
-        };
-
-        recognition.onresult = function(event) {
-          let transcript = '';
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            if (event.results[i].isFinal) {
-              transcript += event.results[i][0].transcript;
-            }
-          }
-          transcript = transcript.trim();
-
-          if (transcript) {
-            const result = isPresentSimple(transcript);
-            let message = `Вы сказали: "${transcript}"`;
-            if (result.isCorrect) {
-              message += ` <span class="correct">Правильно!</span>`;
+        // Update examples based on selected tense
+        function updateExamples() {
+            const tense = tenseSelect.value;
+            if (tense === 'present') {
+                example1.textContent = 'He walks to school.';
+                example2.textContent = 'They play football.';
+                example3.textContent = 'She works late.';
             } else {
-              message += ` <span class="incorrect">Неправильно!</span> Ошибка: ${result.error}. Правильно: ${result.correction}`;
+                example1.textContent = 'He went to school.';
+                example2.textContent = 'They played football.';
+                example3.textContent = 'She worked late.';
             }
-            document.getElementById('transcript').innerHTML = message;
-          } else {
-            document.getElementById('transcript').textContent = 'Ничего не распознано. Попробуйте снова или используйте ручной ввод.';
-          }
+        }
 
-          setTimeout(startRecognition, 2000);
-        };
+        // Initialize speech recognition
+        function initSpeechRecognition() {
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
 
-        recognition.onerror = function(event) {
-          document.getElementById('transcript').textContent = `Ошибка: ${event.error}.`;
-          if (event.error === 'no-speech') {
-            document.getElementById('transcript').textContent += ' Речь не обнаружена. Проверьте, включен ли микрофон, или используйте ручной ввод.';
-          } else if (event.error === 'not-allowed') {
-            document.getElementById('transcript').textContent += ' Доступ к микрофону запрещен. Разрешите доступ или используйте ручной ввод.';
-            alert('Доступ к микрофону запрещен. Разрешите доступ в настройках браузера (рядом с URL) и перезапустите практику.');
-          } else if (event.error === 'aborted') {
-            document.getElementById('transcript').textContent += ' Распознавание прервано.';
-          } else if (event.error === 'network') {
-            document.getElementById('transcript').textContent += ' Ошибка сети. Проверьте подключение.';
-          } else {
-            document.getElementById('transcript').textContent += ` Ошибка: ${event.message || ''}`;
-          }
-        };
+            recognition.onresult = (event) => {
+                const sentence = event.results[0][0].transcript.trim();
+                listening.textContent = 'Processing: ' + sentence;
+                checkSentence(sentence);
+            };
 
-        recognition.onend = function() {
-          toggleListeningIndicator(false);
-          if (isPracticing) {
-            setTimeout(startRecognition, 2000);
-          }
-        };
+            recognition.onend = () => {
+                if (isListening && correctCount < 10) {
+                    recognition.start();
+                    listening.textContent = 'Listening...';
+                } else {
+                    isListening = false;
+                    listening.textContent = 'Stopped. Press start to begin...';
+                    startButton.textContent = 'Start Practice';
+                }
+            };
 
-        recognition.start();
-      } catch (error) {
-        console.error('Ошибка инициализации SpeechRecognition:', error);
-        document.getElementById('transcript').textContent = `Ошибка инициализации: ${error.message}. Попробуйте снова или используйте ручной ввод.`;
-      }
-    }
+            recognition.onerror = (event) => {
+                listening.textContent = 'Error occurred: ' + event.error;
+                isListening = false;
+                startButton.textContent = 'Start Practice';
+            };
+        }
 
-    function stopPractice() {
-      if (recognition) {
-        recognition.stop();
-        recognition = null;
-      }
-      isPracticing = false;
-      document.getElementById('startButton').style.display = 'inline-block';
-      document.getElementById('stopButton').style.display = 'none';
-      toggleListeningIndicator(false);
-      document.getElementById('transcript').textContent = 'Практика остановлена. Вы можете начать заново или использовать ручной ввод.';
-    }
+        // Check if sentence is correct for the selected tense
+        function checkSentence(sentence) {
+            const tense = tenseSelect.value;
+            let isCorrect = false;
+            let logMessage = '';
 
-    async function startPractice() {
-      const micAccess = await checkMicAccess();
-      if (!micAccess) {
-        alert('Не удалось получить доступ к микрофону. Разрешите доступ в настройках браузера или используйте ручной ввод.');
-        console.error('Нет доступа к микрофону, практика не запущена');
-        return;
-      }
+            if (tense === 'present') {
+                isCorrect = checkPresentSimple(sentence);
+            } else {
+                isCorrect = checkPastSimple(sentence);
+            }
 
-      if (recognition) {
-        recognition.stop();
-        recognition = null;
-      }
-      isPracticing = true;
-      document.getElementById('startButton').style.display = 'none';
-      document.getElementById('stopButton').style.display = 'inline-block';
-      startRecognition();
-    }
-  </script>
+            if (saidSentences.has(sentence)) {
+                logMessage = `Repeat: "${sentence}"`;
+            } else if (isCorrect) {
+                correctCount++;
+                saidSentences.add(sentence);
+                logMessage = `Correct: "${sentence}"`;
+                status.textContent = `Correct: ${correctCount}/10`;
+            } else {
+                logMessage = `Incorrect: "${sentence}" (wrong tense or grammar)`;
+            }
+
+            // Add to log
+            const logEntry = document.createElement('p');
+            logEntry.textContent = logMessage;
+            logEntries.prepend(logEntry);
+
+            // Stop if 10 correct sentences are reached
+            if (correctCount >= 10) {
+                isListening = false;
+                recognition.stop();
+                listening.textContent = 'Congratulations! 10 correct sentences achieved!';
+                startButton.textContent = 'Restart Practice';
+            }
+        }
+
+        // Present Simple checker
+        function checkPresentSimple(sentence) {
+            const lowerSentence = sentence.toLowerCase();
+            const words = lowerSentence.split(/\s+/);
+            const subjects = ['i', 'you', 'he', 'she', 'it', 'we', 'they'];
+            const verbForms = {
+                'i': ['am', 'work', 'play', 'go', 'walk', 'study', 'eat', 'drink', 'read', 'write'],
+                'you': ['are', 'work', 'play', 'go', 'walk', 'study', 'eat', 'drink', 'read', 'write'],
+                'he': ['is', 'works', 'plays', 'goes', 'walks', 'studies', 'eats', 'drinks', 'reads', 'writes'],
+                'she': ['is', 'works', 'plays', 'goes', 'walks', 'studies', 'eats', 'drinks', 'reads', 'writes'],
+                'it': ['is', 'works', 'plays', 'goes', 'walks', 'studies', 'eats', 'drinks', 'reads', 'writes'],
+                'we': ['are', 'work', 'play', 'go', 'walk', 'study', 'eat', 'drink', 'read', 'write'],
+                'they': ['are', 'work', 'play', 'go', 'walk', 'study', 'eat', 'drink', 'read', 'write']
+            };
+
+            if (words.length < 2) return false;
+            const subject = words[0];
+            const verb = words[1];
+
+            if (!subjects.includes(subject)) return false;
+            return verbForms[subject].includes(verb);
+        }
+
+        // Past Simple checker
+        function checkPastSimple(sentence) {
+            const lowerSentence = sentence.toLowerCase();
+            const words = lowerSentence.split(/\s+/);
+            const subjects = ['i', 'you', 'he', 'she', 'it', 'we', 'they'];
+            const pastVerbs = ['went', 'played', 'worked', 'walked', 'studied', 'ate', 'drank', 'read', 'wrote', 'was', 'were'];
+
+            if (words.length < 2) return false;
+            const subject = words[0];
+            const verb = words[1];
+
+            if (!subjects.includes(subject)) return false;
+            return pastVerbs.includes(verb);
+        }
+
+        // Event listeners
+        tenseSelect.addEventListener('change', () => {
+            updateExamples();
+            correctCount = 0;
+            status.textContent = 'Correct: 0/10';
+            saidSentences.clear();
+            logEntries.innerHTML = '';
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                startButton.textContent = 'Start Practice';
+                listening.textContent = 'Press start to begin...';
+            }
+        });
+
+        startButton.addEventListener('click', () => {
+            if (!isListening) {
+                if (!recognition) initSpeechRecognition();
+                isListening = true;
+                recognition.start();
+                startButton.textContent = 'Stop Practice';
+                listening.textContent = 'Listening...';
+            } else {
+                isListening = false;
+                recognition.stop();
+                startButton.textContent = 'Start Practice';
+                listening.textContent = 'Stopped. Press start to begin...';
+            }
+        });
+
+        // Initialize examples
+        updateExamples();
+    </script>
 </body>
 </html>
