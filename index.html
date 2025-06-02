@@ -37,6 +37,13 @@
     button {
       font-family: 'Trebuchet MS', sans-serif;
     }
+    .stats {
+      color: #373D8D;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid #D72638;
+      padding-left: 0.5rem;
+    }
   </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
@@ -85,6 +92,7 @@
     </div>
     <div class="mb-6">
       <p class="text-lg font-semibold">Лог:</p>
+      <div id="stats" class="stats"></div>
       <div id="log" class="h-40 overflow-y-auto border p-2 text-sm"></div>
     </div>
     <p id="completion" class="text-lg font-bold text-[#373D8D] hidden">Урок завершён!</p>
@@ -144,6 +152,7 @@
     const restartListeningBtn = document.getElementById('restart-listening-btn');
     const restartTrainingBtn = document.getElementById('restart-training-btn');
     const feedback = document.getElementById('feedback');
+    const statsDiv = document.getElementById('stats');
     const progressBars = document.getElementById('progress-bars');
     const logDiv = document.getElementById('log');
     const userNameEl = document.getElementById('user-name');
@@ -168,6 +177,7 @@
       userLevelEl.textContent = document.getElementById('level').options[document.getElementById('level').selectedIndex].text;
       userLessonEl.textContent = document.getElementById('lesson').options[document.getElementById('lesson').selectedIndex].text;
       initializeProgressBars();
+      updateStats();
     });
 
     // Back to start screen
@@ -190,6 +200,7 @@
       sendResultsBtn.classList.add('hidden');
       restartTrainingBtn.classList.add('hidden');
       feedback.textContent = '';
+      statsDiv.innerHTML = '';
       logDiv.innerHTML = '';
       updateProgressBars();
 
@@ -237,8 +248,10 @@
       sendResultsBtn.classList.add('hidden');
       restartTrainingBtn.classList.add('hidden');
       feedback.textContent = '';
+      statsDiv.innerHTML = '';
       logDiv.innerHTML = '';
       updateProgressBars();
+      updateStats();
     });
 
     // Function to start listening
@@ -257,6 +270,22 @@
     // Initialize progress bars
     function initializeProgressBars() {
       updateProgressBars();
+    }
+
+    // Update statistics
+    function updateStats() {
+      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 3 * 5 = 15
+      const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
+      const totalAttempts = logEntries.length;
+      const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
+
+      statsDiv.innerHTML = `
+        <p><strong>Статистика:</strong></p>
+        <p>- Нужно было сказать: ${requiredExamples} примеров</p>
+        <p>- Сказано правильно: ${totalCorrect} примеров</p>
+        <p>- Всего попыток: ${totalAttempts}</p>
+        <p>- Процент аккуратности: ${accuracy}%</p>
+      `;
     }
 
     // Speech recognition result
@@ -309,6 +338,7 @@
 
       logEntries.push(logEntry);
       updateLog();
+      updateStats();
 
       // Brief pause before restarting recognition to avoid overlap
       setTimeout(() => {
@@ -467,11 +497,16 @@
 Урок: ${userLessonEl.textContent}
 Прогресс: ${Object.entries(progress).map(([id, count]) => `${grammarData.beginner1.lesson1.find(s => s.id === id).structure}: ${count} правильных`).join('\n')}
 Статистика:
-- Нужно было сказать примеров: ${requiredExamples}
-- Сказано правильно: ${totalCorrect}
+- Нужно было сказать: ${requiredExamples} примеров
+- Сказано правильно: ${totalCorrect} примеров
 - Всего попыток: ${totalAttempts}
-- Точность: ${accuracy}%
+- Процент аккуратности: ${accuracy}%
 Лог:
+Статистика в логе:
+- Нужно было сказать: ${requiredExamples} примеров
+- Сказано правильно: ${totalCorrect} примеров
+- Всего попыток: ${totalAttempts}
+- Процент аккуратности: ${accuracy}%
 ${logEntries.map(entry => {
   if (entry.exceeded) {
     return `- ${entry.spoken} 🎉🎈❤️`;
