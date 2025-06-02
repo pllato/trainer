@@ -172,12 +172,20 @@
       "Супер, ты сделал это! 🌟 Урок пройден, и ты уже говоришь как носитель английского! Ты молодец! 💪"
     ];
 
+    // Check if SpeechRecognition is supported
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Ваш браузер не поддерживает SpeechRecognition API. Пожалуйста, используйте современный браузер, например, Google Chrome.");
+    }
+
     // Initialize speech recognition
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.continuous = true;
+    const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+    if (recognition) {
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.continuous = true;
+    }
 
     let userName = '';
     let userLevel = '';
@@ -186,7 +194,7 @@
     let spokenHistory = [];
     let logEntries = [];
     let isListening = false;
-    const REQUIRED_CORRECT = 2; // Confirmed: 2 correct sentences per structure
+    const REQUIRED_CORRECT = 2; // 2 correct sentences per structure
     let lastSpeechTime = Date.now();
     let startTime = null; // To track the start time of the training
     let endTime = null; // To track the end time of the training
@@ -236,7 +244,7 @@
       lessonCompleted = false;
       startTime = null;
       endTime = null;
-      recognition.stop();
+      if (recognition) recognition.stop();
 
       // Reset UI
       startPracticeBtn.textContent = 'Начать практику';
@@ -257,16 +265,22 @@
 
     // Start continuous speech recognition
     startPracticeBtn.addEventListener('click', () => {
+      feedback.textContent = 'Попытка запустить практику...';
       if (!isListening) {
         startTime = new Date(); // Record the start time when practice begins
         startListening();
+      } else {
+        feedback.textContent = 'Практика уже запущена. Если ничего не происходит, проверьте доступ к микрофону и перезапустите.';
       }
     });
 
     // Restart listening
     restartListeningBtn.addEventListener('click', () => {
+      feedback.textContent = 'Попытка возобновить прослушивание...';
       if (!isListening) {
         startListening();
+      } else {
+        feedback.textContent = 'Прослушивание уже активно. Проверьте доступ к микрофону.';
       }
     });
 
@@ -277,15 +291,30 @@
 
     // Function to start listening
     function startListening() {
-      recognition.start();
-      isListening = true;
-      startPracticeBtn.textContent = 'Слушаю...';
-      startPracticeBtn.classList.remove('bg-[#373D8D]', 'hover:bg-[#2A3171]');
-      startPracticeBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
-      startPracticeBtn.disabled = true;
-      restartListeningBtn.classList.add('hidden');
-      feedback.textContent = 'Говори любой пример из структур ниже.';
-      lastSpeechTime = Date.now();
+      if (!recognition) {
+        feedback.textContent = 'SpeechRecognition не поддерживается в вашем браузере.';
+        return;
+      }
+
+      try {
+        recognition.start();
+        isListening = true;
+        startPracticeBtn.textContent = 'Слушаю...';
+        startPracticeBtn.classList.remove('bg-[#373D8D]', 'hover:bg-[#2A3171]');
+        startPracticeBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+        startPracticeBtn.disabled = true;
+        restartListeningBtn.classList.add('hidden');
+        feedback.textContent = 'Говори любой пример из структур ниже.';
+        lastSpeechTime = Date.now();
+      } catch (error) {
+        feedback.textContent = 'Ошибка при запуске распознавания речи: ' + error.message + '. Проверьте доступ к микрофону и попробуйте снова.';
+        isListening = false;
+        startPracticeBtn.textContent = 'Начать практику';
+        startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+        startPracticeBtn.classList.add('bg-[#373D8D]', 'hover:bg-[#2A3171]');
+        startPracticeBtn.disabled = false;
+        restartListeningBtn.classList.remove('hidden');
+      }
     }
 
     // Initialize progress bars
@@ -325,96 +354,108 @@
     }
 
     // Speech recognition result
-    recognition.onresult = (event) => {
-      const spokenText = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
-      const matchedStructure = findMatchingStructure(spokenText);
-      const logEntry = { time: new Date().toLocaleTimeString(), spoken: spokenText };
+    if (recognition) {
+      recognition.onresult = (event) => {
+        const spokenText = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+        const matchedStructure = findMatchingStructure(spokenText);
+        const logEntry = { time: new Date().toLocaleTimeString(), spoken: spokenText };
 
-      lastSpeechTime = Date.now();
+        lastSpeechTime = Date.now();
 
-      if (matchedStructure) {
-        const isCorrect = validateStructure(spokenText, matchedStructure);
-        if (isCorrect) {
-          const isDuplicate = matchedStructure.hasName && spokenHistory.includes(spokenText);
-          logEntry.structure = matchedStructure.structure;
-          logEntry.correct = true;
-          logEntry.duplicate = isDuplicate;
+        if (matchedStructure) {
+          const isCorrect = validateStructure(spokenText, matchedStructure);
+          if (isCorrect) {
+            const isDuplicate = matchedStructure.hasName && spokenHistory.includes(spokenText);
+            logEntry.structure = matchedStructure.structure;
+            logEntry.correct = true;
+            logEntry.duplicate = isDuplicate;
 
-          if (!isDuplicate || !matchedStructure.hasName) {
-            progress[matchedStructure.id]++;
-            if (matchedStructure.hasName) spokenHistory.push(spokenText);
+            if (!isDuplicate || !matchedStructure.hasName) {
+              progress[matchedStructure.id]++;
+              if (matchedStructure.hasName) spokenHistory.push(spokenText);
 
-            if (progress[matchedStructure.id] > REQUIRED_CORRECT) {
-              feedback.textContent = `Отлично! 🎉🎈❤️ Ты превысил цель для "${matchedStructure.structure}"!`;
-              logEntries.push({
-                time: new Date().toLocaleTimeString(),
-                spoken: `Превышена цель для "${matchedStructure.structure}"`,
-                structure: matchedStructure.structure,
-                correct: true,
-                exceeded: true
-              });
+              if (progress[matchedStructure.id] > REQUIRED_CORRECT) {
+                feedback.textContent = `Отлично! 🎉🎈❤️ Ты превысил цель для "${matchedStructure.structure}"!`;
+                logEntries.push({
+                  time: new Date().toLocaleTimeString(),
+                  spoken: `Превышена цель для "${matchedStructure.structure}"`,
+                  structure: matchedStructure.structure,
+                  correct: true,
+                  exceeded: true
+                });
+              } else {
+                feedback.textContent = `Правильно! Ты сказал: "${spokenText}" для "${matchedStructure.structure}"`;
+              }
+
+              updateProgressBars();
+              checkCompletion();
             } else {
-              feedback.textContent = `Правильно! Ты сказал: "${spokenText}" для "${matchedStructure.structure}"`;
+              feedback.textContent = `Повтор: "${spokenText}". Скажи новый пример для: ${matchedStructure.structure}`;
             }
-
-            updateProgressBars();
-            checkCompletion();
           } else {
-            feedback.textContent = `Повтор: "${spokenText}". Скажи новый пример для: ${matchedStructure.structure}`;
+            logEntry.structure = matchedStructure.structure;
+            logEntry.correct = false;
+            feedback.textContent = `Неправильно: "${spokenText}" для "${matchedStructure.structure}"`;
           }
         } else {
-          logEntry.structure = matchedStructure.structure;
           logEntry.correct = false;
-          feedback.textContent = `Неправильно: "${spokenText}" для "${matchedStructure.structure}"`;
+          feedback.textContent = `Не совпадает: "${spokenText}". Попробуй одну из структур ниже.`;
         }
-      } else {
-        logEntry.correct = false;
-        feedback.textContent = `Не совпадает: "${spokenText}". Попробуй одну из структур ниже.`;
-      }
 
-      logEntries.push(logEntry);
-      updateLog();
-      updateStats();
+        logEntries.push(logEntry);
+        updateLog();
+        updateStats();
 
-      // Brief pause before restarting recognition to avoid overlap
-      setTimeout(() => {
-        if (isListening && completionModal.style.display !== 'block') {
-          recognition.start();
-        }
-      }, 500);
-    };
+        // Brief pause before restarting recognition to avoid overlap
+        setTimeout(() => {
+          if (isListening && completionModal.style.display !== 'block') {
+            recognition.start();
+          }
+        }, 500);
+      };
 
-    recognition.onerror = (event) => {
-      feedback.textContent = 'Ошибка в распознавании: ' + event.error;
-      isListening = false;
-      restartListeningBtn.classList.remove('hidden');
-      startPracticeBtn.textContent = 'Начать практику';
-      startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-      startPracticeBtn.classList.add('bg-[#373D8D]', 'hover:bg-[#2A3171]');
-      startPracticeBtn.disabled = false;
-    };
-
-    recognition.onend = () => {
-      // Check for no-speech timeout
-      const currentTime = Date.now();
-      if (currentTime - lastSpeechTime > 10000) { // 10 seconds timeout
-        feedback.textContent = 'Давно не слышу речи. Перезапускаю...';
+      recognition.onerror = (event) => {
+        feedback.textContent = 'Ошибка в распознавании: ' + event.error + '. Попробуйте снова или проверьте доступ к микрофону.';
         isListening = false;
         restartListeningBtn.classList.remove('hidden');
         startPracticeBtn.textContent = 'Начать практику';
         startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
         startPracticeBtn.classList.add('bg-[#373D8D]', 'hover:bg-[#2A3171]');
         startPracticeBtn.disabled = false;
-        return;
-      }
+      };
 
-      // Restart recognition if still listening and modal is not visible
-      if (isListening && completionModal.style.display !== 'block') {
-        setTimeout(() => {
-          recognition.start();
-        }, 500);
-      }
-    };
+      recognition.onend = () => {
+        // Check for no-speech timeout
+        const currentTime = Date.now();
+        if (currentTime - lastSpeechTime > 10000) { // 10 seconds timeout
+          feedback.textContent = 'Давно не слышу речи. Перезапускаю...';
+          isListening = false;
+          restartListeningBtn.classList.remove('hidden');
+          startPracticeBtn.textContent = 'Начать практику';
+          startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+          startPracticeBtn.classList.add('bg-[#373D8D]', 'hover:bg-[#2A3171]');
+          startPracticeBtn.disabled = false;
+          return;
+        }
+
+        // Restart recognition if still listening and modal is not visible
+        if (isListening && completionModal.style.display !== 'block') {
+          setTimeout(() => {
+            try {
+              recognition.start();
+            } catch (error) {
+              feedback.textContent = 'Ошибка при перезапуске распознавания: ' + error.message + '. Попробуйте снова.';
+              isListening = false;
+              restartListeningBtn.classList.remove('hidden');
+              startPracticeBtn.textContent = 'Начать практику';
+              startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+              startPracticeBtn.classList.add('bg-[#373D8D]', 'hover:bg-[#2A3171]');
+              startPracticeBtn.disabled = false;
+            }
+          }, 500);
+        }
+      };
+    }
 
     // Find matching structure
     function findMatchingStructure(text) {
@@ -513,7 +554,7 @@
         congratulationsEl.textContent = randomMessage;
         completionModal.style.display = 'block';
         isListening = false;
-        recognition.stop();
+        if (recognition) recognition.stop();
         startPracticeBtn.textContent = 'Урок завершён';
         updateStats(); // Update stats to include duration
         sendResults(); // Automatically send results
@@ -533,7 +574,7 @@
 Результаты для ${userName}
 Уровень: ${userLevelEl.textContent}
 Урок: ${userLessonEl.textContent}
-Прогресс: ${Object.entries(progress).map(([id, count]) => `${grammarData.beginner1.lesson1.find(s => s.id === id).structure}: ${count} правильных`). 1e-10).join('\n')}
+Прогресс: ${Object.entries(progress).map(([id, count]) => `${grammarData.beginner1.lesson1.find(s => s.id === id).structure}: ${count} правильных`).join('\n')}
 Статистика:
 - Нужно было сказать: ${requiredExamples} примеров
 - Сказано правильно: ${totalCorrect} примеров
