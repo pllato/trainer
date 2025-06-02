@@ -70,11 +70,12 @@
             <!-- Add more tenses later -->
         </select>
         <select id="levelSelect">
-            <option value="1">Level 1: Beginner (Daily Routines, Likes and Dislikes, Introductions and Greetings)</option>
-            <option value="2">Level 2: Elementary (Daily Routines, Likes and Dislikes, Facts)</option>
-            <option value="3">Level 3: Pre-Intermediate (Work and Study, Feelings and Opinions)</option>
-            <option value="4">Level 4: Intermediate (Work and Study, Social Interactions)</option>
-            <option value="5">Level 5: Upper-Intermediate (Social Interactions, Schedules and Events)</option>
+            <option value="1">Beginner Part One (Introductions and Greetings)</option>
+            <option value="2">Beginner Part Two (TBD)</option>
+            <option value="3">Elementary (TBD)</option>
+            <option value="4">Pre-Intermediate (TBD)</option>
+            <option value="5">Intermediate (TBD)</option>
+            <option value="6">Upper-Intermediate (TBD)</option>
         </select>
         <div class="examples">
             <h3>Examples of words to use:</h3>
@@ -109,132 +110,41 @@
         let saidSentences = new Set();
         let currentStructures = [];
 
-        // Define structures for each level/theme
+        // Define structures for each level
         const levels = {
             '1': [
-                // Daily Routines
-                'I _______ . (work, play, eat)',
-                'You _______ . (work, play, eat)',
-                'He _______s . (work, play, eat)',
-                'She _______s . (work, play, eat)',
-                'Mariya _______s . (work, play, eat)',
-                'It _______s . (run, jump, eat)',
-                'We _______ . (work, play, eat)',
-                'They _______ . (work, play, eat)',
-                // Likes and Dislikes
-                'I _______ . (like, love, want)',
-                'You _______ . (like, love, want)',
-                'He _______s . (like, love, want)',
-                'She _______s . (like, love, want)',
-                'Mariya _______s . (like, love, want)',
-                'It _______s . (like, love, want)',
-                'We _______ . (like, love, want)',
-                'They _______ . (like, love, want)',
-                // Daily Routines (Negative)
-                'I don’t _______ . (work, play, eat)',
-                'You don’t _______ . (work, play, eat)',
-                'He doesn’t _______ . (work, play, eat)',
-                'She doesn’t _______ . (work, play, eat)',
-                'Mariya doesn’t _______ . (work, play, eat)',
-                'It doesn’t _______ . (run, jump, eat)',
-                'We don’t _______ . (work, play, eat)',
-                'They don’t _______ . (work, play, eat)',
-                // Likes and Dislikes (Questions)
-                'Do I _______ ? (like, love, want)',
-                'Do you _______ ? (like, love, want)',
-                'Does he _______ ? (like, love, want)',
-                'Does she _______ ? (like, love, want)',
-                'Does Mariya _______ ? (like, love, want)',
-                'Does it _______ ? (like, love, want)',
-                'Do we _______ ? (like, love, want)',
-                'Do they _______ ? (like, love, want)',
-                // Introductions and Greetings (New)
-                'I am ______ . (Asel, Arman, Madina)',
-                'You are ______ . (Asel, Arman, Madina)',
+                // Introductions and Greetings
+                'I am ______ . (Asel, Arman, Madina, Maksat)',
+                'You are ______ . (Asel, Arman, Madina, Maksat)',
                 'He is ______ . (Asel, Arman, Maksat)',
                 'She is ______ . (Asel, Madina, Mariya)',
-                'It is ______ . (a dog, a cat, a bird)',
-                'We are ______ . (Asel and Arman, friends, students)',
-                'They are ______ . (Asel and Maksat, teachers, colleagues)',
                 'What is your name ?',
                 'What is his name ?',
                 'What is her name ?',
-                'My name is ______ . (Asel, Arman, Maksat)',
+                'My name is ______ . (Asel, Arman, Maksat, Madina, Mariya)',
                 'His name is ______ . (Asel, Arman, Maksat)',
                 'Her name is ______ . (Asel, Madina, Mariya)',
-                'This is ______ . (Asel, Arman, Maksat)'
+                'This is ______ . (Asel, Arman, Maksat, Madina, Mariya)'
             ],
             '2': [
-                'I always _______ . (work, play, eat)',
-                'You often _______ . (work, play, eat)',
-                'He never _______s . (work, play, eat)',
-                'She sometimes _______s . (work, play, eat)',
-                'Mariya always _______s . (work, play, eat)',
-                'What do I _______ ? (like, love, want)',
-                'What do you _______ ? (like, love, want)',
-                'What does he _______ ? (like, love, want)',
-                'What does she _______ ? (like, love, want)',
-                'What does Mariya _______ ? (like, love, want)',
-                'Yes, I _______ . (like, love, want)',
-                'Yes, he _______s . (like, love, want)',
-                'Yes, she _______s . (like, love, want)',
-                'Yes, Mariya _______s . (like, love, want)',
-                'No, I don’t _______ . (like, love, want)',
-                'No, he doesn’t _______ . (like, love, want)',
-                'No, she doesn’t _______ . (like, love, want)',
-                'No, Mariya doesn’t _______ . (like, love, want)',
-                'The sun _______s . (rise, set, shine)',
-                'Water _______s . (boil, freeze, flow)'
+                // Placeholder for Beginner Part Two (TBD)
+                'I _______ . (work, play, eat)' // Temporary placeholder
             ],
             '3': [
-                'I _______ English . (study, learn, teach)',
-                'He _______s books . (read, write, buy)',
-                'She _______s lessons . (prepare, give, attend)',
-                'Mariya _______s projects . (manage, finish, start)',
-                'I _______ at the office . (work, meet, stay)',
-                'He _______s in the morning . (study, work, exercise)',
-                'She _______s with her team . (collaborate, talk, plan)',
-                'Mariya _______s on weekends . (work, study, relax)',
-                'I feel _______ . (happy, tired, excited)',
-                'He feels _______ . (happy, tired, excited)',
-                'She feels _______ . (happy, tired, excited)',
-                'Mariya feels _______ . (happy, tired, excited)',
-                'Why do you feel _______ ? (happy, tired, excited)',
-                'Why does he feel _______ ? (happy, tired, excited)',
-                'Why does she feel _______ ? (happy, tired, excited)',
-                'Why does Mariya feel _______ ? (happy, tired, excited)'
+                // Placeholder for Elementary (TBD)
+                'I _______ . (work, play, eat)' // Temporary placeholder
             ],
             '4': [
-                'I like to _______ hard . (work, study, try)',
-                'He _______s to learn quickly . (want, need, try)',
-                'She _______s to teach well . (like, try, want)',
-                'Mariya _______s to manage carefully . (like, try, want)',
-                'Do you like to _______ hard ? (work, study, try)',
-                'Does he _______ to learn quickly ? (want, need, try)',
-                'Does she _______ to teach well ? (like, try, want)',
-                'Does Mariya _______ to manage carefully ? (like, try, want)',
-                'I _______ friends every weekend . (meet, call, visit)',
-                'He _______s people at the park . (meet, help, greet)',
-                'She _______s colleagues after work . (meet, call, join)',
-                'Mariya _______s family on Sundays . (visit, call, help)',
-                'Where do you _______ friends ? (meet, call, visit)',
-                'Where does he _______ people ? (meet, help, greet)',
-                'Where does she _______ colleagues ? (meet, call, join)',
-                'Where does Mariya _______ family ? (visit, call, help)'
+                // Placeholder for Pre-Intermediate (TBD)
+                'I _______ . (work, play, eat)' // Temporary placeholder
             ],
             '5': [
-                'I like to _______ friends at a café every Friday . (meet, call, visit)',
-                'He _______s to help people at the community center weekly . (like, try, want)',
-                'She _______s to join colleagues for dinner after work often . (like, try, want)',
-                'Mariya _______s to visit family in the countryside every month . (like, try, want)',
-                'Why do you like to _______ friends at a café ? (meet, call, visit)',
-                'Why does he _______ to help people at the community center ? (like, try, want)',
-                'Why does she _______ to join colleagues for dinner after work ? (like, try, want)',
-                'Why does Mariya _______ to visit family in the countryside ? (like, try, want)',
-                'The train _______ at 8 AM . (leave, arrive, stop)',
-                'The class _______ at 9 AM . (start, end, begin)',
-                'When does the train _______ ? (leave, arrive, stop)',
-                'When does the class _______ ? (start, end, begin)'
+                // Placeholder for Intermediate (TBD)
+                'I _______ . (work, play, eat)' // Temporary placeholder
+            ],
+            '6': [
+                // Placeholder for Upper-Intermediate (TBD)
+                'I _______ . (work, play, eat)' // Temporary placeholder
             ]
         };
 
@@ -251,7 +161,7 @@
                 structureList.appendChild(li);
             });
 
-            // Update example verbs (combine all verbs from the current level)
+            // Update example words (combine all words from the current level)
             const words = new Set();
             currentStructures.forEach(structure => {
                 const match = structure.match(/\(([^)]+)\)/);
@@ -294,7 +204,7 @@
             };
         }
 
-        // Check if the spoken sentence matches any structure in the current theme
+        // Check if the spoken sentence matches any structure in the current level
         function checkSentence(spokenSentence) {
             const tense = tenseSelect.value;
             let isCorrect = false;
@@ -331,20 +241,9 @@
 
         // Check if the spoken sentence matches the Present Simple structure
         function checkPresentSimpleSentence(spokenSentence, structure) {
-            // Helper to check if a word is a valid base verb, adjective, or name
-            function isValidBaseVerb(verb) {
-                const pastTenseIndicators = ['ed', 'was', 'were', 'went', 'did'];
-                if (!/^[a-z]+$/.test(verb)) return false;
-                return !pastTenseIndicators.some(indicator => verb === indicator || verb.endsWith(indicator));
-            }
-
-            function isValidFeeling(word) {
-                const feelings = ['happy', 'tired', 'excited', 'sad', 'angry'];
-                return feelings.includes(word);
-            }
-
+            // Helper to check if a word is a valid name
             function isValidName(word) {
-                const names = ['asel', 'arman', 'madina', 'maksat', 'mariya', 'a dog', 'a cat', 'a bird', 'asel and arman', 'asel and maksat', 'friends', 'students', 'teachers', 'colleagues'];
+                const names = ['asel', 'arman', 'madina', 'maksat', 'mariya'];
                 return names.includes(word);
             }
 
@@ -355,17 +254,13 @@
             const structureWithoutExamples = structure.split(' (')[0];
             const structureWords = structureWithoutExamples.toLowerCase().split(/\s+/);
 
-            // Extract the expected position of the verb (where _______ or _______s is)
-            let verbPosition = structureWords.indexOf('_______s');
-            let isVerbS = verbPosition !== -1;
-            if (verbPosition === -1) {
-                verbPosition = structureWords.indexOf('_______');
-                if (verbPosition === -1) return false;
-            }
+            // Extract the expected position of the verb (where ______ is)
+            let verbPosition = structureWords.indexOf('______');
+            if (verbPosition === -1) return false;
 
             // Adjust structure words to exclude punctuation and verb slot for length comparison
-            const structureWordsWithoutPunctuation = structureWords.filter(word => word !== '.' && word !== '?' && word !== '_______s' && word !== '_______');
-            let expectedLength = structureWordsWithoutPunctuation.length + 1; // +1 for the verb
+            const structureWordsWithoutPunctuation = structureWords.filter(word => word !== '.' && word !== '?' && word !== '______');
+            let expectedLength = structureWordsWithoutPunctuation.length + 1; // +1 for the name
 
             // Special case for questions like "What is your name ?" which have no slot
             if (structure === 'what is your name ?' || structure === 'what is his name ?' || structure === 'what is her name ?') {
@@ -384,7 +279,7 @@
             // Verify the fixed parts of the sentence match
             let structureMatches = true;
             for (let i = 0; i < structureWords.length; i++) {
-                if (i === verbPosition) continue; // Skip the verb slot
+                if (i === verbPosition) continue; // Skip the name slot
                 if (structureWords[i] === '.' || structureWords[i] === '?') continue; // Skip punctuation
 
                 let expectedWord = structureWords[i];
@@ -403,156 +298,19 @@
             if (!structureMatches) return false;
 
             // Validate the word form based on the structure
-            const baseVerbStructures = [
-                'i _______ . (work, play, eat)',
-                'you _______ . (work, play, eat)',
-                'we _______ . (work, play, eat)',
-                'they _______ . (work, play, eat)',
-                'i _______ . (like, love, want)',
-                'you _______ . (like, love, want)',
-                'we _______ . (like, love, want)',
-                'they _______ . (like, love, want)',
-                'i don’t _______ . (work, play, eat)',
-                'he doesn’t _______ . (work, play, eat)',
-                'she doesn’t _______ . (work, play, eat)',
-                'mariya doesn’t _______ . (work, play, eat)',
-                'it doesn’t _______ . (run, jump, eat)',
-                'we don’t _______ . (work, play, eat)',
-                'you don’t _______ . (work, play, eat)',
-                'they don’t _______ . (work, play, eat)',
-                'do i _______ ? (like, love, want)',
-                'does he _______ ? (like, love, want)',
-                'does she _______ ? (like, love, want)',
-                'does mariya _______ ? (like, love, want)',
-                'does it _______ ? (like, love, want)',
-                'do we _______ ? (like, love, want)',
-                'do they _______ ? (like, love, want)',
-                'i always _______ . (work, play, eat)',
-                'you often _______ . (work, play, eat)',
-                'what do i _______ ? (like, love, want)',
-                'what do you _______ ? (like, love, want)',
-                'what does he _______ ? (like, love, want)',
-                'what does she _______ ? (like, love, want)',
-                'what does mariya _______ ? (like, love, want)',
-                'yes, i _______ . (like, love, want)',
-                'no, i don’t _______ . (like, love, want)',
-                'no, he doesn’t _______ . (like, love, want)',
-                'no, she doesn’t _______ . (like, love, want)',
-                'no, mariya doesn’t _______ . (like, love, want)',
-                'i _______ english . (study, learn, teach)',
-                'he _______s books . (read, write, buy)',
-                'she _______s lessons . (prepare, give, attend)',
-                'mariya _______s projects . (manage, finish, start)',
-                'i _______ at the office . (work, meet, stay)',
-                'he _______s in the morning . (study, work, exercise)',
-                'she _______s with her team . (collaborate, talk, plan)',
-                'mariya _______s on weekends . (work, study, relax)',
-                'i like to _______ hard . (work, study, try)',
-                'he _______s to learn quickly . (want, need, try)',
-                'she _______s to teach well . (like, try, want)',
-                'mariya _______s to manage carefully . (like, try, want)',
-                'do you like to _______ hard ? (work, study, try)',
-                'does he _______ to learn quickly ? (want, need, try)',
-                'does she _______ to teach well ? (like, try, want)',
-                'does mariya _______ to manage carefully ? (like, try, want)',
-                'i _______ friends every weekend . (meet, call, visit)',
-                'he _______s people at the park . (meet, help, greet)',
-                'she _______s colleagues after work . (meet, call, join)',
-                'mariya _______s family on sundays . (visit, call, help)',
-                'where do you _______ friends ? (meet, call, visit)',
-                'where does he _______ people ? (meet, help, greet)',
-                'where does she _______ colleagues ? (meet, call, join)',
-                'where does mariya _______ family ? (visit, call, help)',
-                'i like to _______ friends at a café every friday . (meet, call, visit)',
-                'he _______s to help people at the community center weekly . (like, try, want)',
-                'she _______s to join colleagues for dinner after work often . (like, try, want)',
-                'mariya _______s to visit family in the countryside every month . (like, try, want)',
-                'why do you like to _______ friends at a café ? (meet, call, visit)',
-                'why does he _______ to help people at the community center ? (like, try, want)',
-                'why does she _______ to join colleagues for dinner after work ? (like, try, want)',
-                'why does mariya _______ to visit family in the countryside ? (like, try, want)',
-                'the train _______ at 8 am . (leave, arrive, stop)',
-                'the class _______ at 9 am . (start, end, begin)',
-                'when does the train _______ ? (leave, arrive, stop)',
-                'when does the class _______ ? (start, end, begin)'
-            ];
-
-            const verbSStructures = [
-                'he _______s . (work, play, eat)',
-                'she _______s . (work, play, eat)',
-                'mariya _______s . (work, play, eat)',
-                'it _______s . (run, jump, eat)',
-                'he _______s . (like, love, want)',
-                'she _______s . (like, love, want)',
-                'mariya _______s . (like, love, want)',
-                'it _______s . (like, love, want)',
-                'he never _______s . (work, play, eat)',
-                'she sometimes _______s . (work, play, eat)',
-                'mariya always _______s . (work, play, eat)',
-                'yes, he _______s . (like, love, want)',
-                'yes, she _______s . (like, love, want)',
-                'yes, mariya _______s . (like, love, want)',
-                'the sun _______s . (rise, set, shine)',
-                'water _______s . (boil, freeze, flow)',
-                'he _______s books . (read, write, buy)',
-                'she _______s lessons . (prepare, give, attend)',
-                'mariya _______s projects . (manage, finish, start)',
-                'he _______s in the morning . (study, work, exercise)',
-                'she _______s with her team . (collaborate, talk, plan)',
-                'mariya _______s on weekends . (work, study, relax)',
-                'he _______s to learn quickly . (want, need, try)',
-                'she _______s to teach well . (like, try, want)',
-                'mariya _______s to manage carefully . (like, try, want)',
-                'he _______s people at the park . (meet, help, greet)',
-                'she _______s colleagues after work . (meet, call, join)',
-                'mariya _______s family on sundays . (visit, call, help)',
-                'he _______s to help people at the community center weekly . (like, try, want)',
-                'she _______s to join colleagues for dinner after work often . (like, try, want)',
-                'mariya _______s to visit family in the countryside every month . (like, try, want)'
-            ];
-
-            const yesBaseVerbStructures = [
-                'yes, i _______ . (like, love, want)',
-                'yes, we _______ . (like, love, want)',
-                'yes, you _______ . (like, love, want)',
-                'yes, they _______ . (like, love, want)'
-            ];
-
-            const feelStructures = [
-                'i feel _______ . (happy, tired, excited)',
-                'he feels _______ . (happy, tired, excited)',
-                'she feels _______ . (happy, tired, excited)',
-                'mariya feels _______ . (happy, tired, excited)',
-                'why do you feel _______ ? (happy, tired, excited)',
-                'why does he feel _______ ? (happy, tired, excited)',
-                'why does she feel _______ ? (happy, tired, excited)',
-                'why does mariya feel _______ ? (happy, tired, excited)'
-            ];
-
             const beStructures = [
-                'i am ______ . (asel, arman, madina)',
-                'you are ______ . (asel, arman, madina)',
+                'i am ______ . (asel, arman, madina, maksat)',
+                'you are ______ . (asel, arman, madina, maksat)',
                 'he is ______ . (asel, arman, maksat)',
                 'she is ______ . (asel, madina, mariya)',
-                'it is ______ . (a dog, a cat, a bird)',
-                'we are ______ . (asel and arman, friends, students)',
-                'they are ______ . (asel and maksat, teachers, colleagues)',
-                'my name is ______ . (asel, arman, maksat)',
+                'my name is ______ . (asel, arman, maksat, madina, mariya)',
                 'his name is ______ . (asel, arman, maksat)',
                 'her name is ______ . (asel, madina, mariya)',
-                'this is ______ . (asel, arman, maksat)'
+                'this is ______ . (asel, arman, maksat, madina, mariya)'
             ];
 
             structure = structure.toLowerCase();
-            if (baseVerbStructures.includes(structure)) {
-                return isValidBaseVerb(spokenWord) && !spokenWord.endsWith('s') && !spokenWord.endsWith('es');
-            } else if (verbSStructures.includes(structure)) {
-                return isValidBaseVerb(spokenWord.replace(/(s|es)$/, '')) && (spokenWord.endsWith('s') || spokenWord.endsWith('es'));
-            } else if (yesBaseVerbStructures.includes(structure)) {
-                return isValidBaseVerb(spokenWord) && !spokenWord.endsWith('s') && !spokenWord.endsWith('es');
-            } else if (feelStructures.includes(structure)) {
-                return isValidFeeling(spokenWord);
-            } else if (beStructures.includes(structure)) {
+            if (beStructures.includes(structure)) {
                 return isValidName(spokenWord);
             }
 
