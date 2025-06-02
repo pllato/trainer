@@ -59,7 +59,7 @@
         }
         .status {
             font-size: 16px;
-            margin: 10px 0;
+            margin: 5px 0;
             text-align: center;
         }
         .examples {
@@ -80,10 +80,13 @@
             text-align: left;
             flex: 1;
             overflow-y: auto;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
         }
         #currentStructures h3 {
-            font-size: 16px;
+            font-size: 18px;
             margin: 5px 0;
+            color: #333;
         }
         .structure-item {
             display: flex;
@@ -92,13 +95,14 @@
         }
         .structure-item span {
             flex: 1;
-            font-size: 14px;
+            font-size: 16px;
+            color: #555;
         }
         .progress-bar {
-            width: 80px;
+            width: 100px;
             background-color: #f0f0f0;
             border-radius: 5px;
-            height: 10px;
+            height: 12px;
             margin: 0 10px;
         }
         .progress {
@@ -108,9 +112,10 @@
             transition: width 0.3s;
         }
         .count {
-            font-size: 12px;
+            font-size: 14px;
             width: 40px;
             text-align: right;
+            color: #777;
         }
         #log {
             text-align: left;
@@ -172,17 +177,17 @@
                 font-size: 14px;
             }
             #currentStructures h3 {
-                font-size: 14px;
+                font-size: 16px;
             }
             .structure-item span {
-                font-size: 12px;
+                font-size: 14px;
             }
             .progress-bar {
-                width: 60px;
-                height: 8px;
+                width: 80px;
+                height: 10px;
             }
             .count {
-                font-size: 10px;
+                font-size: 12px;
                 width: 30px;
             }
             #log {
@@ -220,6 +225,8 @@
             <h1 id="greeting"></h1>
             <h2 id="lessonTitle"></h2>
             <div class="examples">
+                <h3>Task:</h3>
+                <p>Say each structure 10 times to practice your English speaking skills.</p>
                 <h3>Examples of words to use:</h3>
                 <p id="exampleVerbs">Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)</p>
             </div>
@@ -227,7 +234,7 @@
             <div class="status" id="listening">Press start to begin...</div>
             <button id="startButton">Start Practice</button>
             <div id="currentStructures">
-                <h3>Structures to practice (say each 10 times):</h3>
+                <h3>Structures you are practicing:</h3>
                 <ul id="structureList"></ul>
             </div>
             <div id="log">
