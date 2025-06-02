@@ -82,6 +82,15 @@
     .modal-content button:hover {
       background-color: #2A3171;
     }
+    .structures-list {
+      color: #373D8D;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      padding-left: 0.5rem;
+    }
+    .structures-list li {
+      margin-bottom: 0.25rem;
+    }
   </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
@@ -124,6 +133,10 @@
     <p class="text-md mb-4">Уровень: <span id="user-level"></span>, <span id="user-lesson"></span></p>
     <button id="start-practice-btn" class="w-full bg-[#373D8D] text-white p-2 rounded-md mb-2 hover:bg-[#2A3171]">Начать практику</button>
     <button id="restart-listening-btn" class="hidden w-full bg-[#D72638] text-white p-2 rounded-md mb-4 hover:bg-[#B72030]">Возобновить прослушивание</button>
+    <div class="mb-4">
+      <p class="text-lg font-semibold">Ожидаемые структуры:</p>
+      <ul id="structures-list" class="structures-list"></ul>
+    </div>
     <p id="feedback" class="text-md mb-4"></p>
     <div class="mb-6">
       <p class="text-lg font-semibold">Прогресс:</p>
@@ -192,6 +205,7 @@
     const restartListeningBtn = document.getElementById('restart-listening-btn');
     const feedback = document.getElementById('feedback');
     const statsDiv = document.getElementById('stats');
+    const structuresList = document.getElementById('structures-list');
     const progressBars = document.getElementById('progress-bars');
     const logDiv = document.getElementById('log');
     const userNameEl = document.getElementById('user-name');
@@ -199,6 +213,16 @@
     const userLessonEl = document.getElementById('user-lesson');
     const completionModal = document.getElementById('completion-modal');
     const congratulationsEl = document.getElementById('congratulations');
+
+    // Display the list of structures on the practice screen
+    function displayStructures() {
+      structuresList.innerHTML = '';
+      grammarData.beginner1.lesson1.forEach(struct => {
+        const li = document.createElement('li');
+        li.textContent = struct.structure;
+        structuresList.appendChild(li);
+      });
+    }
 
     // Start practice screen
     startBtn.addEventListener('click', () => {
@@ -216,6 +240,7 @@
       userLessonEl.textContent = document.getElementById('lesson').options[document.getElementById('lesson').selectedIndex].text;
       initializeProgressBars();
       updateStats();
+      displayStructures(); // Display the structures when starting practice
     });
 
     // Back to start screen via logo
