@@ -70,15 +70,15 @@
             <!-- Add more tenses later -->
         </select>
         <select id="levelSelect">
-            <option value="1">Level 1: Beginner (Daily Routines, Likes and Dislikes)</option>
+            <option value="1">Level 1: Beginner (Daily Routines, Likes and Dislikes, Introductions and Greetings)</option>
             <option value="2">Level 2: Elementary (Daily Routines, Likes and Dislikes, Facts)</option>
             <option value="3">Level 3: Pre-Intermediate (Work and Study, Feelings and Opinions)</option>
             <option value="4">Level 4: Intermediate (Work and Study, Social Interactions)</option>
             <option value="5">Level 5: Upper-Intermediate (Social Interactions, Schedules and Events)</option>
         </select>
         <div class="examples">
-            <h3>Examples of verbs to use:</h3>
-            <p id="exampleVerbs">Select a level to see example verbs.</p>
+            <h3>Examples of words to use:</h3>
+            <p id="exampleVerbs">Select a level to see example words.</p>
         </div>
         <div id="currentStructures">
             <h3>Structures to practice:</h3>
@@ -112,6 +112,7 @@
         // Define structures for each level/theme
         const levels = {
             '1': [
+                // Daily Routines
                 'I _______ . (work, play, eat)',
                 'You _______ . (work, play, eat)',
                 'He _______s . (work, play, eat)',
@@ -120,6 +121,7 @@
                 'It _______s . (run, jump, eat)',
                 'We _______ . (work, play, eat)',
                 'They _______ . (work, play, eat)',
+                // Likes and Dislikes
                 'I _______ . (like, love, want)',
                 'You _______ . (like, love, want)',
                 'He _______s . (like, love, want)',
@@ -128,6 +130,7 @@
                 'It _______s . (like, love, want)',
                 'We _______ . (like, love, want)',
                 'They _______ . (like, love, want)',
+                // Daily Routines (Negative)
                 'I don’t _______ . (work, play, eat)',
                 'You don’t _______ . (work, play, eat)',
                 'He doesn’t _______ . (work, play, eat)',
@@ -136,6 +139,7 @@
                 'It doesn’t _______ . (run, jump, eat)',
                 'We don’t _______ . (work, play, eat)',
                 'They don’t _______ . (work, play, eat)',
+                // Likes and Dislikes (Questions)
                 'Do I _______ ? (like, love, want)',
                 'Do you _______ ? (like, love, want)',
                 'Does he _______ ? (like, love, want)',
@@ -143,7 +147,22 @@
                 'Does Mariya _______ ? (like, love, want)',
                 'Does it _______ ? (like, love, want)',
                 'Do we _______ ? (like, love, want)',
-                'Do they _______ ? (like, love, want)'
+                'Do they _______ ? (like, love, want)',
+                // Introductions and Greetings (New)
+                'I am ______ . (Asel, Arman, Madina)',
+                'You are ______ . (Asel, Arman, Madina)',
+                'He is ______ . (Asel, Arman, Maksat)',
+                'She is ______ . (Asel, Madina, Mariya)',
+                'It is ______ . (a dog, a cat, a bird)',
+                'We are ______ . (Asel and Arman, friends, students)',
+                'They are ______ . (Asel and Maksat, teachers, colleagues)',
+                'What is your name ?',
+                'What is his name ?',
+                'What is her name ?',
+                'My name is ______ . (Asel, Arman, Maksat)',
+                'His name is ______ . (Asel, Arman, Maksat)',
+                'Her name is ______ . (Asel, Madina, Mariya)',
+                'This is ______ . (Asel, Arman, Maksat)'
             ],
             '2': [
                 'I always _______ . (work, play, eat)',
@@ -233,15 +252,15 @@
             });
 
             // Update example verbs (combine all verbs from the current level)
-            const verbs = new Set();
+            const words = new Set();
             currentStructures.forEach(structure => {
                 const match = structure.match(/\(([^)]+)\)/);
                 if (match) {
-                    const verbList = match[1].split(', ');
-                    verbList.forEach(verb => verbs.add(verb));
+                    const wordList = match[1].split(', ');
+                    wordList.forEach(word => words.add(word));
                 }
             });
-            exampleVerbs.textContent = Array.from(verbs).join(', ') || 'Select a level to see example verbs.';
+            exampleVerbs.textContent = Array.from(words).join(', ') || 'Select a level to see example words.';
         }
 
         // Initialize speech recognition
@@ -312,7 +331,7 @@
 
         // Check if the spoken sentence matches the Present Simple structure
         function checkPresentSimpleSentence(spokenSentence, structure) {
-            // Helper to check if a word is a valid base verb or adjective/noun for "feel"
+            // Helper to check if a word is a valid base verb, adjective, or name
             function isValidBaseVerb(verb) {
                 const pastTenseIndicators = ['ed', 'was', 'were', 'went', 'did'];
                 if (!/^[a-z]+$/.test(verb)) return false;
@@ -322,6 +341,11 @@
             function isValidFeeling(word) {
                 const feelings = ['happy', 'tired', 'excited', 'sad', 'angry'];
                 return feelings.includes(word);
+            }
+
+            function isValidName(word) {
+                const names = ['asel', 'arman', 'madina', 'maksat', 'mariya', 'a dog', 'a cat', 'a bird', 'asel and arman', 'asel and maksat', 'friends', 'students', 'teachers', 'colleagues'];
+                return names.includes(word);
             }
 
             // Split the spoken sentence into words
@@ -343,13 +367,19 @@
             const structureWordsWithoutPunctuation = structureWords.filter(word => word !== '.' && word !== '?' && word !== '_______s' && word !== '_______');
             let expectedLength = structureWordsWithoutPunctuation.length + 1; // +1 for the verb
 
+            // Special case for questions like "What is your name ?" which have no slot
+            if (structure === 'what is your name ?' || structure === 'what is his name ?' || structure === 'what is her name ?') {
+                const expectedSentence = structureWords.join(' ').replace(' ?', '');
+                return spokenSentence === expectedSentence;
+            }
+
             // Check if the spoken sentence has at least the expected number of words
             if (spokenWords.length < expectedLength - 1) return false;
 
-            // Extract the spoken verb at the correct position
+            // Extract the spoken word at the correct position
             let spokenVerbPosition = verbPosition;
-            const spokenVerb = spokenWords[spokenVerbPosition];
-            if (!spokenVerb) return false;
+            const spokenWord = spokenWords[spokenVerbPosition];
+            if (!spokenWord) return false;
 
             // Verify the fixed parts of the sentence match
             let structureMatches = true;
@@ -372,7 +402,7 @@
 
             if (!structureMatches) return false;
 
-            // Validate the verb form based on the structure
+            // Validate the word form based on the structure
             const baseVerbStructures = [
                 'i _______ . (work, play, eat)',
                 'you _______ . (work, play, eat)',
@@ -499,15 +529,31 @@
                 'why does mariya feel _______ ? (happy, tired, excited)'
             ];
 
+            const beStructures = [
+                'i am ______ . (asel, arman, madina)',
+                'you are ______ . (asel, arman, madina)',
+                'he is ______ . (asel, arman, maksat)',
+                'she is ______ . (asel, madina, mariya)',
+                'it is ______ . (a dog, a cat, a bird)',
+                'we are ______ . (asel and arman, friends, students)',
+                'they are ______ . (asel and maksat, teachers, colleagues)',
+                'my name is ______ . (asel, arman, maksat)',
+                'his name is ______ . (asel, arman, maksat)',
+                'her name is ______ . (asel, madina, mariya)',
+                'this is ______ . (asel, arman, maksat)'
+            ];
+
             structure = structure.toLowerCase();
             if (baseVerbStructures.includes(structure)) {
-                return isValidBaseVerb(spokenVerb) && !spokenVerb.endsWith('s') && !spokenVerb.endsWith('es');
+                return isValidBaseVerb(spokenWord) && !spokenWord.endsWith('s') && !spokenWord.endsWith('es');
             } else if (verbSStructures.includes(structure)) {
-                return isValidBaseVerb(spokenVerb.replace(/(s|es)$/, '')) && (spokenVerb.endsWith('s') || spokenVerb.endsWith('es'));
+                return isValidBaseVerb(spokenWord.replace(/(s|es)$/, '')) && (spokenWord.endsWith('s') || spokenWord.endsWith('es'));
             } else if (yesBaseVerbStructures.includes(structure)) {
-                return isValidBaseVerb(spokenVerb) && !spokenVerb.endsWith('s') && !spokenVerb.endsWith('es');
+                return isValidBaseVerb(spokenWord) && !spokenWord.endsWith('s') && !spokenWord.endsWith('es');
             } else if (feelStructures.includes(structure)) {
-                return isValidFeeling(spokenVerb);
+                return isValidFeeling(spokenWord);
+            } else if (beStructures.includes(structure)) {
+                return isValidName(spokenWord);
             }
 
             return false;
