@@ -29,12 +29,6 @@
       font-size: 0.8rem;
       color: #373D8D;
     }
-    .pattern-bg {
-      background-image: linear-gradient(45deg, #373D8D 25%, transparent 25%, transparent 75%, #373D8D 75%, #373D8D), 
-                        linear-gradient(45deg, #373D8D 25%, transparent 25%, transparent 75%, #373D8D 75%, #373D8D);
-      background-size: 20px 20px;
-      background-color: #FFFFFF;
-    }
     button {
       font-family: 'Trebuchet MS', sans-serif;
     }
@@ -44,43 +38,6 @@
       margin-bottom: 1rem;
       border-left: 4px solid #D72638;
       padding-left: 0.5rem;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-    }
-    .modal-content {
-      background-color: #FFFFFF;
-      margin: 15% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 80%;
-      max-width: 400px;
-      border-radius: 8px;
-      text-align: center;
-    }
-    .modal-content h2 {
-      color: #373D8D;
-    }
-    .modal-content p {
-      color: #D72638;
-    }
-    .modal-content button {
-      background-color: #373D8D;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .modal-content button:hover {
-      background-color: #2A3171;
     }
   </style>
 </head>
@@ -116,9 +73,8 @@
 
   <div id="practice-screen" class="hidden bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
     <div class="flex justify-between items-center mb-4">
-      <div class="logo text-2xl font-bold" onclick="goBackToStart()">ELC</div>
       <h1 class="text-2xl font-bold">Практика грамматики</h1>
-      <div></div> <!-- Пустой div для выравнивания -->
+      <button id="back-btn" class="bg-gray-500 text-white px-3 py-1 rounded-md hover:bg-gray-600">Назад (домой)</button>
     </div>
     <p class="text-lg mb-2">Привет, <span id="user-name"></span>!</p>
     <p class="text-md mb-4">Уровень: <span id="user-level"></span>, <span id="user-lesson"></span></p>
@@ -134,13 +90,11 @@
       <div id="stats" class="stats"></div>
       <div id="log" class="h-40 overflow-y-auto border p-2 text-sm"></div>
     </div>
-    <div id="completion-modal" class="modal">
-      <div class="modal-content">
-        <h2 class="text-2xl font-bold mb-2">Урок завершён!</h2>
-        <p id="congratulations" class="text-md mb-4"></p>
-        <p class="text-sm mb-4">Результаты высланы на проверку преподавателю.</p>
-        <button onclick="startNewTraining()">Начать новую тренировку</button>
-      </div>
+    <p id="completion" class="text-lg font-bold text-[#373D8D] hidden">Урок завершён!</p>
+    <p id="congratulations" class="text-md text-[#D72638] mt-2 hidden"></p>
+    <div class="flex space-x-2 mt-2">
+      <button id="send-results-btn" class="hidden w-full bg-[#373D8D] text-white p-2 rounded-md hover:bg-[#2A3171]">Отправить результаты учителю</button>
+      <button id="restart-training-btn" class="hidden w-full bg-gray-600 text-white p-2 rounded-md hover:bg-gray-700">Начать заново тренировку</button>
     </div>
   </div>
 
@@ -158,7 +112,7 @@
       }
     };
 
-    // Encouragement messages (updated to present tense)
+    // Encouragement messages (in present tense)
     const encouragementMessages = [
       "Ты большой молодец! 🌟 Отличная работа, ты справился с уроком на ура! Ты уже говоришь на английском как носитель! 💪",
       "Молодец, ты справился блестяще! 🎉 Урок пройден, ты на высоте! Ты уже владеешь английским как настоящий профи! ✨",
@@ -188,8 +142,10 @@
     const startScreen = document.getElementById('start-screen');
     const practiceScreen = document.getElementById('practice-screen');
     const startBtn = document.getElementById('start-btn');
+    const backBtn = document.getElementById('back-btn');
     const startPracticeBtn = document.getElementById('start-practice-btn');
     const restartListeningBtn = document.getElementById('restart-listening-btn');
+    const restartTrainingBtn = document.getElementById('restart-training-btn');
     const feedback = document.getElementById('feedback');
     const statsDiv = document.getElementById('stats');
     const progressBars = document.getElementById('progress-bars');
@@ -197,8 +153,9 @@
     const userNameEl = document.getElementById('user-name');
     const userLevelEl = document.getElementById('user-level');
     const userLessonEl = document.getElementById('user-lesson');
-    const completionModal = document.getElementById('completion-modal');
+    const completionEl = document.getElementById('completion');
     const congratulationsEl = document.getElementById('congratulations');
+    const sendResultsBtn = document.getElementById('send-results-btn');
 
     // Start practice screen
     startBtn.addEventListener('click', () => {
@@ -218,8 +175,8 @@
       updateStats();
     });
 
-    // Back to start screen via logo
-    function goBackToStart() {
+    // Back to start screen
+    backBtn.addEventListener('click', () => {
       // Reset all data
       progress = { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0 };
       spokenHistory = [];
@@ -233,7 +190,10 @@
       startPracticeBtn.classList.add('bg-[#373D8D]', 'hover:bg-[#2A3171]');
       startPracticeBtn.disabled = false;
       restartListeningBtn.classList.add('hidden');
-      completionModal.style.display = 'none';
+      completionEl.classList.add('hidden');
+      congratulationsEl.classList.add('hidden');
+      sendResultsBtn.classList.add('hidden');
+      restartTrainingBtn.classList.add('hidden');
       feedback.textContent = '';
       statsDiv.innerHTML = '';
       logDiv.innerHTML = '';
@@ -242,7 +202,7 @@
       // Show start screen
       practiceScreen.classList.add('hidden');
       startScreen.classList.remove('hidden');
-    }
+    });
 
     // Start continuous speech recognition
     startPracticeBtn.addEventListener('click', () => {
@@ -258,10 +218,36 @@
       }
     });
 
-    // Start new training (from modal)
-    function startNewTraining() {
-      goBackToStart();
-    }
+    // Send results to Telegram and Bitrix24
+    sendResultsBtn.addEventListener('click', () => {
+      sendResults();
+    });
+
+    // Restart training
+    restartTrainingBtn.addEventListener('click', () => {
+      // Reset all data
+      progress = { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0 };
+      spokenHistory = [];
+      logEntries = [];
+      isListening = false;
+      recognition.stop();
+
+      // Reset UI
+      startPracticeBtn.textContent = 'Начать практику';
+      startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+      startPracticeBtn.classList.add('bg-[#373D8D]', 'hover:bg-[#2A3171]');
+      startPracticeBtn.disabled = false;
+      restartListeningBtn.classList.add('hidden');
+      completionEl.classList.add('hidden');
+      congratulationsEl.classList.add('hidden');
+      sendResultsBtn.classList.add('hidden');
+      restartTrainingBtn.classList.add('hidden');
+      feedback.textContent = '';
+      statsDiv.innerHTML = '';
+      logDiv.innerHTML = '';
+      updateProgressBars();
+      updateStats();
+    });
 
     // Function to start listening
     function startListening() {
@@ -351,7 +337,7 @@
 
       // Brief pause before restarting recognition to avoid overlap
       setTimeout(() => {
-        if (isListening && completionModal.style.display !== 'block') {
+        if (isListening && !completionEl.classList.contains('hidden')) {
           recognition.start();
         }
       }, 500);
@@ -381,8 +367,8 @@
         return;
       }
 
-      // Restart recognition if still listening and modal is not visible
-      if (isListening && completionModal.style.display !== 'block') {
+      // Restart recognition if still listening and lesson not completed
+      if (isListening && !completionEl.classList.contains('hidden')) {
         setTimeout(() => {
           recognition.start();
         }, 500);
@@ -480,13 +466,15 @@
     // Check lesson completion
     function checkCompletion() {
       if (Object.values(progress).every(count => count >= REQUIRED_CORRECT)) {
+        completionEl.classList.remove('hidden');
         const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
         congratulationsEl.textContent = randomMessage;
-        completionModal.style.display = 'block';
+        congratulationsEl.classList.remove('hidden');
+        sendResultsBtn.classList.remove('hidden');
+        restartTrainingBtn.classList.remove('hidden');
         isListening = false;
         recognition.stop();
         startPracticeBtn.textContent = 'Урок завершён';
-        sendResults(); // Automatically send results
       }
     }
 
@@ -539,8 +527,9 @@ ${logEntries.map(entry => {
             text: resultSummary
           })
         });
+        feedback.textContent = 'Результаты отправлены преподавателю.';
       } catch (error) {
-        console.error('Ошибка отправки в Telegram:', error.message);
+        feedback.textContent = 'Ошибка отправки в Telegram: ' + error.message;
       }
 
       // Bitrix24 integration
@@ -558,11 +547,13 @@ ${logEntries.map(entry => {
           })
         });
         const data = await response.json();
-        if (!data.result) {
-          console.error('Ошибка отправки в Bitrix24:', JSON.stringify(data.error));
+        if (data.result) {
+          feedback.textContent = 'Результаты отправлены преподавателю.';
+        } else {
+          feedback.textContent = 'Ошибка отправки в Bitrix24: ' + JSON.stringify(data.error);
         }
       } catch (error) {
-        console.error('Ошибка отправки в Bitrix24:', error.message);
+        feedback.textContent = 'Ошибка отправки в Bitrix24: ' + error.message;
       }
     }
   </script>
