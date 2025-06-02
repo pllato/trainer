@@ -75,7 +75,7 @@
 
     // Encouragement messages
     const encouragementMessages = [
-      "Ты просто супер! 🌟 Отличный результат, урок пройден на ура! Продолжай так же, и скоро ты заговоришь на английском, как настоящий профи! 💪",
+      "Ты большой молодец! 🌟 Отличная работа, ты справился с уроком на ура! Продолжай в том же духе, чувствуешь как начинаешь говорить на английском как носитель! 💪",
       "Молодец, ты справился блестяще! 🎉 Урок пройден, ты на высоте! Не останавливайся, и английский станет для тебя как родной! ✨",
       "Ух, как здорово! 🌟 Ты прошёл урок с лёгкостью! Продолжай в том же духе, и скоро будешь говорить на английском без усилий! 💪",
       "Ты настоящий чемпион! 🏆 Урок завершён, ты большой молодец! С такими успехами английский покорится тебе в два счёта! 🌟",
@@ -273,13 +273,6 @@
 
       logEntries.push(logEntry);
       updateLog();
-
-      // Brief pause before restarting recognition to avoid overlap
-      setTimeout(() => {
-        if (isListening && !completionEl.classList.contains('hidden')) {
-          recognition.start();
-        }
-      }, 500);
     };
 
     recognition.onerror = (event) => {
@@ -393,10 +386,32 @@
         if (entry.exceeded) {
           p.textContent = `[${entry.time}] ${entry.spoken} 🎉🎈❤️`;
         } else {
-          p.textContent = `[${entry.time}] Сказано: "${entry.spoken}"${entry.structure ? ` для "${entry.structure}"` : ''} - ${entry.correct ? 'Правильно' : 'Неправильно'}${entry.duplicate ? ', Повтор' : ''}`;
+          const statusIcon = entry.correct ? '✅' : '❌';
+          const duplicateIcon = entry.duplicate ? '🔁' : '';
+          p.textContent = `[${entry.time}] Сказано: "${entry.spoken}"${entry.structure ? ` для "${entry.structure}"` : ''} - ${statusIcon} ${entry.correct ? 'Правильно' : 'Неправильно'}${duplicateIcon ? ` ${duplicateIcon} Повтор` : ''}`;
         }
         logDiv.appendChild(p);
       });
+
+      // Add statistics to the log if the lesson is completed
+      if (completionEl.classList.contains('hidden')) {
+        const totalRequired = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length;
+        const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
+        const totalAttempts = logEntries.filter(entry => !entry.exceeded).length;
+        const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
+
+        const statsDiv = document.createElement('div');
+        statsDiv.className = 'mt-2 text-sm text-gray-700';
+        statsDiv.innerHTML = `
+          <p>📊 Статистика:</p>
+          <p>- Нужно было сказать: ${totalRequired} примеров</p>
+          <p>- Сказано правильно: ${totalCorrect} примеров</p>
+          <p>- Всего попыток: ${totalAttempts}</p>
+          <p>- Процент аккуратности: ${accuracy}%</p>
+        `;
+        logDiv.appendChild(statsDiv);
+      }
+
       logDiv.scrollTop = logDiv.scrollHeight;
     }
 
@@ -412,18 +427,38 @@
         isListening = false;
         recognition.stop();
         startPracticeBtn.textContent = 'Урок завершён';
+        updateLog(); // Update log to show statistics
       }
     }
 
     // Send results to Telegram and Bitrix24
     async function sendResults() {
+      const totalRequired = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length;
+      const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
+      const totalAttempts = logEntries.filter(entry => !entry.exceeded).length;
+      const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
+
       const resultSummary = `
 Результаты для ${userName}
 Уровень: ${userLevelEl.textContent}
 Урок: ${userLessonEl.textContent}
 Прогресс: ${Object.entries(progress).map(([id, count]) => `${grammarData.beginner1.lesson1.find(s => s.id === id).structure}: ${count} правильных`).join('\n')}
 Лог:
-${logEntries.map(entry => `- ${entry.spoken}${entry.structure ? ` (для "${entry.structure}")` : ''} - ${entry.correct ? 'Правильно' : 'Неправильно'}${entry.duplicate ? ', Повтор' : ''}${entry.exceeded ? ' 🎉🎈❤️' : ''}`).join('\n')}
+${logEntries.map(entry => {
+  if (entry.exceeded) {
+    return `- ${entry.spoken} 🎉🎈❤️`;
+  } else {
+    const statusIcon = entry.correct ? '✅' : '❌';
+    const duplicateIcon = entry.duplicate ? '🔁' : '';
+    return `- ${entry.spoken}${entry.structure ? ` (для "${entry.structure}")` : ''} - ${statusIcon} ${entry.correct ? 'Правильно' : 'Неправильно'}${duplicateIcon ? ` ${duplicateIcon} Повтор` : ''}`;
+  }
+}).join('\n')}
+
+📊 Статистика:
+- Нужно было сказать: ${totalRequired} примеров
+- Сказано правильно: ${totalCorrect} примеров
+- Всего попыток: ${totalAttempts}
+- Процент аккуратности: ${accuracy}%
 `;
 
       // Telegram integration
@@ -447,7 +482,7 @@ ${logEntries.map(entry => `- ${entry.spoken}${entry.structure ? ` (для "${ent
 
       // Bitrix24 integration
       const BITRIX_WEBHOOK_URL = 'https://elcalmaty.bitrix24.kz/rest/1/t30j7bkqi9p4sy0b/'; // Твой вебхук
-      const BITRIX_CHAT_ID = '145630'; // Новый ID чата
+      const BITRIX_CHAT_ID = '145630'; // ID чата
       const bitrixUrl = `${BITRIX_WEBHOOK_URL}im.message.add`;
 
       try {
