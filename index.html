@@ -31,11 +31,6 @@
             margin: 10px 0;
             text-align: center;
         }
-        h2 {
-            font-size: 20px;
-            margin: 10px 0;
-            text-align: center;
-        }
         button {
             padding: 10px 20px;
             font-size: 16px;
@@ -198,9 +193,6 @@
             h1 {
                 font-size: 20px;
             }
-            h2 {
-                font-size: 18px;
-            }
             button {
                 padding: 8px 16px;
                 font-size: 14px;
@@ -272,17 +264,19 @@
                 <option value="present">Present Simple</option>
             </select>
             <select id="levelSelect">
-                <option value="1">Level 1: Beginner (Daily Routines, Likes and Dislikes)</option>
-                <option value="2">Level 2: Elementary (Daily Routines, Likes and Dislikes, Facts)</option>
-                <option value="3">Level 3: Pre-Intermediate (Work and Study, Feelings and Opinions)</option>
-                <option value="4">Level 4: Intermediate (Work and Study, Social Interactions)</option>
-                <option value="5">Level 5: Upper-Intermediate (Social Interactions, Schedules and Events)</option>
+                <option value="1">Beginner Part One</option>
+                <option value="2">Beginner Part Two (TBD)</option>
+                <option value="3">Elementary (TBD)</option>
+                <option value="4">Pre-Intermediate (TBD)</option>
+                <option value="5">Intermediate (TBD)</option>
+                <option value="6">Upper-Intermediate (TBD)</option>
+            </select>
+            <select id="lessonSelect">
+                <option value="1">Lesson 1: Introductions and Greetings</option>
             </select>
             <button id="nextButton">Next</button>
         </div>
         <div id="practiceScreen">
-            <h1 id="greeting"></h1>
-            <h2 id="lessonTitle"></h2>
             <div class="examples">
                 <h3>Examples of words to use:</h3>
                 <p id="exampleVerbs">Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)</p>
@@ -311,9 +305,8 @@
         const userNameInput = document.getElementById('userName');
         const tenseSelect = document.getElementById('tenseSelect');
         const levelSelect = document.getElementById('levelSelect');
+        const lessonSelect = document.getElementById('lessonSelect');
         const nextButton = document.getElementById('nextButton');
-        const greeting = document.getElementById('greeting');
-        const lessonTitle = document.getElementById('lessonTitle');
         const startButton = document.getElementById('startButton');
         const status = document.getElementById('status');
         const listening = document.getElementById('listening');
@@ -333,10 +326,10 @@
         let structureProgress = {};
         let isLogExpanded = false;
 
-        // Define structures for each level
+        // Define structures for each level and lesson
         const lessons = {
             '1': {
-                structures: [
+                '1': [
                     'I am ______ . (Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)',
                     'You are ______ . (Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)',
                     'What is your name ?',
@@ -345,23 +338,27 @@
                 ]
             },
             '2': {
-                structures: ['I _______ . (work, play, eat)']
+                '1': ['I _______ . (work, play, eat)']
             },
             '3': {
-                structures: ['I _______ . (work, play, eat)']
+                '1': ['I _______ . (work, play, eat)']
             },
             '4': {
-                structures: ['I _______ . (work, play, eat)']
+                '1': ['I _______ . (work, play, eat)']
             },
             '5': {
-                structures: ['I _______ . (work, play, eat)']
+                '1': ['I _______ . (work, play, eat)']
+            },
+            '6': {
+                '1': ['I _______ . (work, play, eat)']
             }
         };
 
         // Update the displayed structures and examples
         function updateStructures() {
             const level = levelSelect.value;
-            currentStructures = lessons[level].structures;
+            const lesson = lessonSelect.value;
+            currentStructures = lessons[level][lesson];
 
             // Initialize progress for each structure
             structureProgress = {};
@@ -416,8 +413,6 @@
             }
             welcomeScreen.classList.remove('active');
             practiceScreen.classList.add('active');
-            greeting.textContent = `Hello, ${userName}!`;
-            lessonTitle.textContent = levelSelect.options[levelSelect.selectedIndex].text;
             updateStructures();
             lastLogEntry.textContent = 'Press start to begin...';
             lastLogEntry.style.display = 'block';
