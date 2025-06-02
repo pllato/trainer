@@ -7,92 +7,99 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 10px;
+            padding: 20px;
             background-color: #f0f0f0;
             margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
         .container {
             max-width: 600px;
-            margin: 0 auto;
+            width: 100%;
             background: white;
-            padding: 10px;
+            padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 20px);
+            height: 80vh;
         }
         h1 {
+            font-size: 24px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        h2 {
             font-size: 20px;
             margin: 10px 0;
+            text-align: center;
         }
         button {
-            padding: 8px 16px;
-            font-size: 14px;
-            margin: 5px 0;
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px auto;
             cursor: pointer;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
+            display: block;
         }
         button:hover {
             background-color: #45a049;
         }
-        select {
-            padding: 8px;
-            font-size: 14px;
-            margin: 5px 0;
+        input, select {
+            padding: 10px;
+            font-size: 16px;
+            margin: 10px 0;
             width: 100%;
             box-sizing: border-box;
         }
         .status {
-            font-size: 14px;
-            margin: 5px 0;
-            position: sticky;
-            top: 0;
-            background: white;
-            padding: 5px 0;
-            z-index: 1;
+            font-size: 16px;
+            margin: 10px 0;
+            text-align: center;
         }
         .examples {
-            margin: 5px 0;
+            margin: 10px 0;
             text-align: left;
         }
         .examples h3 {
-            font-size: 14px;
+            font-size: 16px;
             margin: 5px 0;
         }
         .examples p {
-            font-size: 12px;
+            font-size: 14px;
             margin: 0;
         }
         #currentStructures {
-            font-size: 14px;
-            margin: 5px 0;
+            font-size: 16px;
+            margin: 10px 0;
             text-align: left;
             flex: 1;
             overflow-y: auto;
         }
         #currentStructures h3 {
-            font-size: 14px;
+            font-size: 16px;
             margin: 5px 0;
         }
         .structure-item {
             display: flex;
             align-items: center;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
         .structure-item span {
             flex: 1;
-            font-size: 12px;
+            font-size: 14px;
         }
         .progress-bar {
-            width: 60px;
+            width: 80px;
             background-color: #f0f0f0;
             border-radius: 5px;
-            height: 8px;
-            margin: 0 5px;
+            height: 10px;
+            margin: 0 10px;
         }
         .progress {
             height: 100%;
@@ -101,115 +108,144 @@
             transition: width 0.3s;
         }
         .count {
-            font-size: 10px;
-            width: 30px;
+            font-size: 12px;
+            width: 40px;
             text-align: right;
         }
         #log {
             text-align: left;
-            margin-top: 5px;
-            padding: 5px;
+            margin-top: 10px;
+            padding: 10px;
             background: #e8e8e8;
             border-radius: 5px;
-            height: 150px;
+            height: 200px;
             overflow-y: auto;
         }
         #log h3 {
-            font-size: 14px;
+            font-size: 16px;
             margin: 0 0 5px 0;
         }
         #log p {
-            font-size: 12px;
+            font-size: 14px;
             margin: 2px 0;
         }
+        #welcomeScreen, #practiceScreen {
+            display: none;
+        }
+        #welcomeScreen.active, #practiceScreen.active {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
         @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
             .container {
-                padding: 5px;
+                padding: 10px;
+                height: 90vh;
             }
             h1 {
+                font-size: 20px;
+            }
+            h2 {
                 font-size: 18px;
             }
             button {
-                padding: 6px 12px;
-                font-size: 12px;
+                padding: 8px 16px;
+                font-size: 14px;
             }
-            select {
-                padding: 6px;
-                font-size: 12px;
+            input, select {
+                padding: 8px;
+                font-size: 14px;
             }
             .status {
-                font-size: 12px;
+                font-size: 14px;
             }
             .examples h3 {
-                font-size: 12px;
+                font-size: 14px;
             }
             .examples p {
-                font-size: 10px;
+                font-size: 12px;
             }
             #currentStructures {
-                font-size: 12px;
+                font-size: 14px;
             }
             #currentStructures h3 {
-                font-size: 12px;
+                font-size: 14px;
             }
             .structure-item span {
-                font-size: 10px;
-            }
-            .progress-bar {
-                width: 50px;
-                height: 6px;
-            }
-            .count {
-                font-size: 8px;
-                width: 25px;
-            }
-            #log {
-                height: 120px;
-            }
-            #log h3 {
                 font-size: 12px;
             }
-            #log p {
+            .progress-bar {
+                width: 60px;
+                height: 8px;
+            }
+            .count {
                 font-size: 10px;
+                width: 30px;
+            }
+            #log {
+                height: 150px;
+            }
+            #log h3 {
+                font-size: 14px;
+            }
+            #log p {
+                font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>ELC English Speaking Trainer</h1>
-        <select id="tenseSelect">
-            <option value="present">Present Simple</option>
-            <!-- Add more tenses later -->
-        </select>
-        <select id="levelSelect">
-            <option value="1">Beginner Part One (Introductions and Greetings)</option>
-            <option value="2">Beginner Part Two (TBD)</option>
-            <option value="3">Elementary (TBD)</option>
-            <option value="4">Pre-Intermediate (TBD)</option>
-            <option value="5">Intermediate (TBD)</option>
-            <option value="6">Upper-Intermediate (TBD)</option>
-        </select>
-        <div class="examples">
-            <h3>Examples of words to use:</h3>
-            <p id="exampleVerbs">Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)</p>
+        <div id="welcomeScreen" class="active">
+            <h1>ELC English Speaking Trainer</h1>
+            <input type="text" id="userName" placeholder="Enter your name" required>
+            <select id="levelSelect">
+                <option value="1">Beginner Part One</option>
+                <option value="2">Beginner Part Two (TBD)</option>
+                <option value="3">Elementary (TBD)</option>
+                <option value="4">Pre-Intermediate (TBD)</option>
+                <option value="5">Intermediate (TBD)</option>
+                <option value="6">Upper-Intermediate (TBD)</option>
+            </select>
+            <select id="lessonSelect">
+                <option value="1">Lesson 1: Introductions and Greetings</option>
+                <!-- Add more lessons as needed -->
+            </select>
+            <button id="nextButton">Next</button>
         </div>
-        <div class="status" id="status">Progress: 0/110</div>
-        <div class="status" id="listening">Press start to begin...</div>
-        <button id="startButton">Start Practice</button>
-        <div id="currentStructures">
-            <h3>Structures to practice (say each 10 times):</h3>
-            <ul id="structureList"></ul>
-        </div>
-        <div id="log">
-            <h3>Practice Log:</h3>
-            <div id="logEntries"></div>
+        <div id="practiceScreen">
+            <h1 id="greeting"></h1>
+            <h2 id="lessonTitle"></h2>
+            <div class="examples">
+                <h3>Examples of words to use:</h3>
+                <p id="exampleVerbs">Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)</p>
+            </div>
+            <div class="status" id="status">Progress: 0/50</div>
+            <div class="status" id="listening">Press start to begin...</div>
+            <button id="startButton">Start Practice</button>
+            <div id="currentStructures">
+                <h3>Structures to practice (say each 10 times):</h3>
+                <ul id="structureList"></ul>
+            </div>
+            <div id="log">
+                <h3>Practice Log:</h3>
+                <div id="logEntries"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        const tenseSelect = document.getElementById('tenseSelect');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const practiceScreen = document.getElementById('practiceScreen');
+        const userNameInput = document.getElementById('userName');
         const levelSelect = document.getElementById('levelSelect');
+        const lessonSelect = document.getElementById('lessonSelect');
+        const nextButton = document.getElementById('nextButton');
+        const greeting = document.getElementById('greeting');
+        const lessonTitle = document.getElementById('lessonTitle');
         const startButton = document.getElementById('startButton');
         const status = document.getElementById('status');
         const listening = document.getElementById('listening');
@@ -217,6 +253,7 @@
         const structureList = document.getElementById('structureList');
         const exampleVerbs = document.getElementById('exampleVerbs');
 
+        let userName = '';
         let correctCount = 0;
         let recognition = null;
         let isListening = false;
@@ -224,42 +261,39 @@
         let currentStructures = [];
         let structureProgress = {};
 
-        // Define structures for each level
-        const levels = {
-            '1': [
-                'I am ______ . (Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)',
-                'You are ______ . (Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)',
-                'He is ______ . (Asel, Arman, Maksat, Piter, Natalie, Armaan)',
-                'She is ______ . (Asel, Madina, Mariya, Maria, Natalie, Armaan)',
-                'What is your name ?',
-                'What is his name ?',
-                'What is her name ?',
-                'My name is ______ . (Asel, Arman, Maksat, Madina, Mariya, Maria, Piter, Natalie, Armaan)',
-                'His name is ______ . (Asel, Arman, Maksat, Piter, Natalie, Armaan)',
-                'Her name is ______ . (Asel, Madina, Mariya, Maria, Natalie, Armaan)',
-                'This is ______ . (Asel, Arman, Maksat, Madina, Mariya, Maria, Piter, Natalie, Armaan)'
-            ],
-            '2': [
-                'I _______ . (work, play, eat)'
-            ],
-            '3': [
-                'I _______ . (work, play, eat)'
-            ],
-            '4': [
-                'I _______ . (work, play, eat)'
-            ],
-            '5': [
-                'I _______ . (work, play, eat)'
-            ],
-            '6': [
-                'I _______ . (work, play, eat)'
-            ]
+        // Define structures for each level and lesson
+        const lessons = {
+            '1': {
+                '1': [
+                    'I am ______ . (Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)',
+                    'You are ______ . (Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)',
+                    'What is your name ?',
+                    'My name is ______ . (Asel, Arman, Maksat, Madina, Mariya, Maria, Piter, Natalie, Armaan)',
+                    'This is ______ . (Asel, Arman, Maksat, Madina, Mariya, Maria, Piter, Natalie, Armaan)'
+                ]
+            },
+            '2': {
+                '1': ['I _______ . (work, play, eat)']
+            },
+            '3': {
+                '1': ['I _______ . (work, play, eat)']
+            },
+            '4': {
+                '1': ['I _______ . (work, play, eat)']
+            },
+            '5': {
+                '1': ['I _______ . (work, play, eat)']
+            },
+            '6': {
+                '1': ['I _______ . (work, play, eat)']
+            }
         };
 
         // Update the displayed structures and examples
         function updateStructures() {
             const level = levelSelect.value;
-            currentStructures = levels[level];
+            const lesson = lessonSelect.value;
+            currentStructures = lessons[level][lesson];
 
             // Initialize progress for each structure
             structureProgress = {};
@@ -286,6 +320,20 @@
             exampleVerbs.textContent = 'Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)';
             status.textContent = `Progress: 0/${currentStructures.length * 10}`;
         }
+
+        // Switch to practice screen
+        nextButton.addEventListener('click', () => {
+            userName = userNameInput.value.trim();
+            if (!userName) {
+                alert('Please enter your name!');
+                return;
+            }
+            welcomeScreen.classList.remove('active');
+            practiceScreen.classList.add('active');
+            greeting.textContent = `Hello, ${userName}!`;
+            lessonTitle.textContent = lessonSelect.options[lessonSelect.selectedIndex].text;
+            updateStructures();
+        });
 
         // Initialize speech recognition
         function initSpeechRecognition() {
@@ -320,15 +368,12 @@
 
         // Check if the spoken sentence matches any structure in the current level
         function checkSentence(spokenSentence) {
-            const tense = tenseSelect.value;
             let isCorrect = false;
             let matchedStructure = null;
             let logMessage = '';
 
-            if (tense === 'present') {
-                matchedStructure = currentStructures.find(structure => checkPresentSimpleSentence(spokenSentence, structure));
-                isCorrect = !!matchedStructure;
-            }
+            matchedStructure = currentStructures.find(structure => checkPresentSimpleSentence(spokenSentence, structure));
+            isCorrect = !!matchedStructure;
 
             if (saidSentences.has(spokenSentence)) {
                 logMessage = `Repeat: "${spokenSentence}"`;
@@ -389,6 +434,17 @@
             const structureWithoutExamples = structure.split(' (')[0];
             const structureWords = normalizeSentence(structureWithoutExamples).split(' ');
 
+            // Special case for "What is your name ?" or "What's your name ?"
+            if (structure === 'what is your name ?') {
+                const expectedSentence = 'what is your name';
+                const expectedSentenceShort = 'whats your name';
+                const isMatch = normalizedSpokenSentence === expectedSentence || normalizedSpokenSentence === expectedSentenceShort;
+                if (!isMatch) {
+                    console.log(`Mismatch for "What is your name ?": Expected "${expectedSentence}" or "${expectedSentenceShort}", got "${normalizedSpokenSentence}"`);
+                }
+                return isMatch;
+            }
+
             // Extract the expected position of the name (where ______ is)
             let namePosition = structureWords.indexOf('______');
             if (namePosition === -1) return false;
@@ -396,21 +452,6 @@
             // Adjust structure words to exclude the name slot for length comparison
             const structureWordsWithoutName = structureWords.filter(word => word !== '______');
             let expectedLength = structureWordsWithoutName.length + 1; // +1 for the name
-
-            // Special case for questions like "What is your name ?" or "What's your name ?"
-            if (structure === 'what is your name ?') {
-                const expectedSentence = 'what is your name';
-                const expectedSentenceShort = 'whats your name';
-                return normalizedSpokenSentence === expectedSentence || normalizedSpokenSentence === expectedSentenceShort;
-            } else if (structure === 'what is his name ?') {
-                const expectedSentence = 'what is his name';
-                const expectedSentenceShort = 'whats his name';
-                return normalizedSpokenSentence === expectedSentence || normalizedSpokenSentence === expectedSentenceShort;
-            } else if (structure === 'what is her name ?') {
-                const expectedSentence = 'what is her name';
-                const expectedSentenceShort = 'whats her name';
-                return normalizedSpokenSentence === expectedSentence || normalizedSpokenSentence === expectedSentenceShort;
-            }
 
             // Check if the spoken sentence has at least the expected number of words
             if (spokenWords.length < expectedLength - 1) return false;
@@ -440,11 +481,7 @@
             const beStructures = [
                 'i am ______ . (asel, arman, madina, maksat, maria, piter, natalie, armaan)',
                 'you are ______ . (asel, arman, madina, maksat, maria, piter, natalie, armaan)',
-                'he is ______ . (asel, arman, maksat, piter, natalie, armaan)',
-                'she is ______ . (asel, madina, mariya, maria, natalie, armaan)',
                 'my name is ______ . (asel, arman, maksat, madina, mariya, maria, piter, natalie, armaan)',
-                'his name is ______ . (asel, arman, maksat, piter, natalie, armaan)',
-                'her name is ______ . (asel, madina, mariya, maria, natalie, armaan)',
                 'this is ______ . (asel, arman, maksat, madina, mariya, maria, piter, natalie, armaan)'
             ];
 
@@ -457,32 +494,6 @@
         }
 
         // Event listeners
-        tenseSelect.addEventListener('change', () => {
-            correctCount = 0;
-            saidSentences.clear();
-            logEntries.innerHTML = '';
-            updateStructures();
-            if (isListening) {
-                recognition.stop();
-                isListening = false;
-                startButton.textContent = 'Start Practice';
-                listening.textContent = 'Press start to begin...';
-            }
-        });
-
-        levelSelect.addEventListener('change', () => {
-            correctCount = 0;
-            saidSentences.clear();
-            logEntries.innerHTML = '';
-            updateStructures();
-            if (isListening) {
-                recognition.stop();
-                isListening = false;
-                startButton.textContent = 'Start Practice';
-                listening.textContent = 'Press start to begin...';
-            }
-        });
-
         startButton.addEventListener('click', () => {
             if (!isListening) {
                 if (!recognition) initSpeechRecognition();
@@ -497,9 +508,6 @@
                 listening.textContent = 'Stopped. Press start to begin...';
             }
         });
-
-        // Initialize structures
-        updateStructures();
     </script>
 </body>
 </html>
