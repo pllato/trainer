@@ -130,7 +130,7 @@
       <div id="progress-bars"></div>
     </div>
     <div class="mb-6">
-      <p class="text-lg font-semibold">Лог:</p>
+      <p class="text-lg font-semibold">Протокол:</p>
       <div id="stats" class="stats"></div>
       <div id="log" class="h-40 overflow-y-auto border p-2 text-sm"></div>
     </div>
@@ -183,6 +183,9 @@
     let isListening = false;
     const REQUIRED_CORRECT = 1; // One correct sentence per structure
     let lastSpeechTime = Date.now();
+    let startTime = null; // To track the start time of the training
+    let endTime = null; // To track the end time of the training
+    let lessonCompleted = false; // Flag to indicate if the lesson is completed
 
     // DOM elements
     const startScreen = document.getElementById('start-screen');
@@ -225,6 +228,9 @@
       spokenHistory = [];
       logEntries = [];
       isListening = false;
+      lessonCompleted = false;
+      startTime = null;
+      endTime = null;
       recognition.stop();
 
       // Reset UI
@@ -247,6 +253,7 @@
     // Start continuous speech recognition
     startPracticeBtn.addEventListener('click', () => {
       if (!isListening) {
+        startTime = new Date(); // Record the start time when practice begins
         startListening();
       }
     });
@@ -281,6 +288,15 @@
       updateProgressBars();
     }
 
+    // Function to format duration
+    function formatDuration(start, end) {
+      if (!start || !end) return '0 минут 0 секунд';
+      const durationMs = end - start;
+      const minutes = Math.floor(durationMs / 1000 / 60);
+      const seconds = Math.floor((durationMs / 1000) % 60);
+      return `${minutes} минут ${seconds} секунд`;
+    }
+
     // Update statistics
     function updateStats() {
       const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 1 * 5 = 5
@@ -288,13 +304,19 @@
       const totalAttempts = logEntries.length;
       const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
 
-      statsDiv.innerHTML = `
+      let statsHTML = `
         <p><strong>Статистика:</strong></p>
         <p>- Нужно было сказать: ${requiredExamples} примеров</p>
         <p>- Сказано правильно: ${totalCorrect} примеров</p>
         <p>- Всего попыток: ${totalAttempts}</p>
         <p>- Процент аккуратности: ${accuracy}%</p>
       `;
+      
+      if (lessonCompleted && startTime && endTime) {
+        statsHTML += `<p>- Время тренировки: ${formatDuration(startTime, endTime)}</p>`;
+      }
+
+      statsDiv.innerHTML = statsHTML;
     }
 
     // Speech recognition result
@@ -439,7 +461,7 @@
           </div>
         `;
 
-        // Additional progress bar for exceeding the goal (changed to green)
+        // Additional progress bar for exceeding the goal (ensuring green color)
         if (totalCorrect > REQUIRED_CORRECT) {
           const excessCorrect = totalCorrect - REQUIRED_CORRECT;
           const excessProgress = excessCorrect % REQUIRED_CORRECT;
@@ -459,7 +481,7 @@
       });
     }
 
-    // Update log
+    // Update log (now "Протокол")
     function updateLog() {
       logDiv.innerHTML = '';
       logEntries.forEach(entry => {
@@ -480,12 +502,15 @@
     // Check lesson completion
     function checkCompletion() {
       if (Object.values(progress).every(count => count >= REQUIRED_CORRECT)) {
+        endTime = new Date(); // Record the end time when the lesson is completed
+        lessonCompleted = true;
         const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
         congratulationsEl.textContent = randomMessage;
         completionModal.style.display = 'block';
         isListening = false;
         recognition.stop();
         startPracticeBtn.textContent = 'Урок завершён';
+        updateStats(); // Update stats to include duration
         sendResults(); // Automatically send results
       }
     }
@@ -497,6 +522,7 @@
       const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
       const totalAttempts = logEntries.length;
       const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
+      const duration = formatDuration(startTime, endTime);
 
       const resultSummary = `
 Результаты для ${userName}
@@ -508,12 +534,14 @@
 - Сказано правильно: ${totalCorrect} примеров
 - Всего попыток: ${totalAttempts}
 - Процент аккуратности: ${accuracy}%
-Лог:
-Статистика в логе:
+- Время тренировки: ${duration}
+Протокол:
+Статистика в протоколе:
 - Нужно было сказать: ${requiredExamples} примеров
 - Сказано правильно: ${totalCorrect} примеров
 - Всего попыток: ${totalAttempts}
 - Процент аккуратности: ${accuracy}%
+- Время тренировки: ${duration}
 ${logEntries.map(entry => {
   if (entry.exceeded) {
     return `- ${entry.spoken} 🎉🎈❤️`;
