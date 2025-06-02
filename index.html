@@ -1,210 +1,197 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Тренировка грамматики</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренировка грамматики</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Open+Sans:wght@400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Trebuchet MS', 'Open Sans', sans-serif;
+            background-color: #F5F5F5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #start-screen {
+            background-color: #FFFFFF;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
+            text-transform: uppercase;
+            color: #373D8D;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            text-transform: uppercase;
+            color: #373D8D;
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #373D8D;
+        }
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #D1D5DA;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #373D8D;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #E30613;
+        }
+        #practice-screen, #lesson-complete {
+            background-color: #FFFFFF;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        #practice-screen p, #lesson-complete p {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #373D8D;
+        }
+        #progress-bar div {
+            background-color: #E30613;
+            height: 20px;
+            border-radius: 5px;
+        }
+        #log-list li {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        #user-input {
+            width: 70%;
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #D1D5DA;
+            border-radius: 5px;
+        }
+        #log-list button {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        a {
+            color: #373D8D;
+            text-decoration: none;
+        }
+        a:hover {
+            color: #E30613;
+        }
+    </style>
 </head>
 <body>
-  <div>
-    <h1>Тренировка грамматики</h1>
-    <div>
-      <label for="user-name">Ваше имя</label>
-      <input type="text" id="user-name">
+    <div id="start-screen">
+        <h1>Тренировка грамматики</h1>
+        <label for="name">Ваше имя</label>
+        <input type="text" id="name" placeholder="Введите имя">
+        
+        <label for="level">Выберите уровень</label>
+        <select id="level">
+            <option value="beginner-part-one">Beginner Part One</option>
+            <option value="beginner-part-two">Beginner Part Two</option>
+            <option value="elementary">Elementary</option>
+            <option value="pre-intermediate">Pre-Intermediate</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="upper-intermediate">Upper-Intermediate</option>
+        </select>
+
+        <label for="lesson">Выберите урок</label>
+        <select id="lesson">
+            <option value="lesson-1">Урок 1</option>
+            <option value="lesson-3">Урок 3</option>
+        </select>
+
+        <button onclick="startPractice()">Начать практику</button>
     </div>
-    <div>
-      <label for="level-select">Выберите уровень</label>
-      <select id="level-select">
-        <option value="beginner-part-one">Beginner Part One</option>
-        <option value="beginner-part-two">Beginner Part Two</option>
-        <option value="elementary">Elementary</option>
-        <option value="pre-intermediate">Pre-Intermediate</option>
-        <option value="intermediate">Intermediate</option>
-        <option value="upper-intermediate">Upper-Intermediate</option>
-      </select>
-    </div>
-    <div>
-      <label for="lesson-select">Выберите урок</label>
-      <select id="lesson-select">
-        <option value="lesson-1">Урок 1</option>
-        <option value="lesson-3">Урок 3</option>
-      </select>
-    </div>
-    <button onclick="startPractice()">Начать практику</button>
-  </div>
 
-  <div id="practice-section" style="display: none;">
-    <h2>Практика грамматики</h2>
-    <a href="#" onclick="goHome()">Назад (домой)</a>
-    <p>Привет, <span id="greeting-name"></span>!</p>
-    <p>Уровень: <span id="practice-level"></span>, <span id="practice-lesson"></span></p>
-    <button onclick="startPractice()">Начать практику</button>
-    <button onclick="resumeListening()">Возобновить прослушивание</button>
-    <div>
-      <h3>Прогресс:</h3>
-      <div id="progress-content"></div>
-    </div>
-    <div>
-      <h3>Лог:</h3>
-      <div id="log-content"></div>
-    </div>
-  </div>
+    <div id="practice-screen" style="display:none;">
+        <h1>Практика грамматики</h1>
+        <a href="#" onclick="goHome()">Назад (домой)</a>
+        <p>Привет, <span id="user-name"></span>!</p>
+        <p>Уровень: <span id="user-level"></span>, <span id="user-lesson"></span></p>
+        
+        <button onclick="startPractice()">Начать практику</button>
+        <button onclick="resumeListening()">Возобновить прослушивание</button>
 
-  <div id="exercise-section" style="display: none;">
-    <div id="exercise-content"></div>
-    <input type="text" id="user-input" placeholder="Введите ответ">
-    <button onclick="checkAnswer()">Проверить</button>
-    <div id="feedback"></div>
-  </div>
+        <div id="progress">
+            <h2>Прогресс:</h2>
+            <div id="progress-bar"></div>
+        </div>
 
-  <div id="complete-section" style="display: none;">
-    <h2>Урок завершён!</h2>
-    <button onclick="sendResults()">Отправить результаты учителю</button>
-    <button onclick="restartPractice()">Начать заново тренировку</button>
-  </div>
+        <div id="log">
+            <h2>Лог:</h2>
+            <ul id="log-list"></ul>
+        </div>
 
-  <script>
-    let currentLesson = null;
-    let currentExercise = 0;
-    let progress = [];
-    let log = [];
+        <div id="lesson-complete" style="display:none;">
+            <h2>Урок завершён!</h2>
+            <button onclick="sendResults()">Отправить результаты учителю</button>
+            <button onclick="restartPractice()">Начать заново тренировку</button>
+        </div>
+    </### Changes Applied to Match the ELC Brandbook
 
-    // Lesson 3 Data
-    const lesson3 = {
-      sentences: [
-        { text: "I am a _______.", requires: "singular" },
-        { text: "You are a _______.", requires: "singular" },
-        { text: "He is a _______.", requires: "singular" },
-        { text: "She is a _______.", requires: "singular" },
-        { text: "We are _______s.", requires: "plural" },
-        { text: "They are _______s.", requires: "plural" }
-      ],
-      professions: [
-        "teacher", "doctor", "engineer", "artist", "chef",
-        "pilot", "lawyer", "nurse", "programmer", "writer"
-      ],
-      examples: {
-        singular: "I am a teacher. You are a doctor. He is an engineer. She is an artist.",
-        plural: "We are teachers. They are doctors."
-      },
-      validate: function(input, requires) {
-        const singularProfessions = this.professions;
-        const pluralProfessions = this.professions.map(p => p + "s");
-        const isSingular = singularProfessions.includes(input.toLowerCase());
-        const isPlural = pluralProfessions.includes(input.toLowerCase());
+1. **Colors**:
+   - Primary color (dark blue): `#373D8D` used for headings, labels, links, and buttons.
+   - Accent color (red): `#E30613` used for hover effects on buttons, links, and the progress bar.
+   - Background: Light gray `#F5F5F5` for the page, white `#FFFFFF` for the form container.
 
-        if (requires === "singular") {
-          if (!isSingular) {
-            return {
-              correct: false,
-              message: `Пожалуйста, введите профессию в единственном числе, например, 'teacher' или 'doctor'. Вы ввели: ${input}`
-            };
-          }
-          return { correct: true, message: "Правильно!" };
-        } else {
-          if (!isPlural) {
-            return {
-              correct: false,
-              message: `Пожалуйста, введите профессию во множественном числе, например, 'teachers' или 'doctors'. Вы ввели: ${input}`
-            };
-          }
-          return { correct: true, message: "Правильно!" };
-        }
-      }
-    };
+2. **Fonts**:
+   - Headings (`h1`, `h2`): Montserrat (700 weight, uppercase) to mimic Acrom.
+     - Connected via Google Fonts: `<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Open+Sans:wght@400&display=swap" rel="stylesheet">`.
+   - Body text, labels, inputs: Trebuchet MS (as specified in the brandbook for contact info).
+   - Fallback: Open Sans (instead of Museo Sans Cyrl) for body text if Trebuchet MS is unavailable.
 
-    function startPractice() {
-      const name = document.getElementById("user-name").value || "User";
-      const level = document.getElementById("level-select").value;
-      const lesson = document.getElementById("lesson-select").value;
+3. **Buttons**:
+   - Styled with the primary color `#373D8D`, white text, and rounded corners.
+   - Hover effect changes the background to the red accent color `#E30613`.
 
-      document.querySelectorAll("div").forEach(div => div.style.display = "none");
-      document.getElementById("practice-section").style.display = "block";
-      document.getElementById("greeting-name").textContent = name;
-      document.getElementById("practice-level").textContent = level.replace(/-/g, " ");
-      document.getElementById("practice-lesson").textContent = lesson.replace(/-/g, " ");
+4. **Layout and Spacing**:
+   - Form container has a white background, rounded corners (`border-radius: 10px`), and a subtle shadow (`box-shadow`).
+   - Padding and margins are set to ensure clean spacing (e.g., `padding: 20px`, `margin-bottom: 15px`).
+   - Text sizes: 24px for `h1` (as per the brandbook’s emphasis on larger text for names on badges), 16px for body text (equivalent to kegl 11 in print).
 
-      if (lesson === "lesson-3" && level === "beginner-part-one") {
-        currentLesson = lesson3;
-        startExercise();
-      } else {
-        document.getElementById("progress-content").textContent = "Урок не реализован.";
-      }
-    }
+5. **Links**:
+   - Links (e.g., "Назад (домой)") use the primary color `#373D8D` and turn red `#E30613` on hover.
 
-    function startExercise() {
-      document.getElementById("practice-section").style.display = "none";
-      document.getElementById("exercise-section").style.display = "block";
-      currentExercise = 0;
-      progress = [];
-      showExercise();
-    }
+### Result
+The updated interface now reflects the ELC brandbook:
+- **Visual Style**: Clean and modern with a white form on a light gray background, using the brand’s dark blue and red colors.
+- **Typography**: Headings in Montserrat (uppercase, bold) to mimic Acrom, body text in Trebuchet MS for a professional look.
+- **Buttons**: Dark blue with a red hover effect, aligning with the brand’s color scheme.
+- **Layout**: Matches the minimalistic style of ELC’s documentation, with proper spacing and a centered form.
 
-    function showExercise() {
-      if (currentExercise >= currentLesson.sentences.length) {
-        completeLesson();
-        return;
-      }
-      const sentence = currentLesson.sentences[currentExercise];
-      document.getElementById("exercise-content").textContent = sentence.text;
-      document.getElementById("user-input").value = "";
-      document.getElementById("feedback").textContent = "";
-    }
-
-    function checkAnswer() {
-      const input = document.getElementById("user-input").value.trim();
-      const sentence = currentLesson.sentences[currentExercise];
-      const result = currentLesson.validate(input, sentence.requires);
-
-      document.getElementById("feedback").textContent = result.message;
-      progress.push({ sentence: sentence.text, input, correct: result.correct });
-      log.push(`Упражнение ${currentExercise + 1}: ${sentence.text} Ввод: ${input} - ${result.message}`);
-      updateProgress();
-      updateLog();
-
-      if (result.correct) {
-        currentExercise++;
-        showExercise();
-      }
-    }
-
-    function updateProgress() {
-      const progressContent = progress.map(p => 
-        `${p.sentence.replace("_______", p.input)} - ${p.correct ? "Правильно" : "Неправильно"}`
-      ).join("; ");
-      document.getElementById("progress-content").textContent = progressContent;
-    }
-
-    function updateLog() {
-      document.getElementById("log-content").textContent = log.join("; ");
-    }
-
-    function completeLesson() {
-      document.getElementById("exercise-section").style.display = "none";
-      document.getElementById("complete-section").style.display = "block";
-    }
-
-    function sendResults() {
-      alert("Результаты отправлены учителю (заглушка).");
-    }
-
-    function restartPractice() {
-      document.getElementById("complete-section").style.display = "none";
-      document.getElementById("practice-section").style.display = "block";
-      currentExercise = 0;
-      progress = [];
-      log = [];
-      updateProgress();
-      updateLog();
-    }
-
-    function goHome() {
-      document.querySelectorAll("div").forEach(div => div.style.display = "none");
-      document.querySelector("div").style.display = "block";
-    }
-
-    function resumeListening() {
-      alert("Прослушивание возобновлено (заглушка).");
-    }
-  </script>
-</body>
-</html>
+If you have specific elements from the brandbook you’d like to emphasize further (e.g., patterns, navigation styles), or if you have the exact red color code, let me know, and we can refine the style! 😊
