@@ -29,6 +29,12 @@
       font-size: 0.8rem;
       color: #373D8D;
     }
+    .pattern-bg {
+      background-image: linear-gradient(45deg, #373D8D 25%, transparent 25%, transparent 75%, #373D8D 75%, #373D8D), 
+                        linear-gradient(45deg, #373D8D 25%, transparent 25%, transparent 75%, #373D8D 75%, #373D8D);
+      background-size: 20px 20px;
+      background-color: #FFFFFF;
+    }
     button {
       font-family: 'Trebuchet MS', sans-serif;
     }
@@ -126,7 +132,11 @@
     <div class="mb-6">
       <p class="text-lg font-semibold">Лог:</p>
       <div id="stats" class="stats"></div>
-      <div id="log" class="h-40 overflow-y-auto border p-2 text the-2xl font-bold mb-2">Урок завершён!</h2>
+      <div id="log" class="h-40 overflow-y-auto border p-2 text-sm"></div>
+    </div>
+    <div id="completion-modal" class="modal">
+      <div class="modal-content">
+        <h2 class="text-2xl font-bold mb-2">Урок завершён!</h2>
         <p id="congratulations" class="text-md mb-4"></p>
         <p class="text-sm mb-4">Результаты высланы на проверку преподавателю.</p>
         <button onclick="startNewTraining()">Начать новую тренировку</button>
@@ -171,7 +181,7 @@
     let spokenHistory = [];
     let logEntries = [];
     let isListening = false;
-    const REQUIRED_CORRECT = 1; // One correct sentence per structure
+    const REQUIRED_CORRECT = 1; // Changed to 1 correct sentence per structure
     let lastSpeechTime = Date.now();
 
     // DOM elements
