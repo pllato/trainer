@@ -123,16 +123,41 @@
             padding: 10px;
             background: #e8e8e8;
             border-radius: 5px;
+            transition: height 0.3s;
+        }
+        #log.collapsed {
+            height: 30px;
+            overflow: hidden;
+        }
+        #log.expanded {
             height: 200px;
             overflow-y: auto;
         }
         #log h3 {
             font-size: 16px;
             margin: 0 0 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         #log p {
             font-size: 14px;
             margin: 2px 0;
+        }
+        #lastLogEntry {
+            font-size: 14px;
+            margin: 2px 0;
+        }
+        #toggleLogButton {
+            padding: 5px 10px;
+            font-size: 12px;
+            background-color: #ddd;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #toggleLogButton:hover {
+            background-color: #ccc;
         }
         #welcomeScreen, #practiceScreen {
             display: none;
@@ -190,14 +215,21 @@
                 font-size: 12px;
                 width: 30px;
             }
-            #log {
+            #log.collapsed {
+                height: 25px;
+            }
+            #log.expanded {
                 height: 150px;
             }
             #log h3 {
                 font-size: 14px;
             }
-            #log p {
+            #lastLogEntry {
                 font-size: 12px;
+            }
+            #toggleLogButton {
+                font-size: 10px;
+                padding: 3px 6px;
             }
         }
     </style>
@@ -237,9 +269,13 @@
                 <h3>Structures you are practicing:</h3>
                 <ul id="structureList"></ul>
             </div>
-            <div id="log">
-                <h3>Practice Log:</h3>
-                <div id="logEntries"></div>
+            <div id="log" class="collapsed">
+                <h3>
+                    Practice Log:
+                    <button id="toggleLogButton">Show Log</button>
+                </h3>
+                <div id="lastLogEntry"></div>
+                <div id="logEntries" style="display: none;"></div>
             </div>
         </div>
     </div>
@@ -256,7 +292,10 @@
         const startButton = document.getElementById('startButton');
         const status = document.getElementById('status');
         const listening = document.getElementById('listening');
+        const lastLogEntry = document.getElementById('lastLogEntry');
         const logEntries = document.getElementById('logEntries');
+        const toggleLogButton = document.getElementById('toggleLogButton');
+        const logContainer = document.getElementById('log');
         const structureList = document.getElementById('structureList');
         const exampleVerbs = document.getElementById('exampleVerbs');
 
@@ -267,6 +306,7 @@
         let saidSentences = new Set();
         let currentStructures = [];
         let structureProgress = {};
+        let isLogExpanded = false;
 
         // Define structures for each level and lesson
         const lessons = {
@@ -327,6 +367,24 @@
             exampleVerbs.textContent = 'Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)';
             status.textContent = `Progress: 0/${currentStructures.length * 10}`;
         }
+
+        // Toggle log visibility
+        toggleLogButton.addEventListener('click', () => {
+            isLogExpanded = !isLogExpanded;
+            if (isLogExpanded) {
+                logContainer.classList.remove('collapsed');
+                logContainer.classList.add('expanded');
+                logEntries.style.display = 'block';
+                lastLogEntry.style.display = 'none';
+                toggleLogButton.textContent = 'Hide Log';
+            } else {
+                logContainer.classList.remove('expanded');
+                logContainer.classList.add('collapsed');
+                logEntries.style.display = 'none';
+                lastLogEntry.style.display = 'block';
+                toggleLogButton.textContent = 'Show Log';
+            }
+        });
 
         // Switch to practice screen
         nextButton.addEventListener('click', () => {
@@ -409,6 +467,7 @@
             // Add to log
             const logEntry = document.createElement('p');
             logEntry.textContent = logMessage;
+            lastLogEntry.textContent = logMessage;
             logEntries.prepend(logEntry);
 
             // Stop if all structures have been said 10 times
