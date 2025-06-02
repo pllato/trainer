@@ -145,6 +145,7 @@
         #lastLogEntry {
             font-size: 12px;
             margin: 0;
+            line-height: 15px;
         }
         #toggleLogButton {
             padding: 3px 6px;
@@ -224,6 +225,7 @@
             }
             #lastLogEntry {
                 font-size: 10px;
+                line-height: 12px;
             }
             #toggleLogButton {
                 font-size: 8px;
@@ -505,6 +507,8 @@
                 const isMatch = normalizedSpokenSentence === expectedSentence || normalizedSpokenSentence === expectedSentenceShort;
                 if (!isMatch) {
                     console.log(`Mismatch for "What is your name ?": Expected "${expectedSentence}" or "${expectedSentenceShort}", got "${normalizedSpokenSentence}"`);
+                    console.log(`Spoken words: ${spokenWords.join(', ')}`);
+                    console.log(`Structure words: ${structureWords.join(', ')}`);
                 }
                 return isMatch;
             }
