@@ -91,7 +91,7 @@
             display: flex;
             align-items: center;
             margin-bottom: 20px;
-            padding: 8px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #eee;
         }
         .structure-item span {
@@ -120,7 +120,7 @@
         }
         #log {
             text-align: left;
-            margin-top: 5px;
+            margin-top: 10px;
             padding: 5px;
             background: #e8e8e8;
             border-radius: 5px;
@@ -551,6 +551,11 @@
                 const expectedMisrecognition2 = 'what isyour name';
                 const expectedMisrecognition3 = 'whatis your name';
                 const expectedMisrecognition4 = 'what is yourname';
+                const expectedMisrecognition5 = 'what is you name';
+                const expectedMisrecognition6 = 'what is yr name';
+                const expectedMisrecognition7 = 'whatsyourname';
+                const expectedMisrecognition8 = 'whatisyour name';
+                const expectedMisrecognition9 = 'what isyourname';
 
                 // Check for exact matches
                 const exactMatches = [
@@ -562,10 +567,27 @@
                     expectedMisrecognition1,
                     expectedMisrecognition2,
                     expectedMisrecognition3,
-                    expectedMisrecognition4
+                    expectedMisrecognition4,
+                    expectedMisrecognition5,
+                    expectedMisrecognition6,
+                    expectedMisrecognition7,
+                    expectedMisrecognition8,
+                    expectedMisrecognition9
                 ];
 
                 let isMatch = exactMatches.includes(normalizedSpokenSentence);
+
+                // Check for partial match (contains key words in order)
+                if (!isMatch) {
+                    const keyWords = ['what', 'is', 'your', 'name'];
+                    let matchIndex = 0;
+                    for (const word of spokenWords) {
+                        if (matchIndex < keyWords.length && word.includes(keyWords[matchIndex])) {
+                            matchIndex++;
+                        }
+                    }
+                    isMatch = matchIndex >= 3; // At least 3 keywords must match
+                }
 
                 // Check for partial match (starts with expected patterns)
                 if (!isMatch) {
@@ -575,11 +597,95 @@
                         'what is yur name',
                         'whatisyourname',
                         'whatis your name',
-                        'what isyour name'
+                        'what isyour name',
+                        'what is you name',
+                        'what is yr name',
+                        'whatsyourname',
+                        'whatisyour name',
+                        'what isyourname'
                     ];
                     isMatch = partialPatterns.some(pattern => normalizedSpokenSentence.startsWith(pattern));
                 }
 
                 if (!isMatch) {
                     console.log(`Mismatch for "What is your name ?":`);
-                    console.log(`
+                    console.log(`Expected one of: ${exactMatches.join(', ')}`);
+                    console.log(`Got: "${normalizedSpokenSentence}"`);
+                    console.log(`Spoken words: ${spokenWords.join(', ')}`);
+                    console.log(`Structure words: ${structureWords.join(', ')}`);
+                    const logEntry = document.createElement('p');
+                    logEntry.textContent = `⚠️ Debug: Expected "What is your name ?" but got "${normalizedSpokenSentence}"`;
+                    logEntries.prepend(logEntry);
+                    lastLogEntry.textContent = `⚠️ Debug: Expected "What is your name ?" but got "${normalizedSpokenSentence}"`;
+                    lastLogEntry.className = 'debug';
+                    lastLogEntry.style.display = 'block';
+                }
+                return isMatch;
+            }
+
+            // Extract the expected position of the name (where ______ is)
+            let namePosition = structureWords.indexOf('______');
+            if (namePosition === -1) return false;
+
+            // Adjust structure words to exclude the name slot for length comparison
+            const structureWordsWithoutName = structureWords.filter(word => word !== '______');
+            let expectedLength = structureWordsWithoutName.length + 1; // +1 for the name
+
+            // Check if the spoken sentence has at least the expected number of words
+            if (spokenWords.length < expectedLength - 1) return false;
+
+            // Extract the spoken name at the correct position
+            let spokenNamePosition = namePosition;
+            const spokenName = spokenWords[spokenNamePosition];
+            if (!spokenName) return false;
+
+            // Verify the fixed parts of the sentence match
+            let structureMatches = true;
+            for (let i = 0; i < structureWords.length; i++) {
+                if (i === namePosition) continue; // Skip the name slot
+
+                let expectedWord = structureWords[i];
+                let spokenWord = spokenWords[i] || '';
+
+                if (expectedWord && expectedWord !== spokenWord) {
+                    structureMatches = false;
+                    break;
+                }
+            }
+
+            if (!structureMatches) return false;
+
+            // Validate the name based on the structure
+            const beStructures = [
+                'i am ______ . (asel, arman, madina, maksat, maria, piter, natalie, armaan)',
+                'you are ______ . (asel, arman, madina, maksat, maria, piter, natalie, armaan)',
+                'my name is ______ . (asel, arman, maksat, madina, mariya, maria, piter, natalie, armaan)',
+                'this is ______ . (asel, arman, maksat, madina, mariya, maria, piter, natalie, armaan)'
+            ];
+
+            structure = structure.toLowerCase();
+            if (beStructures.includes(structure)) {
+                return isValidName(spokenName);
+            }
+
+            return false;
+        }
+
+        // Event listeners
+        startButton.addEventListener('click', () => {
+            if (!isListening) {
+                if (!recognition) initSpeechRecognition();
+                isListening = true;
+                recognition.start();
+                startButton.textContent = 'Stop Practice';
+                listening.textContent = 'Listening...';
+            } else {
+                isListening = false;
+                recognition.stop();
+                startButton.textContent = 'Start Practice';
+                listening.textContent = 'Stopped. Press start to begin...';
+            }
+        });
+    </script>
+</body>
+</html>
