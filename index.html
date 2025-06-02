@@ -135,7 +135,7 @@
     let spokenHistory = [];
     let logEntries = [];
     let isListening = false;
-    const REQUIRED_CORRECT = 3;
+    const REQUIRED_CORRECT = 1; // Changed from 3 to 1
     let lastSpeechTime = Date.now();
 
     // DOM elements
@@ -269,7 +269,7 @@
 
     // Update statistics
     function updateStats() {
-      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 3 * 5 = 15
+      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 1 * 5 = 5
       const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
       const totalAttempts = logEntries.length;
       const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
@@ -481,7 +481,7 @@
     // Send results to Telegram and Bitrix24
     async function sendResults() {
       // Calculate statistics
-      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 3 * 5 = 15
+      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 1 * 5 = 5
       const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
       const totalAttempts = logEntries.length;
       const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
