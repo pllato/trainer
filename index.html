@@ -1,713 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELC English Speaking Trainer</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f0f0f0;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            max-width: 600px;
-            width: 100%;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            height: 80vh;
-        }
-        h1 {
-            font-size: 24px;
-            margin: 10px 0;
-            text-align: center;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin: 10px auto;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            display: block;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        input, select {
-            padding: 10px;
-            font-size: 16px;
-            margin: 10px 0;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .status {
-            font-size: 16px;
-            margin: 5px 0;
-            text-align: center;
-        }
-        .examples {
-            margin: 10px 0;
-            text-align: left;
-        }
-        .examples h3 {
-            font-size: 16px;
-            margin: 5px 0;
-        }
-        .examples p {
-            font-size: 14px;
-            margin: 0;
-        }
-        #currentStructures {
-            font-size: 16px;
-            margin: 15px 0;
-            text-align: left;
-            border-top: 1px solid #ddd;
-            padding-top: 15px;
-            flex: 1;
-        }
-        #currentStructures h3 {
-            font-size: 18px;
-            margin: 5px 0;
-            color: #333;
-        }
-        .structure-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .structure-item span {
-            flex: 1;
-            font-size: 18px;
-            color: #444;
-        }
-        .progress-bar {
-            width: 120px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-            height: 14px;
-            margin: 0 15px;
-        }
-        .progress {
-            height: 100%;
-            background-color: #4CAF50;
-            border-radius: 5px;
-            transition: width 0.3s;
-        }
-        .count {
-            font-size: 16px;
-            width: 50px;
-            text-align: right;
-            color: #666;
-        }
-        #log {
-            text-align: left;
-            margin-top: 10px;
-            padding: 5px;
-            background: #e8e8e8;
-            border-radius: 5px;
-            transition: height 0.3s;
-        }
-        #log.collapsed {
-            height: 25px;
-            overflow: hidden;
-        }
-        #log.expanded {
-            height: 150px;
-            overflow-y: auto;
-        }
-        #log h3 {
-            font-size: 14px;
-            margin: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        #log p {
-            font-size: 12px;
-            margin: 2px 0;
-        }
-        #lastLogEntry {
-            font-size: 12px;
-            margin: 0;
-            line-height: 15px;
-            display: flex;
-            align-items: center;
-        }
-        #lastLogEntry::before {
-            margin-right: 5px;
-            font-size: 14px;
-        }
-        #lastLogEntry.correct::before {
-            content: "✅";
-        }
-        #lastLogEntry.incorrect::before {
-            content: "❌";
-        }
-        #lastLogEntry.repeat::before {
-            content: "🔁";
-        }
-        #lastLogEntry.debug::before {
-            content: "⚠️";
-        }
-        #toggleLogButton {
-            padding: 3px 6px;
-            font-size: 10px;
-            background-color: #ddd;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        #toggleLogButton:hover {
-            background-color: #ccc;
-        }
-        #welcomeScreen, #practiceScreen {
-            display: none;
-        }
-        #welcomeScreen.active, #practiceScreen.active {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-            .container {
-                padding: 10px;
-                height: 90vh;
-            }
-            h1 {
-                font-size: 20px;
-            }
-            button {
-                padding: 8px 16px;
-                font-size: 14px;
-            }
-            input, select {
-                padding: 8px;
-                font-size: 14px;
-            }
-            .status {
-                font-size: 14px;
-            }
-            .examples h3 {
-                font-size: 14px;
-            }
-            .examples p {
-                font-size: 12px;
-            }
-            #currentStructures {
-                font-size: 14px;
-            }
-            #currentStructures h3 {
-                font-size: 16px;
-            }
-            .structure-item {
-                margin-bottom: 15px;
-                padding: 5px 0;
-            }
-            .structure-item span {
-                font-size: 16px;
-            }
-            .progress-bar {
-                width: 100px;
-                height: 12px;
-                margin: 0 10px;
-            }
-            .count {
-                font-size: 14px;
-                width: 40px;
-            }
-            #log.collapsed {
-                height: 20px;
-            }
-            #log.expanded {
-                height: 120px;
-            }
-            #log h3 {
-                font-size: 12px;
-            }
-            #lastLogEntry {
-                font-size: 10px;
-                line-height: 12px;
-            }
-            #lastLogEntry::before {
-                font-size: 12px;
-            }
-            #toggleLogButton {
-                font-size: 8px;
-                padding: 2px 4px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grammar Practice App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="container">
-        <div id="welcomeScreen" class="active">
-            <h1>ELC English Speaking Trainer</h1>
-            <input type="text" id="userName" placeholder="Enter your name" required>
-            <select id="tenseSelect">
-                <option value="present">Present Simple</option>
-            </select>
-            <select id="levelSelect">
-                <option value="1">Level 1: Beginner (Daily Routines, Likes and Dislikes)</option>
-                <option value="2">Level 2: Elementary (Daily Routines, Likes and Dislikes, Facts)</option>
-                <option value="3">Level 3: Pre-Intermediate (Work and Study, Feelings and Opinions)</option>
-                <option value="4">Level 4: Intermediate (Work and Study, Social Interactions)</option>
-                <option value="5">Level 5: Upper-Intermediate (Social Interactions, Schedules and Events)</option>
-            </select>
-            <select id="lessonSelect">
-                <option value="1">Lesson 1: Introductions and Greetings</option>
-            </select>
-            <button id="nextButton">Next</button>
-        </div>
-        <div id="practiceScreen">
-            <div class="examples">
-                <h3>Examples of words to use:</h3>
-                <p id="exampleVerbs">Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)</p>
-            </div>
-            <div class="status" id="status">Correct: 0/50</div>
-            <div class="status" id="listening">Press start to begin...</div>
-            <button id="startButton">Start Practice</button>
-            <div id="currentStructures">
-                <h3>Structures to practice:</h3>
-                <ul id="structureList"></ul>
-            </div>
-            <div id="log" class="collapsed">
-                <h3>
-                    Practice Log:
-                    <button id="toggleLogButton">Show Log</button>
-                </h3>
-                <div id="lastLogEntry" class="status"></div>
-                <div id="logEntries" style="display: none;"></div>
-            </div>
-        </div>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div id="start-screen" class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-6 text-center">Grammar Practice</h1>
+    <div class="mb-4">
+      <label for="name" class="block text-sm font-medium text-gray-700">Your Name</label>
+      <input type="text" id="name" class="mt-1 p-2 w-full border rounded-md" placeholder="Enter your name" required>
     </div>
+    <div class="mb-4">
+      <label for="level" class="block text-sm font-medium text-gray-700">Select Level</label>
+      <select id="level" class="mt-1 p-2 w-full border rounded-md">
+        <option value="beginner1">Beginner Part One</option>
+        <option value="beginner2">Beginner Part Two</option>
+        <option value="elementary">Elementary</option>
+        <option value="preintermediate">Pre-Intermediate</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="upperintermediate">Upper-Intermediate</option>
+      </select>
+    </div>
+    <div class="mb-6">
+      <label for="lesson" class="block text-sm font-medium text-gray-700">Select Lesson</label>
+      <select id="lesson" class="mt-1 p-2 w-full border rounded-md">
+        <option value="lesson1">Lesson 1</option>
+      </select>
+    </div>
+    <button id="start-btn" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">Start Practice</button>
+  </div>
 
-    <script>
-        const welcomeScreen = document.getElementById('welcomeScreen');
-        const practiceScreen = document.getElementById('practiceScreen');
-        const userNameInput = document.getElementById('userName');
-        const tenseSelect = document.getElementById('tenseSelect');
-        const levelSelect = document.getElementById('levelSelect');
-        const lessonSelect = document.getElementById('lessonSelect');
-        const nextButton = document.getElementById('nextButton');
-        const startButton = document.getElementById('startButton');
-        const status = document.getElementById('status');
-        const listening = document.getElementById('listening');
-        const lastLogEntry = document.getElementById('lastLogEntry');
-        const logEntries = document.getElementById('logEntries');
-        const toggleLogButton = document.getElementById('toggleLogButton');
-        const logContainer = document.getElementById('log');
-        const structureList = document.getElementById('structureList');
-        const exampleVerbs = document.getElementById('exampleVerbs');
+  <div id="practice-screen" class="hidden bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-4">Practice Grammar</h1>
+    <p class="text-lg mb-2">Hello, <span id="user-name"></span>!</p>
+    <p class="text-md mb-4">Level: <span id="user-level"></span>, <span id="user-lesson"></span></p>
+    <div class="mb-6">
+      <p class="text-lg font-semibold">Say this structure:</p>
+      <p id="grammar-structure" class="text-md font-bold"></p>
+    </div>
+    <button id="speak-btn" class="w-full bg-green-600 text-white p-2 rounded-md mb-4 hover:bg-green-700">Speak Example</button>
+    <p id="feedback" class="text-md mb-4"></p>
+    <div class="mb-6">
+      <p class="text-lg font-semibold">Progress:</p>
+      <div id="progress-bars"></div>
+    </div>
+    <div class="mb-6">
+      <p class="text-lg font-semibold">Log:</p>
+      <div id="log" class="h-40 overflow-y-auto border p-2 text-sm"></div>
+    </div>
+    <p id="completion" class="text-lg font-bold text-green-600 hidden">Lesson Completed!</p>
+  </div>
 
-        let userName = '';
-        let correctCount = 0;
-        let recognition = null;
-        let isListening = false;
-        let saidSentences = new Set();
-        let currentStructures = [];
-        let structureProgress = {};
-        let isLogExpanded = false;
+  <script>
+    // Grammar structures for Beginner Part One, Lesson 1
+    const grammarData = {
+      beginner1: {
+        lesson1: [
+          { structure: "I am [name].", pattern: ["i", "am", "name"], id: "s1" },
+          { structure: "You are [name].", pattern: ["you", "are", "name"], id: "s2" },
+          { structure: "What is your name?", pattern: ["what", "is", "your", "name"], id: "s3" },
+          { structure: "My name is [name].", pattern: ["my", "name", "is", "name"], id: "s4" },
+          { structure: "This is [name].", pattern: ["this", "is", "name"], id: "s5" }
+        ]
+      }
+    };
 
-        // Define structures for each level and lesson
-        const lessons = {
-            '1': {
-                '1': [
-                    'I am ______ . (Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)',
-                    'You are ______ . (Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)',
-                    'What is your name ?',
-                    'My name is ______ . (Asel, Arman, Maksat, Madina, Mariya, Maria, Piter, Natalie, Armaan)',
-                    'This is ______ . (Asel, Arman, Maksat, Madina, Mariya, Maria, Piter, Natalie, Armaan)'
-                ]
-            },
-            '2': {
-                '1': ['I _______ . (work, play, eat)']
-            },
-            '3': {
-                '1': ['I _______ . (work, play, eat)']
-            },
-            '4': {
-                '1': ['I _______ . (work, play, eat)']
-            },
-            '5': {
-                '1': ['I _______ . (work, play, eat)']
-            }
-        };
+    // Initialize speech recognition
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
 
-        // Update the displayed structures and examples
-        function updateStructures() {
-            const level = levelSelect.value;
-            const lesson = lessonSelect.value;
-            currentStructures = lessons[level][lesson];
+    let currentStructure = null;
+    let userName = '';
+    let userLevel = '';
+    let userLesson = '';
+    let progress = { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0 };
+    let spokenHistory = [];
+    let logEntries = [];
 
-            // Initialize progress for each structure
-            structureProgress = {};
-            currentStructures.forEach(structure => {
-                structureProgress[structure.toLowerCase()] = 0;
-            });
+    // DOM elements
+    const startScreen = document.getElementById('start-screen');
+    const practiceScreen = document.getElementById('practice-screen');
+    const startBtn = document.getElementById('start-btn');
+    const speakBtn = document.getElementById('speak-btn');
+    const grammarStructure = document.getElementById('grammar-structure');
+    const feedback = document.getElementById('feedback');
+    const progressBars = document.getElementById('progress-bars');
+    const logDiv = document.getElementById('log');
+    const userNameEl = document.getElementById('user-name');
+    const userLevelEl = document.getElementById('user-level');
+    const userLessonEl = document.getElementById('user-lesson');
+    const completionEl = document.getElementById('completion');
 
-            // Update the structure list with progress bars
-            structureList.innerHTML = '';
-            currentStructures.forEach(structure => {
-                const li = document.createElement('li');
-                li.className = 'structure-item';
-                li.innerHTML = `
-                    <span>${structure}</span>
-                    <div class="progress-bar">
-                        <div class="progress" id="progress-${structure.toLowerCase().replace(/[^a-z0-9]/g, '-')}" style="width: 0%"></div>
-                    </div>
-                    <span class="count" id="count-${structure.toLowerCase().replace(/[^a-z0-9]/g, '-')}" style="font-size: 12px;">0/10</span>
-                `;
-                structureList.appendChild(li);
-            });
+    // Start practice
+    startBtn.addEventListener('click', () => {
+      userName = document.getElementById('name').value.trim();
+      userLevel = document.getElementById('level').value;
+      userLesson = document.getElementById('lesson').value;
+      if (!userName) {
+        alert('Please enter your name.');
+        return;
+      }
+      startScreen.classList.add('hidden');
+      practiceScreen.classList.remove('hidden');
+      userNameEl.textContent = userName;
+      userLevelEl.textContent = document.getElementById('level').options[document.getElementById('level').selectedIndex].text;
+      userLessonEl.textContent = document.getElementById('lesson').options[document.getElementById('lesson').selectedIndex].text;
+      initializeProgressBars();
+      loadNewStructure();
+    });
 
-            // Update example words
-            exampleVerbs.textContent = 'Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)';
-            status.textContent = `Correct: 0/${currentStructures.length * 10}`;
+    // Initialize progress bars
+    function initializeProgressBars() {
+      progressBars.innerHTML = '';
+      grammarData.beginner1.lesson1.forEach(struct => {
+        const div = document.createElement('div');
+        div.className = 'mb-2';
+        div.innerHTML = `
+          <p class="text-sm">${struct.structure}</p>
+          <div class="w-full bg-gray-200 rounded-full h-2.5">
+            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${progress[struct.id] * 10}%"></div>
+          </div>
+          <p class="text-xs text-gray-600">${progress[struct.id]}/10</p>
+        `;
+        progressBars.appendChild(div);
+      });
+    }
+
+    // Load a random structure
+    function loadNewStructure() {
+      const structures = grammarData.beginner1.lesson1;
+      currentStructure = structures[Math.floor(Math.random() * structures.length)];
+      grammarStructure.textContent = currentStructure.structure;
+      feedback.textContent = '';
+    }
+
+    // Speech recognition
+    speakBtn.addEventListener('click', () => {
+      recognition.start();
+      feedback.textContent = 'Listening...';
+    });
+
+    recognition.onresult = (event) => {
+      const spokenText = event.results[0][0].transcript.trim().toLowerCase();
+      const isCorrect = validateStructure(spokenText, currentStructure);
+      const isDuplicate = spokenHistory.includes(spokenText);
+      const logEntry = {
+        time: new Date().toLocaleTimeString(),
+        spoken: spokenText,
+        structure: currentStructure.structure,
+        correct: isCorrect,
+        duplicate: isDuplicate
+      };
+      logEntries.push(logEntry);
+      updateLog();
+
+      if (isCorrect && !isDuplicate) {
+        progress[currentStructure.id]++;
+        spokenHistory.push(spokenText);
+        feedback.textContent = `Correct! You said: "${spokenText}"`;
+        updateProgressBars();
+        checkCompletion();
+        setTimeout(loadNewStructure, 2000);
+      } else {
+        feedback.textContent = isDuplicate
+          ? `Duplicate: "${spokenText}". Say a new example for: ${currentStructure.structure}`
+          : `Incorrect: "${spokenText}". Try again with: ${currentStructure.structure}`;
+      }
+    };
+
+    recognition.onerror = (event) => {
+      feedback.textContent = 'Error occurred in recognition: ' + event.error;
+    };
+
+    recognition.onend = () => {
+      if (!feedback.textContent.includes('Correct') && !feedback.textContent.includes('Incorrect') && !feedback.textContent.includes('Duplicate')) {
+        feedback.textContent = 'Please try again.';
+      }
+    };
+
+    // Validate spoken structure
+    function validateStructure(text, structure) {
+      const words = text.split(' ');
+      const pattern = structure.pattern;
+      let wordIndex = 0;
+
+      for (let part of pattern) {
+        if (part === 'name') {
+          if (!words[wordIndex]) return false; // Must have a word for name
+          wordIndex++;
+        } else {
+          if (words[wordIndex] !== part) return false;
+          wordIndex++;
         }
+      }
+      return wordIndex === words.length; // Ensure no extra words
+    }
 
-        // Toggle log visibility
-        toggleLogButton.addEventListener('click', () => {
-            isLogExpanded = !isLogExpanded;
-            if (isLogExpanded) {
-                logContainer.classList.remove('collapsed');
-                logContainer.classList.add('expanded');
-                logEntries.style.display = 'block';
-                lastLogEntry.style.display = 'none';
-                toggleLogButton.textContent = 'Hide Log';
-            } else {
-                logContainer.classList.remove('expanded');
-                logContainer.classList.add('collapsed');
-                logEntries.style.display = 'none';
-                lastLogEntry.style.display = 'block';
-                toggleLogButton.textContent = 'Show Log';
-            }
-        });
+    // Update progress bars
+    function updateProgressBars() {
+      progressBars.innerHTML = '';
+      grammarData.beginner1.lesson1.forEach(struct => {
+        const div = document.createElement('div');
+        div.className = 'mb-2';
+        div.innerHTML = `
+          <p class="text-sm">${struct.structure}</p>
+          <div class="w-full bg-gray-200 rounded-full h-2.5">
+            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${progress[struct.id] * 10}%"></div>
+          </div>
+          <p class="text-xs text-gray-600">${progress[struct.id]}/10</p>
+        `;
+        progressBars.appendChild(div);
+      });
+    }
 
-        // Switch to practice screen
-        nextButton.addEventListener('click', () => {
-            userName = userNameInput.value.trim();
-            if (!userName) {
-                alert('Please enter your name!');
-                return;
-            }
-            welcomeScreen.classList.remove('active');
-            practiceScreen.classList.add('active');
-            updateStructures();
-            lastLogEntry.textContent = 'Press start to begin...';
-            lastLogEntry.style.display = 'block';
-            logContainer.style.display = 'block';
-        });
+    // Update log
+    function updateLog() {
+      logDiv.innerHTML = '';
+      logEntries.forEach(entry => {
+        const p = document.createElement('p');
+        p.className = 'mb-1';
+        p.textContent = `[${entry.time}] Said: "${entry.spoken}" for "${entry.structure}" - ${entry.correct ? 'Correct' : 'Incorrect'}${entry.duplicate ? ', Duplicate' : ''}`;
+        logDiv.appendChild(p);
+      });
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
 
-        // Initialize speech recognition
-        function initSpeechRecognition() {
-            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = 'en-US';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            recognition.onresult = (event) => {
-                const spokenSentence = event.results[0][0].transcript.trim().toLowerCase();
-                listening.textContent = 'Processing: ' + spokenSentence;
-                checkSentence(spokenSentence);
-            };
-
-            recognition.onend = () => {
-                if (isListening && correctCount < currentStructures.length * 10) {
-                    recognition.start();
-                    listening.textContent = 'Listening...';
-                } else {
-                    isListening = false;
-                    listening.textContent = 'Stopped. Press start to begin...';
-                    startButton.textContent = 'Start Practice';
-                }
-            };
-
-            recognition.onerror = (event) => {
-                listening.textContent = 'Error occurred: ' + event.error;
-                isListening = false;
-                startButton.textContent = 'Start Practice';
-            };
-        }
-
-        // Check if the spoken sentence matches any structure in the current level
-        function checkSentence(spokenSentence) {
-            let isCorrect = false;
-            let matchedStructure = null;
-            let logMessage = '';
-            let logClass = '';
-
-            matchedStructure = currentStructures.find(structure => checkPresentSimpleSentence(spokenSentence, structure));
-            isCorrect = !!matchedStructure;
-
-            if (saidSentences.has(spokenSentence)) {
-                logMessage = `🔁 Повтор: "${spokenSentence}"`;
-                logClass = 'repeat';
-            } else if (isCorrect) {
-                const structureKey = matchedStructure.toLowerCase();
-                if (structureProgress[structureKey] < 10) {
-                    structureProgress[structureKey]++;
-                    correctCount++;
-                    saidSentences.add(spokenSentence);
-                    logMessage = `✅ Правильно: "${spokenSentence}" (Structure: "${matchedStructure}")`;
-                    logClass = 'correct';
-                    status.textContent = `Correct: ${correctCount}/${currentStructures.length * 10}`;
-
-                    // Update progress bar and count
-                    const progressBar = document.getElementById(`progress-${structureKey.replace(/[^a-z0-9]/g, '-')}`);
-                    const countDisplay = document.getElementById(`count-${structureKey.replace(/[^a-z0-9]/g, '-')}`);
-                    const progressPercentage = (structureProgress[structureKey] / 10) * 100;
-                    progressBar.style.width = `${progressPercentage}%`;
-                    countDisplay.textContent = `${structureProgress[structureKey]}/10`;
-                } else {
-                    logMessage = `🔁 Структура "${matchedStructure}" уже завершена 10 раз: "${spokenSentence}"`;
-                    logClass = 'repeat';
-                }
-            } else {
-                logMessage = `❌ Неправильно: "${spokenSentence}" (неверная форма или структура)`;
-                logClass = 'incorrect';
-            }
-
-            // Add to log
-            const logEntry = document.createElement('p');
-            logEntry.textContent = logMessage;
-            lastLogEntry.textContent = logMessage;
-            lastLogEntry.className = logClass;
-            lastLogEntry.style.display = 'block';
-            logEntries.prepend(logEntry);
-            logContainer.style.display = 'block';
-
-            // Stop if all structures have been said 10 times
-            if (correctCount >= currentStructures.length * 10) {
-                isListening = false;
-                recognition.stop();
-                listening.textContent = 'Congratulations! All structures completed 10 times!';
-                startButton.textContent = 'Restart Practice';
-            }
-        }
-
-        // Check if the spoken sentence matches the Present Simple structure
-        function checkPresentSimpleSentence(spokenSentence, structure) {
-            // Helper to check if a word is a valid name (any word that isn't a verb)
-            function isValidName(word) {
-                const verbIndicators = ['work', 'play', 'eat', 'like', 'love', 'want', 'is', 'are', 'am'];
-                if (!/^[a-zA-Z]+$/.test(word)) return false; // Должны быть только буквы
-                return !verbIndicators.includes(word.toLowerCase());
-            }
-
-            // Normalize the spoken sentence and structure (remove extra spaces and punctuation)
-            const normalizeSentence = (sentence) => {
-                return sentence.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[?.!]/g, '');
-            };
-
-            const normalizedSpokenSentence = normalizeSentence(spokenSentence);
-            const spokenWords = normalizedSpokenSentence.split(' ');
-
-            // Extract the structure without the example verbs
-            const structureWithoutExamples = structure.split(' (')[0];
-            const structureWords = normalizeSentence(structureWithoutExamples).split(' ');
-
-            // Special case for "What is your name ?" or "What's your name ?"
-            if (structure === 'what is your name ?') {
-                const expectedSentence = 'what is your name';
-                const expectedSentenceShort = 'whats your name';
-                const expectedNoSpaces = 'whatisyourname';
-                const expectedAltSpelling = 'what is yur name';
-                const expectedExtraSpaces = 'what  is  your  name';
-                const expectedMisrecognition1 = 'what is your namee';
-                const expectedMisrecognition2 = 'what isyour name';
-                const expectedMisrecognition3 = 'whatis your name';
-                const expectedMisrecognition4 = 'what is yourname';
-                const expectedMisrecognition5 = 'what is you name';
-                const expectedMisrecognition6 = 'what is yr name';
-                const expectedMisrecognition7 = 'whatsyourname';
-                const expectedMisrecognition8 = 'whatisyour name';
-                const expectedMisrecognition9 = 'what isyourname';
-
-                // Check for exact matches
-                const exactMatches = [
-                    expectedSentence,
-                    expectedSentenceShort,
-                    expectedNoSpaces,
-                    expectedAltSpelling,
-                    expectedExtraSpaces,
-                    expectedMisrecognition1,
-                    expectedMisrecognition2,
-                    expectedMisrecognition3,
-                    expectedMisrecognition4,
-                    expectedMisrecognition5,
-                    expectedMisrecognition6,
-                    expectedMisrecognition7,
-                    expectedMisrecognition8,
-                    expectedMisrecognition9
-                ];
-
-                let isMatch = exactMatches.includes(normalizedSpokenSentence);
-
-                // Check for partial match (contains key words in order)
-                if (!isMatch) {
-                    const keyWords = ['what', 'is', 'your', 'name'];
-                    let matchIndex = 0;
-                    for (const word of spokenWords) {
-                        if (matchIndex < keyWords.length && word.includes(keyWords[matchIndex])) {
-                            matchIndex++;
-                        }
-                    }
-                    isMatch = matchIndex >= 3; // At least 3 keywords must match
-                }
-
-                // Check for partial match (starts with expected patterns)
-                if (!isMatch) {
-                    const partialPatterns = [
-                        'what is your name',
-                        'whats your name',
-                        'what is yur name',
-                        'whatisyourname',
-                        'whatis your name',
-                        'what isyour name',
-                        'what is you name',
-                        'what is yr name',
-                        'whatsyourname',
-                        'whatisyour name',
-                        'what isyourname'
-                    ];
-                    isMatch = partialPatterns.some(pattern => normalizedSpokenSentence.startsWith(pattern));
-                }
-
-                if (!isMatch) {
-                    console.log(`Mismatch for "What is your name ?":`);
-                    console.log(`Expected one of: ${exactMatches.join(', ')}`);
-                    console.log(`Got: "${normalizedSpokenSentence}"`);
-                    console.log(`Spoken words: ${spokenWords.join(', ')}`);
-                    console.log(`Structure words: ${structureWords.join(', ')}`);
-                    const logEntry = document.createElement('p');
-                    logEntry.textContent = `⚠️ Debug: Expected "What is your name ?" but got "${normalizedSpokenSentence}"`;
-                    logEntries.prepend(logEntry);
-                    lastLogEntry.textContent = `⚠️ Debug: Expected "What is your name ?" but got "${normalizedSpokenSentence}"`;
-                    lastLogEntry.className = 'debug';
-                    lastLogEntry.style.display = 'block';
-                }
-                return isMatch;
-            }
-
-            // Extract the expected position of the name (where ______ is)
-            let namePosition = structureWords.indexOf('______');
-            if (namePosition === -1) return false;
-
-            // Adjust structure words to exclude the name slot for length comparison
-            const structureWordsWithoutName = structureWords.filter(word => word !== '______');
-            let expectedLength = structureWordsWithoutName.length + 1; // +1 for the name
-
-            // Check if the spoken sentence has at least the expected number of words
-            if (spokenWords.length < expectedLength - 1) return false;
-
-            // Extract the spoken name at the correct position
-            let spokenNamePosition = namePosition;
-            const spokenName = spokenWords[spokenNamePosition];
-            if (!spokenName) return false;
-
-            // Verify the fixed parts of the sentence match
-            let structureMatches = true;
-            for (let i = 0; i < structureWords.length; i++) {
-                if (i === namePosition) continue; // Skip the name slot
-
-                let expectedWord = structureWords[i];
-                let spokenWord = spokenWords[i] || '';
-
-                if (expectedWord && expectedWord !== spokenWord) {
-                    structureMatches = false;
-                    break;
-                }
-            }
-
-            if (!structureMatches) return false;
-
-            // Validate the name based on the structure
-            const beStructures = [
-                'i am ______ . (asel, arman, madina, maksat, maria, piter, natalie, armaan)',
-                'you are ______ . (asel, arman, madina, maksat, maria, piter, natalie, armaan)',
-                'my name is ______ . (asel, arman, maksat, madina, mariya, maria, piter, natalie, armaan)',
-                'this is ______ . (asel, arman, maksat, madina, mariya, maria, piter, natalie, armaan)'
-            ];
-
-            structure = structure.toLowerCase();
-            if (beStructures.includes(structure)) {
-                return isValidName(spokenName);
-            }
-
-            return false;
-        }
-
-        // Event listeners
-        tenseSelect.addEventListener('change', () => {
-            correctCount = 0;
-            saidSentences.clear();
-            logEntries.innerHTML = '';
-            updateStructures();
-            if (isListening) {
-                recognition.stop();
-                isListening = false;
-                startButton.textContent = 'Start Practice';
-                listening.textContent = 'Press start to begin...';
-            }
-        });
-
-        levelSelect.addEventListener('change', () => {
-            correctCount = 0;
-            saidSentences.clear();
-            logEntries.innerHTML = '';
-            updateStructures();
-            if (isListening) {
-                recognition.stop();
-                isListening = false;
-                startButton.textContent = 'Start Practice';
-                listening.textContent = 'Press start to begin...';
-            }
-        });
-
-        lessonSelect.addEventListener('change', () => {
-            correctCount = 0;
-            saidSentences.clear();
-            logEntries.innerHTML = '';
-            updateStructures();
-            if (isListening) {
-                recognition.stop();
-                isListening = false;
-                startButton.textContent = 'Start Practice';
-                listening.textContent = 'Press start to begin...';
-            }
-        });
-
-        startButton.addEventListener('click', () => {
-            if (!isListening) {
-                if (!recognition) initSpeechRecognition();
-                isListening = true;
-                recognition.start();
-                startButton.textContent = 'Stop Practice';
-                listening.textContent = 'Listening...';
-            } else {
-                isListening = false;
-                recognition.stop();
-                startButton.textContent = 'Start Practice';
-                listening.textContent = 'Stopped. Press start to begin...';
-            }
-        });
-    </script>
+    // Check lesson completion
+    function checkCompletion() {
+      if (Object.values(progress).every(count => count >= 10)) {
+        completionEl.classList.remove('hidden');
+        speakBtn.disabled = true;
+        speakBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+      }
+    }
+  </script>
 </body>
 </html>
