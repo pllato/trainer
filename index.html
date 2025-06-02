@@ -264,12 +264,11 @@
                 <option value="present">Present Simple</option>
             </select>
             <select id="levelSelect">
-                <option value="1">Beginner Part One</option>
-                <option value="2">Beginner Part Two (TBD)</option>
-                <option value="3">Elementary (TBD)</option>
-                <option value="4">Pre-Intermediate (TBD)</option>
-                <option value="5">Intermediate (TBD)</option>
-                <option value="6">Upper-Intermediate (TBD)</option>
+                <option value="1">Level 1: Beginner (Daily Routines, Likes and Dislikes)</option>
+                <option value="2">Level 2: Elementary (Daily Routines, Likes and Dislikes, Facts)</option>
+                <option value="3">Level 3: Pre-Intermediate (Work and Study, Feelings and Opinions)</option>
+                <option value="4">Level 4: Intermediate (Work and Study, Social Interactions)</option>
+                <option value="5">Level 5: Upper-Intermediate (Social Interactions, Schedules and Events)</option>
             </select>
             <select id="lessonSelect">
                 <option value="1">Lesson 1: Introductions and Greetings</option>
@@ -347,9 +346,6 @@
                 '1': ['I _______ . (work, play, eat)']
             },
             '5': {
-                '1': ['I _______ . (work, play, eat)']
-            },
-            '6': {
                 '1': ['I _______ . (work, play, eat)']
             }
         };
@@ -659,6 +655,45 @@
         }
 
         // Event listeners
+        tenseSelect.addEventListener('change', () => {
+            correctCount = 0;
+            saidSentences.clear();
+            logEntries.innerHTML = '';
+            updateStructures();
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                startButton.textContent = 'Start Practice';
+                listening.textContent = 'Press start to begin...';
+            }
+        });
+
+        levelSelect.addEventListener('change', () => {
+            correctCount = 0;
+            saidSentences.clear();
+            logEntries.innerHTML = '';
+            updateStructures();
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                startButton.textContent = 'Start Practice';
+                listening.textContent = 'Press start to begin...';
+            }
+        });
+
+        lessonSelect.addEventListener('change', () => {
+            correctCount = 0;
+            saidSentences.clear();
+            logEntries.innerHTML = '';
+            updateStructures();
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                startButton.textContent = 'Start Practice';
+                listening.textContent = 'Press start to begin...';
+            }
+        });
+
         startButton.addEventListener('click', () => {
             if (!isListening) {
                 if (!recognition) initSpeechRecognition();
