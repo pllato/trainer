@@ -120,7 +120,7 @@
     <div class="mb-6">
       <label for="lesson" class="block text-sm font-medium text-gray-700">Выберите урок</label>
       <select id="lesson" class="mt-1 p-2 w-full border rounded-md">
-        <option value="lesson1">Урок 1</option>
+        <!-- Lessons will be populated dynamically -->
       </select>
     </div>
     <button id="start-btn" class="w-full bg-[#373D8D] text-white p-2 rounded-md hover:bg-[#2A3171]">Начать практику</button>
@@ -157,34 +157,8 @@
     </div>
   </div>
 
+  <script src="index.js"></script>
   <script>
-    // Grammar structures for Beginner Part One, Lesson 1
-    const grammarData = {
-      beginner1: {
-        lesson1: [
-          { structure: "I am [name].", pattern: ["i", "am", "name"], id: "s1", hasName: true },
-          { structure: "You are [name].", pattern: ["you", "are", "name"], id: "s2", hasName: true },
-          { structure: "What is your name?", pattern: ["what", "is", "your", "name"], id: "s3", hasName: false },
-          { structure: "My name is [name].", pattern: ["my", "name", "is", "name"], id: "s4", hasName: true },
-          { structure: "This is [name].", pattern: ["this", "is", "name"], id: "s5", hasName: true }
-        ]
-      }
-    };
-
-    // Encouragement messages (10 messages for less repetition)
-    const encouragementMessages = [
-      "Ты большой молодец! 🌟 Отличная работа, ты справился с уроком на ура! Ты уже говоришь на английском как носитель! 💪",
-      "Молодец, ты справился блестяще! 🎉 Урок пройден, ты на высоте! Ты уже владеешь английским как настоящий профи! ✨",
-      "Ух, как здорово! 🌟 Ты прошёл урок с лёгкостью! Ты уже говоришь на английском как носитель, это потрясающе! 💪",
-      "Ты настоящий чемпион! 🏆 Урок завершён, ты большой молодец! Ты уже разговариваешь как носитель английского! 🌟",
-      "Превосходно! 🎉 Ты справился с уроком на все 100%! Ты уже общаешься на английском как носитель, это невероятно! 💪",
-      "Вау, ты супер! 🌟 Урок пройден, и ты уже говоришь как носитель английского! Продолжай в том же духе! 🚀",
-      "Отлично сработано! 🎉 Ты завершил урок, и твой английский звучит как у носителя! Ты звезда! ⭐",
-      "Как круто! 🌟 Ты прошёл урок, и твой английский уже на уровне носителя! Горжусь тобой! 💖",
-      "Ты справился на ура! 🏆 Урок завершён, и ты уже общаешься как носитель! Это фантастика! 🎈",
-      "Супер, ты сделал это! 🌟 Урок пройден, и ты уже говоришь как носитель английского! Ты молодец! 💪"
-    ];
-
     // Check if SpeechRecognition is supported
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -203,15 +177,15 @@
     let userName = '';
     let userLevel = '';
     let userLesson = '';
-    let progress = { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0 };
+    let progress = {};
     let spokenHistory = [];
     let logEntries = [];
     let isListening = false;
-    const REQUIRED_CORRECT = 2; // 2 correct sentences per structure
     let lastSpeechTime = Date.now();
     let startTime = null; // To track the start time of the training
     let endTime = null; // To track the end time of the training
     let lessonCompleted = false; // Flag to indicate if the lesson is completed
+    let currentLessonData = null; // To store the current lesson's data
 
     // DOM elements
     const startScreen = document.getElementById('start-screen');
@@ -229,6 +203,25 @@
     const completionModal = document.getElementById('completion-modal');
     const congratulationsEl = document.getElementById('congratulations');
     const modalLog = document.getElementById('modal-log');
+    const levelSelect = document.getElementById('level');
+    const lessonSelect = document.getElementById('lesson');
+
+    // Populate lessons dynamically based on selected level
+    function populateLessons() {
+      const selectedLevel = levelSelect.value;
+      lessonSelect.innerHTML = ''; // Clear previous options
+      const lessons = lessonsData.filter(lesson => lesson.level === selectedLevel);
+      lessons.forEach(lesson => {
+        const option = document.createElement('option');
+        option.value = lesson.lesson;
+        option.textContent = lesson.name;
+        lessonSelect.appendChild(option);
+      });
+    }
+
+    // Populate lessons on page load and when level changes
+    populateLessons();
+    levelSelect.addEventListener('change', populateLessons);
 
     // Start practice screen
     startBtn.addEventListener('click', () => {
@@ -239,6 +232,20 @@
         alert('Пожалуйста, введите ваше имя.');
         return;
       }
+
+      // Find the current lesson data
+      currentLessonData = lessonsData.find(lesson => lesson.level === userLevel && lesson.lesson === userLesson);
+      if (!currentLessonData) {
+        alert('Урок не найден. Пожалуйста, выберите другой урок.');
+        return;
+      }
+
+      // Initialize progress for the current lesson's structures
+      progress = {};
+      currentLessonData.structures.forEach(struct => {
+        progress[struct.id] = 0;
+      });
+
       startScreen.classList.add('hidden');
       practiceScreen.classList.remove('hidden');
       userNameEl.textContent = userName;
@@ -251,13 +258,14 @@
     // Back to start screen via logo
     function goBackToStart() {
       // Reset all data
-      progress = { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0 };
+      progress = {};
       spokenHistory = [];
       logEntries = [];
       isListening = false;
       lessonCompleted = false;
       startTime = null;
       endTime = null;
+      currentLessonData = null;
       if (recognition) recognition.stop();
 
       // Reset UI
@@ -348,7 +356,8 @@
 
     // Update statistics
     function updateStats() {
-      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 2 * 5 = 10
+      if (!currentLessonData) return;
+      const requiredExamples = currentLessonData.requiredCorrect * currentLessonData.structures.length;
       const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
       const totalAttempts = logEntries.length;
       const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
@@ -370,7 +379,8 @@
 
     // Update modal log (protocol in the completion modal)
     function updateModalLog() {
-      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 2 * 5 = 10
+      if (!currentLessonData) return;
+      const requiredExamples = currentLessonData.requiredCorrect * currentLessonData.structures.length;
       const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
       const totalAttempts = logEntries.length;
       const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
@@ -410,7 +420,7 @@
         lastSpeechTime = Date.now();
 
         if (matchedStructure) {
-          const isCorrect = validateStructure(spokenText, matchedStructure);
+          const isCorrect = currentLessonData.validateStructure(spokenText, matchedStructure);
           if (isCorrect) {
             const isDuplicate = matchedStructure.hasName && spokenHistory.includes(spokenText);
             logEntry.structure = matchedStructure.structure;
@@ -421,7 +431,7 @@
               progress[matchedStructure.id]++;
               if (matchedStructure.hasName) spokenHistory.push(spokenText);
 
-              if (progress[matchedStructure.id] > REQUIRED_CORRECT) {
+              if (progress[matchedStructure.id] > currentLessonData.requiredCorrect) {
                 feedback.textContent = `Отлично! 🎉🎈❤️ Ты превысил цель для "${matchedStructure.structure}"!`;
                 logEntries.push({
                   time: new Date().toLocaleTimeString(),
@@ -506,37 +516,21 @@
 
     // Find matching structure
     function findMatchingStructure(text) {
-      const structures = grammarData.beginner1.lesson1;
+      if (!currentLessonData) return null;
+      const structures = currentLessonData.structures;
       for (let struct of structures) {
-        if (validateStructure(text, struct)) {
+        if (currentLessonData.validateStructure(text, struct)) {
           return struct;
         }
       }
       return null;
     }
 
-    // Validate spoken structure
-    function validateStructure(text, structure) {
-      const words = text.split(' ').filter(word => word.length > 0); // Удаляем пустые строки после split
-      const pattern = structure.pattern;
-      let wordIndex = 0;
-
-      for (let part of pattern) {
-        if (part === 'name') {
-          if (!words[wordIndex]) return false; // Must have a word for name
-          wordIndex++;
-        } else {
-          if (!words[wordIndex] || words[wordIndex] !== part) return false;
-          wordIndex++;
-        }
-      }
-      return wordIndex === words.length; // Ensure no extra words
-    }
-
     // Update progress bars
     function updateProgressBars() {
+      if (!currentLessonData) return;
       progressBars.innerHTML = '';
-      grammarData.beginner1.lesson1.forEach(struct => {
+      currentLessonData.structures.forEach(struct => {
         const totalCorrect = progress[struct.id];
         const div = document.createElement('div');
         div.className = 'mb-2';
@@ -546,8 +540,8 @@
         `;
 
         // First progress bar (up to REQUIRED_CORRECT)
-        const firstBarProgress = Math.min(totalCorrect, REQUIRED_CORRECT);
-        const firstBarPercentage = (firstBarProgress / REQUIRED_CORRECT) * 100;
+        const firstBarProgress = Math.min(totalCorrect, currentLessonData.requiredCorrect);
+        const firstBarPercentage = (firstBarProgress / currentLessonData.requiredCorrect) * 100;
         barsHTML += `
           <div class="w-full bg-gray-200 rounded-full h-2.5 mb-1">
             <div class="bg-[#373D8D] h-2.5 rounded-full" style="width: ${firstBarPercentage}%"></div>
@@ -555,10 +549,10 @@
         `;
 
         // Additional progress bar for exceeding the goal
-        if (totalCorrect > REQUIRED_CORRECT) {
-          const excessCorrect = totalCorrect - REQUIRED_CORRECT;
-          const excessProgress = excessCorrect % REQUIRED_CORRECT;
-          const excessPercentage = (excessProgress / REQUIRED_CORRECT) * 100;
+        if (totalCorrect > currentLessonData.requiredCorrect) {
+          const excessCorrect = totalCorrect - currentLessonData.requiredCorrect;
+          const excessProgress = excessCorrect % currentLessonData.requiredCorrect;
+          const excessPercentage = (excessProgress / currentLessonData.requiredCorrect) * 100;
           barsHTML += `
             <div class="w-full bg-gray-200 rounded-full h-2.5">
               <div class="bg-[#28A745] h-2.5 rounded-full" style="width: ${excessPercentage}%"></div>
@@ -567,34 +561,17 @@
         }
 
         barsHTML += `
-          <p class="text-xs text-gray-600">${totalCorrect}/${REQUIRED_CORRECT}</p>
+          <p class="text-xs text-gray-600">${totalCorrect}/${currentLessonData.requiredCorrect}</p>
         `;
         div.innerHTML = barsHTML;
         progressBars.appendChild(div);
       });
     }
 
-    // Update log (now "Протокол")
-    function updateLog() {
-      logDiv.innerHTML = '';
-      logEntries.forEach(entry => {
-        const p = document.createElement('p');
-        p.className = 'mb-1';
-        if (entry.exceeded) {
-          p.textContent = `[${entry.time}] ${entry.spoken} 🎉🎈❤️`;
-        } else {
-          const statusIcon = entry.correct ? '✅' : '❌';
-          const duplicateIcon = entry.duplicate ? '🔁' : '';
-          p.textContent = `[${entry.time}] Сказано: "${entry.spoken}"${entry.structure ? ` для "${entry.structure}"` : ''} - ${statusIcon} ${entry.correct ? 'Правильно' : 'Неправильно'}${duplicateIcon ? ` ${duplicateIcon} Повтор` : ''}`;
-        }
-        logDiv.appendChild(p);
-      });
-      logDiv.scrollTop = logDiv.scrollHeight;
-    }
-
     // Check lesson completion
     function checkCompletion() {
-      if (Object.values(progress).every(count => count >= REQUIRED_CORRECT)) {
+      if (!currentLessonData) return;
+      if (Object.values(progress).every(count => count >= currentLessonData.requiredCorrect)) {
         endTime = new Date(); // Record the end time when the lesson is completed
         lessonCompleted = true;
         const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
@@ -611,8 +588,9 @@
 
     // Send results to Telegram and Bitrix24
     async function sendResults() {
+      if (!currentLessonData) return;
       // Calculate statistics
-      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 2 * 5 = 10
+      const requiredExamples = currentLessonData.requiredCorrect * currentLessonData.structures.length;
       const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
       const totalAttempts = logEntries.length;
       const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
@@ -622,7 +600,7 @@
 Результаты для ${userName}
 Уровень: ${userLevelEl.textContent}
 Урок: ${userLessonEl.textContent}
-Прогресс: ${Object.entries(progress).map(([id, count]) => `${grammarData.beginner1.lesson1.find(s => s.id === id).structure}: ${count} правильных`).join('\n')}
+Прогресс: ${Object.entries(progress).map(([id, count]) => `${currentLessonData.structures.find(s => s.id === id).structure}: ${count} правильных`).join('\n')}
 Статистика:
 - Нужно было сказать: ${requiredExamples} примеров
 - Сказано правильно: ${totalCorrect} примеров
