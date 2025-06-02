@@ -69,7 +69,7 @@
       color: #373D8D;
     }
     .modal-content p {
-      color: #F59E0B; /* Changed to a warm orange for a friendlier look */
+      color: #F59E0B; /* Warm orange for a friendlier look */
     }
     .modal-content button {
       background-color: #373D8D;
@@ -158,7 +158,7 @@
       }
     };
 
-    // Encouragement messages (expanded to 10 for less repetition)
+    // Encouragement messages (10 messages for less repetition)
     const encouragementMessages = [
       "Ты большой молодец! 🌟 Отличная работа, ты справился с уроком на ура! Ты уже говоришь на английском как носитель! 💪",
       "Молодец, ты справился блестяще! 🎉 Урок пройден, ты на высоте! Ты уже владеешь английским как настоящий профи! ✨",
@@ -186,7 +186,7 @@
     let spokenHistory = [];
     let logEntries = [];
     let isListening = false;
-    const REQUIRED_CORRECT = 1; // One correct sentence per structure
+    const REQUIRED_CORRECT = 2; // Confirmed: 2 correct sentences per structure
     let lastSpeechTime = Date.now();
     let startTime = null; // To track the start time of the training
     let endTime = null; // To track the end time of the training
@@ -304,7 +304,7 @@
 
     // Update statistics
     function updateStats() {
-      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 1 * 5 = 5
+      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 2 * 5 = 10
       const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
       const totalAttempts = logEntries.length;
       const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
@@ -523,7 +523,7 @@
     // Send results to Telegram and Bitrix24
     async function sendResults() {
       // Calculate statistics
-      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 1 * 5 = 5
+      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 2 * 5 = 10
       const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
       const totalAttempts = logEntries.length;
       const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
@@ -533,7 +533,7 @@
 Результаты для ${userName}
 Уровень: ${userLevelEl.textContent}
 Урок: ${userLessonEl.textContent}
-Прогресс: ${Object.entries(progress).map(([id, count]) => `${grammarData.beginner1.lesson1.find(s => s.id === id).structure}: ${count} правильных`).join('\n')}
+Прогресс: ${Object.entries(progress).map(([id, count]) => `${grammarData.beginner1.lesson1.find(s => s.id === id).structure}: ${count} правильных`). 1e-10).join('\n')}
 Статистика:
 - Нужно было сказать: ${requiredExamples} примеров
 - Сказано правильно: ${totalCorrect} примеров
