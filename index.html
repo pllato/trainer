@@ -89,19 +89,20 @@
         .structure-item {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            padding: 5px 0;
         }
         .structure-item span {
             flex: 1;
-            font-size: 16px;
-            color: #555;
+            font-size: 18px;
+            color: #444;
         }
         .progress-bar {
-            width: 100px;
+            width: 120px;
             background-color: #f0f0f0;
             border-radius: 5px;
-            height: 12px;
-            margin: 0 10px;
+            height: 14px;
+            margin: 0 15px;
         }
         .progress {
             height: 100%;
@@ -110,10 +111,10 @@
             transition: width 0.3s;
         }
         .count {
-            font-size: 14px;
-            width: 40px;
+            font-size: 16px;
+            width: 50px;
             text-align: right;
-            color: #777;
+            color: #666;
         }
         #log {
             text-align: left;
@@ -203,16 +204,20 @@
             #currentStructures h3 {
                 font-size: 16px;
             }
+            .structure-item {
+                margin-bottom: 10px;
+            }
             .structure-item span {
-                font-size: 14px;
+                font-size: 16px;
             }
             .progress-bar {
-                width: 80px;
-                height: 10px;
+                width: 100px;
+                height: 12px;
+                margin: 0 10px;
             }
             .count {
-                font-size: 12px;
-                width: 30px;
+                font-size: 14px;
+                width: 40px;
             }
             #log.collapsed {
                 height: 20px;
@@ -468,7 +473,9 @@
             const logEntry = document.createElement('p');
             logEntry.textContent = logMessage;
             lastLogEntry.textContent = logMessage;
+            lastLogEntry.style.display = 'block'; // Ensure lastLogEntry is visible
             logEntries.prepend(logEntry);
+            logContainer.style.display = 'block'; // Ensure log container is visible
 
             // Stop if all structures have been said 10 times
             if (correctCount >= currentStructures.length * 10) {
@@ -490,7 +497,7 @@
 
             // Normalize the spoken sentence and structure (remove extra spaces and punctuation)
             const normalizeSentence = (sentence) => {
-                return sentence.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[?.]/g, '');
+                return sentence.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[?.!]/g, '');
             };
 
             const normalizedSpokenSentence = normalizeSentence(spokenSentence);
@@ -504,9 +511,14 @@
             if (structure === 'what is your name ?') {
                 const expectedSentence = 'what is your name';
                 const expectedSentenceShort = 'whats your name';
-                const isMatch = normalizedSpokenSentence === expectedSentence || normalizedSpokenSentence === expectedSentenceShort;
+                const expectedNoSpaces = 'whatisyourname'; // Handle cases where speech recognition removes spaces
+                const isMatch = normalizedSpokenSentence === expectedSentence || 
+                                normalizedSpokenSentence === expectedSentenceShort ||
+                                normalizedSpokenSentence === expectedNoSpaces;
                 if (!isMatch) {
-                    console.log(`Mismatch for "What is your name ?": Expected "${expectedSentence}" or "${expectedSentenceShort}", got "${normalizedSpokenSentence}"`);
+                    console.log(`Mismatch for "What is your name ?":`);
+                    console.log(`Expected: "${expectedSentence}", "${expectedSentenceShort}", or "${expectedNoSpaces}"`);
+                    console.log(`Got: "${normalizedSpokenSentence}"`);
                     console.log(`Spoken words: ${spokenWords.join(', ')}`);
                     console.log(`Structure words: ${structureWords.join(', ')}`);
                 }
