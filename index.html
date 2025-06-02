@@ -57,13 +57,15 @@
     }
     .modal-content {
       background-color: #FFFFFF;
-      margin: 15% auto;
+      margin: 5% auto;
       padding: 20px;
       border: 1px solid #888;
       width: 80%;
       max-width: 400px;
       border-radius: 8px;
       text-align: center;
+      max-height: 80vh;
+      overflow-y: auto;
     }
     .modal-content h2 {
       color: #373D8D;
@@ -81,6 +83,16 @@
     }
     .modal-content button:hover {
       background-color: #2A3171;
+    }
+    .modal-log {
+      margin-top: 1rem;
+      text-align: left;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      font-size: 0.8rem;
+      color: #333;
     }
   </style>
 </head>
@@ -138,8 +150,9 @@
       <div class="modal-content">
         <h2 class="text-2xl font-bold mb-2">Урок завершён!</h2>
         <p id="congratulations" class="text-md mb-4"></p>
-        <p class="text-sm mb-4">Результаты высланы на проверку преподавателю.</p>
-        <button onclick="startNewTraining()">Начать новую тренировку</button>
+        <p class="text-sm mb-2">Результаты высланы на проверку преподавателю.</p>
+        <div class="modal-log" id="modal-log"></div>
+        <button onclick="startNewTraining()" class="mt-4">Начать новую тренировку</button>
       </div>
     </div>
   </div>
@@ -215,6 +228,7 @@
     const userLessonEl = document.getElementById('user-lesson');
     const completionModal = document.getElementById('completion-modal');
     const congratulationsEl = document.getElementById('congratulations');
+    const modalLog = document.getElementById('modal-log');
 
     // Start practice screen
     startBtn.addEventListener('click', () => {
@@ -256,6 +270,7 @@
       feedback.textContent = '';
       statsDiv.innerHTML = '';
       logDiv.innerHTML = '';
+      modalLog.innerHTML = '';
       updateProgressBars();
 
       // Show start screen
@@ -351,6 +366,38 @@
       }
 
       statsDiv.innerHTML = statsHTML;
+    }
+
+    // Update modal log (protocol in the completion modal)
+    function updateModalLog() {
+      const requiredExamples = REQUIRED_CORRECT * grammarData.beginner1.lesson1.length; // 2 * 5 = 10
+      const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
+      const totalAttempts = logEntries.length;
+      const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
+      const duration = formatDuration(startTime, endTime);
+
+      let logHTML = `
+        <p><strong>Протокол:</strong></p>
+        <p><strong>Статистика:</strong></p>
+        <p>- Нужно было сказать: ${requiredExamples} примеров</p>
+        <p>- Сказано правильно: ${totalCorrect} примеров</p>
+        <p>- Всего попыток: ${totalAttempts}</p>
+        <p>- Процент аккуратности: ${accuracy}%</p>
+        <p>- Время тренировки: ${duration}</p>
+        <p><strong>Попытки:</strong></p>
+      `;
+
+      logEntries.forEach(entry => {
+        if (entry.exceeded) {
+          logHTML += `<p>[${entry.time}] ${entry.spoken} 🎉🎈❤️</p>`;
+        } else {
+          const statusIcon = entry.correct ? '✅' : '❌';
+          const duplicateIcon = entry.duplicate ? '🔁' : '';
+          logHTML += `<p>[${entry.time}] Сказано: "${entry.spoken}"${entry.structure ? ` для "${entry.structure}"` : ''} - ${statusIcon} ${entry.correct ? 'Правильно' : 'Неправильно'}${duplicateIcon ? ` ${duplicateIcon} Повтор` : ''}</p>`;
+        }
+      });
+
+      modalLog.innerHTML = logHTML;
     }
 
     // Speech recognition result
@@ -552,6 +599,7 @@
         lessonCompleted = true;
         const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
         congratulationsEl.textContent = randomMessage;
+        updateModalLog(); // Update the protocol in the modal
         completionModal.style.display = 'block';
         isListening = false;
         if (recognition) recognition.stop();
