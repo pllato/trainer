@@ -60,6 +60,22 @@
             margin: 15px 0;
             text-align: left;
         }
+        .progress-bar {
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            height: 10px;
+            margin-top: 5px;
+        }
+        .progress {
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+        .structure-item {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -79,14 +95,14 @@
         </select>
         <div class="examples">
             <h3>Examples of words to use:</h3>
-            <p id="exampleVerbs">Select a level to see example words.</p>
+            <p id="exampleVerbs">Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)</p>
         </div>
         <div id="currentStructures">
-            <h3>Structures to practice:</h3>
+            <h3>Structures to practice (say each 10 times):</h3>
             <ul id="structureList"></ul>
         </div>
         <button id="startButton">Start Practice</button>
-        <div class="status" id="status">Correct: 0/10</div>
+        <div class="status" id="status">Progress: 0/110</div>
         <div class="status" id="listening">Press start to begin...</div>
         <div id="log">
             <h3>Practice Log:</h3>
@@ -109,42 +125,42 @@
         let isListening = false;
         let saidSentences = new Set();
         let currentStructures = [];
+        let structureProgress = {};
 
         // Define structures for each level
         const levels = {
             '1': [
-                // Introductions and Greetings
-                'I am ______ . (Asel, Arman, Madina, Maksat, Maria, Piter)',
-                'You are ______ . (Asel, Arman, Madina, Maksat, Maria, Piter)',
-                'He is ______ . (Asel, Arman, Maksat, Piter)',
-                'She is ______ . (Asel, Madina, Mariya, Maria)',
+                'I am ______ . (Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)',
+                'You are ______ . (Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)',
+                'He is ______ . (Asel, Arman, Maksat, Piter, Natalie, Armaan)',
+                'She is ______ . (Asel, Madina, Mariya, Maria, Natalie, Armaan)',
                 'What is your name ?',
                 'What is his name ?',
                 'What is her name ?',
-                'My name is ______ . (Asel, Arman, Maksat, Madina, Mariya, Maria, Piter)',
-                'His name is ______ . (Asel, Arman, Maksat, Piter)',
-                'Her name is ______ . (Asel, Madina, Mariya, Maria)',
-                'This is ______ . (Asel, Arman, Maksat, Madina, Mariya, Maria, Piter)'
+                'My name is ______ . (Asel, Arman, Maksat, Madina, Mariya, Maria, Piter, Natalie, Armaan)',
+                'His name is ______ . (Asel, Arman, Maksat, Piter, Natalie, Armaan)',
+                'Her name is ______ . (Asel, Madina, Mariya, Maria, Natalie, Armaan)',
+                'This is ______ . (Asel, Arman, Maksat, Madina, Mariya, Maria, Piter, Natalie, Armaan)'
             ],
             '2': [
                 // Placeholder for Beginner Part Two (TBD)
-                'I _______ . (work, play, eat)' // Temporary placeholder
+                'I _______ . (work, play, eat)'
             ],
             '3': [
                 // Placeholder for Elementary (TBD)
-                'I _______ . (work, play, eat)' // Temporary placeholder
+                'I _______ . (work, play, eat)'
             ],
             '4': [
                 // Placeholder for Pre-Intermediate (TBD)
-                'I _______ . (work, play, eat)' // Temporary placeholder
+                'I _______ . (work, play, eat)'
             ],
             '5': [
                 // Placeholder for Intermediate (TBD)
-                'I _______ . (work, play, eat)' // Temporary placeholder
+                'I _______ . (work, play, eat)'
             ],
             '6': [
                 // Placeholder for Upper-Intermediate (TBD)
-                'I _______ . (work, play, eat)' // Temporary placeholder
+                'I _______ . (work, play, eat)'
             ]
         };
 
@@ -153,15 +169,28 @@
             const level = levelSelect.value;
             currentStructures = levels[level];
 
-            // Update the structure list
+            // Initialize progress for each structure
+            structureProgress = {};
+            currentStructures.forEach(structure => {
+                structureProgress[structure.toLowerCase()] = 0;
+            });
+
+            // Update the structure list with progress bars
             structureList.innerHTML = '';
             currentStructures.forEach(structure => {
                 const li = document.createElement('li');
-                li.textContent = structure;
+                li.className = 'structure-item';
+                li.innerHTML = `
+                    ${structure}
+                    <div class="progress-bar">
+                        <div class="progress" id="progress-${structure.toLowerCase().replace(/[^a-z0-9]/g, '-')}" style="width: 0%"></div>
+                    </div>
+                    <span id="count-${structure.toLowerCase().replace(/[^a-z0-9]/g, '-')}" style="font-size: 12px;">0/10</span>
+                `;
                 structureList.appendChild(li);
             });
 
-            // Update example words (combine all words from the current level)
+            // Update example words
             const words = new Set();
             currentStructures.forEach(structure => {
                 const match = structure.match(/\(([^)]+)\)/);
@@ -170,7 +199,7 @@
                     wordList.forEach(word => words.add(word));
                 }
             });
-            exampleVerbs.textContent = Array.from(words).join(', ') || 'Select a level to see example words.';
+            exampleVerbs.textContent = Array.from(words).join(', ') || 'Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)';
         }
 
         // Initialize speech recognition
@@ -187,7 +216,7 @@
             };
 
             recognition.onend = () => {
-                if (isListening && correctCount < 10) {
+                if (isListening && correctCount < currentStructures.length * 10) {
                     recognition.start();
                     listening.textContent = 'Listening...';
                 } else {
@@ -208,19 +237,35 @@
         function checkSentence(spokenSentence) {
             const tense = tenseSelect.value;
             let isCorrect = false;
+            let matchedStructure = null;
             let logMessage = '';
 
             if (tense === 'present') {
-                isCorrect = currentStructures.some(structure => checkPresentSimpleSentence(spokenSentence, structure));
+                matchedStructure = currentStructures.find(structure => checkPresentSimpleSentence(spokenSentence, structure));
+                isCorrect = !!matchedStructure;
             }
 
             if (saidSentences.has(spokenSentence)) {
                 logMessage = `Repeat: "${spokenSentence}"`;
             } else if (isCorrect) {
-                correctCount++;
-                saidSentences.add(spokenSentence);
-                logMessage = `Correct: "${spokenSentence}"`;
-                status.textContent = `Correct: ${correctCount}/10`;
+                // Increment progress for the matched structure
+                const structureKey = matchedStructure.toLowerCase();
+                structureProgress[structureKey] = (structureProgress[structureKey] || 0) + 1;
+                if (structureProgress[structureKey] <= 10) {
+                    correctCount++;
+                    saidSentences.add(spokenSentence);
+                    logMessage = `Correct: "${spokenSentence}"`;
+                    status.textContent = `Progress: ${correctCount}/${currentStructures.length * 10}`;
+
+                    // Update progress bar and count
+                    const progressBar = document.getElementById(`progress-${structureKey.replace(/[^a-z0-9]/g, '-')}`);
+                    const countDisplay = document.getElementById(`count-${structureKey.replace(/[^a-z0-9]/g, '-')}`);
+                    const progressPercentage = (structureProgress[structureKey] / 10) * 100;
+                    progressBar.style.width = `${progressPercentage}%`;
+                    countDisplay.textContent = `${structureProgress[structureKey]}/10`;
+                } else {
+                    logMessage = `Structure "${matchedStructure}" already completed 10 times: "${spokenSentence}"`;
+                }
             } else {
                 logMessage = `Incorrect: "${spokenSentence}" (wrong form or structure)`;
             }
@@ -230,21 +275,23 @@
             logEntry.textContent = logMessage;
             logEntries.prepend(logEntry);
 
-            // Stop if 10 correct sentences are reached
-            if (correctCount >= 10) {
+            // Stop if all structures have been said 10 times
+            if (correctCount >= currentStructures.length * 10) {
                 isListening = false;
                 recognition.stop();
-                listening.textContent = 'Congratulations! 10 correct sentences achieved!';
+                listening.textContent = 'Congratulations! All structures completed 10 times!';
                 startButton.textContent = 'Restart Practice';
             }
         }
 
         // Check if the spoken sentence matches the Present Simple structure
         function checkPresentSimpleSentence(spokenSentence, structure) {
-            // Helper to check if a word is a valid name
+            // Helper to check if a word is a valid name (any word that isn't a verb)
             function isValidName(word) {
-                const names = ['asel', 'arman', 'madina', 'maksat', 'mariya', 'maria', 'piter'];
-                return names.includes(word);
+                // Простая проверка: имя должно состоять только из букв и не быть в списке известных глаголов
+                const verbIndicators = ['work', 'play', 'eat', 'like', 'love', 'want', 'is', 'are', 'am'];
+                if (!/^[a-zA-Z]+$/.test(word)) return false; // Должны быть только буквы
+                return !verbIndicators.includes(word.toLowerCase());
             }
 
             // Normalize the spoken sentence and structure (remove extra spaces and punctuation)
@@ -308,14 +355,14 @@
 
             // Validate the name based on the structure
             const beStructures = [
-                'i am ______ . (asel, arman, madina, maksat, maria, piter)',
-                'you are ______ . (asel, arman, madina, maksat, maria, piter)',
-                'he is ______ . (asel, arman, maksat, piter)',
-                'she is ______ . (asel, madina, mariya, maria)',
-                'my name is ______ . (asel, arman, maksat, madina, mariya, maria, piter)',
-                'his name is ______ . (asel, arman, maksat, piter)',
-                'her name is ______ . (asel, madina, mariya, maria)',
-                'this is ______ . (asel, arman, maksat, madina, mariya, maria, piter)'
+                'i am ______ . (asel, arman, madina, maksat, maria, piter, natalie, armaan)',
+                'you are ______ . (asel, arman, madina, maksat, maria, piter, natalie, armaan)',
+                'he is ______ . (asel, arman, maksat, piter, natalie, armaan)',
+                'she is ______ . (asel, madina, mariya, maria, natalie, armaan)',
+                'my name is ______ . (asel, arman, maksat, madina, mariya, maria, piter, natalie, armaan)',
+                'his name is ______ . (asel, arman, maksat, piter, natalie, armaan)',
+                'her name is ______ . (asel, madina, mariya, maria, natalie, armaan)',
+                'this is ______ . (asel, arman, maksat, madina, mariya, maria, piter, natalie, armaan)'
             ];
 
             structure = structure.toLowerCase();
@@ -329,7 +376,6 @@
         // Event listeners
         tenseSelect.addEventListener('change', () => {
             correctCount = 0;
-            status.textContent = 'Correct: 0/10';
             saidSentences.clear();
             logEntries.innerHTML = '';
             updateStructures();
@@ -342,11 +388,10 @@
         });
 
         levelSelect.addEventListener('change', () => {
-            updateStructures();
             correctCount = 0;
-            status.textContent = 'Correct: 0/10';
             saidSentences.clear();
             logEntries.innerHTML = '';
+            updateStructures();
             if (isListening) {
                 recognition.stop();
                 isListening = false;
