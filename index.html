@@ -8,13 +8,13 @@
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
   <div id="start-screen" class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-    <h1 class="text-2xl font-bold mb-6 text-center">Grammar Practice</h1>
+    <h1 class="text-2xl font-bold mb-6 text-center">Тренировка грамматики</h1>
     <div class="mb-4">
-      <label for="name" class="block text-sm font-medium text-gray-700">Your Name</label>
-      <input type="text" id="name" class="mt-1 p-2 w-full border rounded-md" placeholder="Enter your name" required>
+      <label for="name" class="block text-sm font-medium text-gray-700">Ваше имя</label>
+      <input type="text" id="name" class="mt-1 p-2 w-full border rounded-md" placeholder="Введите ваше имя" required>
     </div>
     <div class="mb-4">
-      <label for="level" class="block text-sm font-medium text-gray-700">Select Level</label>
+      <label for="level" class="block text-sm font-medium text-gray-700">Выберите уровень</label>
       <select id="level" class="mt-1 p-2 w-full border rounded-md">
         <option value="beginner1">Beginner Part One</option>
         <option value="beginner2">Beginner Part Two</option>
@@ -25,30 +25,32 @@
       </select>
     </div>
     <div class="mb-6">
-      <label for="lesson" class="block text-sm font-medium text-gray-700">Select Lesson</label>
+      <label for="lesson" class="block text-sm font-medium text-gray-700">Выберите урок</label>
       <select id="lesson" class="mt-1 p-2 w-full border rounded-md">
-        <option value="lesson1">Lesson 1</option>
+        <option value="lesson1">Урок 1</option>
       </select>
     </div>
-    <button id="start-btn" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">Start Practice</button>
+    <button id="start-btn" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">Начать практику</button>
   </div>
 
   <div id="practice-screen" class="hidden bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-    <h1 class="text-2xl font-bold mb-4">Practice Grammar</h1>
-    <p class="text-lg mb-2">Hello, <span id="user-name"></span>!</p>
-    <p class="text-md mb-4">Level: <span id="user-level"></span>, <span id="user-lesson"></span></p>
-    <button id="start-practice-btn" class="w-full bg-green-600 text-white p-2 rounded-md mb-2 hover:bg-green-700">Start Practice</button>
-    <button id="restart-listening-btn" class="hidden w-full bg-yellow-600 text-white p-2 rounded-md mb-4 hover:bg-yellow-700">Restart Listening</button>
+    <h1 class="text-2xl font-bold mb-4">Практика грамматики</h1>
+    <p class="text-lg mb-2">Привет, <span id="user-name"></span>!</p>
+    <p class="text-md mb-4">Уровень: <span id="user-level"></span>, <span id="user-lesson"></span></p>
+    <button id="start-practice-btn" class="w-full bg-green-600 text-white p-2 rounded-md mb-2 hover:bg-green-700">Начать практику</button>
+    <button id="restart-listening-btn" class="hidden w-full bg-yellow-600 text-white p-2 rounded-md mb-4 hover:bg-yellow-700">Возобновить прослушивание</button>
     <p id="feedback" class="text-md mb-4"></p>
     <div class="mb-6">
-      <p class="text-lg font-semibold">Progress:</p>
+      <p class="text-lg font-semibold">Прогресс:</p>
       <div id="progress-bars"></div>
     </div>
     <div class="mb-6">
-      <p class="text-lg font-semibold">Log:</p>
+      <p class="text-lg font-semibold">Лог:</p>
       <div id="log" class="h-40 overflow-y-auto border p-2 text-sm"></div>
     </div>
-    <p id="completion" class="text-lg font-bold text-green-600 hidden">Lesson Completed!</p>
+    <p id="completion" class="text-lg font-bold text-green-600 hidden">Урок завершён!</p>
+    <p id="congratulations" class="text-md text-purple-700 mt-2 hidden">Ты большой молодец! 🌟 Отличная работа, ты справился с уроком на ура! Продолжай в том же духе, и скоро ты будешь говорить на английском как носитель! 💪</p>
+    <button id="send-results-btn" class="hidden w-full bg-purple-600 text-white p-2 rounded-md mt-2 hover:bg-purple-700">Отправить результаты учителю</button>
   </div>
 
   <script>
@@ -79,7 +81,7 @@
     let spokenHistory = [];
     let logEntries = [];
     let isListening = false;
-    const REQUIRED_CORRECT = 3; // Reduced from 10 to 3
+    const REQUIRED_CORRECT = 3;
     let lastSpeechTime = Date.now();
 
     // DOM elements
@@ -95,6 +97,8 @@
     const userLevelEl = document.getElementById('user-level');
     const userLessonEl = document.getElementById('user-lesson');
     const completionEl = document.getElementById('completion');
+    const congratulationsEl = document.getElementById('congratulations');
+    const sendResultsBtn = document.getElementById('send-results-btn');
 
     // Start practice screen
     startBtn.addEventListener('click', () => {
@@ -102,7 +106,7 @@
       userLevel = document.getElementById('level').value;
       userLesson = document.getElementById('lesson').value;
       if (!userName) {
-        alert('Please enter your name.');
+        alert('Пожалуйста, введите ваше имя.');
         return;
       }
       startScreen.classList.add('hidden');
@@ -127,34 +131,27 @@
       }
     });
 
+    // Send results to Telegram and Bitrix24
+    sendResultsBtn.addEventListener('click', () => {
+      sendResults();
+    });
+
     // Function to start listening
     function startListening() {
       recognition.start();
       isListening = true;
-      startPracticeBtn.textContent = 'Listening...';
+      startPracticeBtn.textContent = 'Слушаю...';
       startPracticeBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
       startPracticeBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
       startPracticeBtn.disabled = true;
       restartListeningBtn.classList.add('hidden');
-      feedback.textContent = 'Speak any example from the structures above.';
+      feedback.textContent = 'Говори любой пример из структур выше.';
       lastSpeechTime = Date.now();
     }
 
     // Initialize progress bars
     function initializeProgressBars() {
-      progressBars.innerHTML = '';
-      grammarData.beginner1.lesson1.forEach(struct => {
-        const div = document.createElement('div');
-        div.className = 'mb-2';
-        div.innerHTML = `
-          <p class="text-sm">${struct.structure}</p>
-          <div class="w-full bg-gray-200 rounded-full h-2.5">
-            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${(progress[struct.id] / REQUIRED_CORRECT) * 100}%"></div>
-          </div>
-          <p class="text-xs text-gray-600">${progress[struct.id]}/${REQUIRED_CORRECT}</p>
-        `;
-        progressBars.appendChild(div);
-      });
+      updateProgressBars();
     }
 
     // Speech recognition result
@@ -178,31 +175,31 @@
             if (matchedStructure.hasName) spokenHistory.push(spokenText);
 
             if (progress[matchedStructure.id] > REQUIRED_CORRECT) {
-              feedback.textContent = `Great job! 🎉🎈❤️ You’ve exceeded the goal for "${matchedStructure.structure}"!`;
+              feedback.textContent = `Отлично! 🎉🎈❤️ Ты превысил цель для "${matchedStructure.structure}"!`;
               logEntries.push({
                 time: new Date().toLocaleTimeString(),
-                spoken: `Exceeded goal for "${matchedStructure.structure}"`,
+                spoken: `Превышена цель для "${matchedStructure.structure}"`,
                 structure: matchedStructure.structure,
                 correct: true,
                 exceeded: true
               });
             } else {
-              feedback.textContent = `Correct! You said: "${spokenText}" for "${matchedStructure.structure}"`;
+              feedback.textContent = `Правильно! Ты сказал: "${spokenText}" для "${matchedStructure.structure}"`;
             }
 
             updateProgressBars();
             checkCompletion();
           } else {
-            feedback.textContent = `Duplicate: "${spokenText}". Say a new example for: ${matchedStructure.structure}`;
+            feedback.textContent = `Повтор: "${spokenText}". Скажи новый пример для: ${matchedStructure.structure}`;
           }
         } else {
           logEntry.structure = matchedStructure.structure;
           logEntry.correct = false;
-          feedback.textContent = `Incorrect: "${spokenText}" for "${matchedStructure.structure}"`;
+          feedback.textContent = `Неправильно: "${spokenText}" для "${matchedStructure.structure}"`;
         }
       } else {
         logEntry.correct = false;
-        feedback.textContent = `No match: "${spokenText}". Try one of the structures above.`;
+        feedback.textContent = `Не совпадает: "${spokenText}". Попробуй одну из структур выше.`;
       }
 
       logEntries.push(logEntry);
@@ -217,10 +214,10 @@
     };
 
     recognition.onerror = (event) => {
-      feedback.textContent = 'Error occurred in recognition: ' + event.error;
+      feedback.textContent = 'Ошибка в распознавании: ' + event.error;
       isListening = false;
       restartListeningBtn.classList.remove('hidden');
-      startPracticeBtn.textContent = 'Start Practice';
+      startPracticeBtn.textContent = 'Начать практику';
       startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
       startPracticeBtn.classList.add('bg-green-600', 'hover:bg-green-700');
       startPracticeBtn.disabled = false;
@@ -230,10 +227,10 @@
       // Check for no-speech timeout
       const currentTime = Date.now();
       if (currentTime - lastSpeechTime > 10000) { // 10 seconds timeout
-        feedback.textContent = 'No speech detected for a while. Restarting...';
+        feedback.textContent = 'Давно не слышу речи. Перезапускаю...';
         isListening = false;
         restartListeningBtn.classList.remove('hidden');
-        startPracticeBtn.textContent = 'Start Practice';
+        startPracticeBtn.textContent = 'Начать практику';
         startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
         startPracticeBtn.classList.add('bg-green-600', 'hover:bg-green-700');
         startPracticeBtn.disabled = false;
@@ -281,14 +278,20 @@
     function updateProgressBars() {
       progressBars.innerHTML = '';
       grammarData.beginner1.lesson1.forEach(struct => {
+        const totalCorrect = progress[struct.id];
+        const cycles = Math.floor(totalCorrect / REQUIRED_CORRECT);
+        const currentProgress = totalCorrect % REQUIRED_CORRECT;
+        const percentage = (currentProgress / REQUIRED_CORRECT) * 100;
+        const barColor = cycles % 2 === 0 ? 'bg-blue-600' : 'bg-green-600';
+
         const div = document.createElement('div');
         div.className = 'mb-2';
         div.innerHTML = `
           <p class="text-sm">${struct.structure}</p>
           <div class="w-full bg-gray-200 rounded-full h-2.5">
-            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${(progress[struct.id] / REQUIRED_CORRECT) * 100}%"></div>
+            <div class="${barColor} h-2.5 rounded-full" style="width: ${percentage}%"></div>
           </div>
-          <p class="text-xs text-gray-600">${progress[struct.id]}/${REQUIRED_CORRECT}</p>
+          <p class="text-xs text-gray-600">${totalCorrect}/${REQUIRED_CORRECT}</p>
         `;
         progressBars.appendChild(div);
       });
@@ -303,7 +306,7 @@
         if (entry.exceeded) {
           p.textContent = `[${entry.time}] ${entry.spoken} 🎉🎈❤️`;
         } else {
-          p.textContent = `[${entry.time}] Said: "${entry.spoken}"${entry.structure ? ` for "${entry.structure}"` : ''} - ${entry.correct ? 'Correct' : 'Incorrect'}${entry.duplicate ? ', Duplicate' : ''}`;
+          p.textContent = `[${entry.time}] Сказано: "${entry.spoken}"${entry.structure ? ` для "${entry.structure}"` : ''} - ${entry.correct ? 'Правильно' : 'Неправильно'}${entry.duplicate ? ', Повтор' : ''}`;
         }
         logDiv.appendChild(p);
       });
@@ -314,9 +317,66 @@
     function checkCompletion() {
       if (Object.values(progress).every(count => count >= REQUIRED_CORRECT)) {
         completionEl.classList.remove('hidden');
+        congratulationsEl.classList.remove('hidden');
+        sendResultsBtn.classList.remove('hidden');
         isListening = false;
         recognition.stop();
-        startPracticeBtn.textContent = 'Lesson Completed';
+        startPracticeBtn.textContent = 'Урок завершён';
+      }
+    }
+
+    // Send results to Telegram and Bitrix24
+    async function sendResults() {
+      const resultSummary = `
+Результаты для ${userName}
+Уровень: ${userLevelEl.textContent}
+Урок: ${userLessonEl.textContent}
+Прогресс: ${Object.entries(progress).map(([id, count]) => `${grammarData.beginner1.lesson1.find(s => s.id === id).structure}: ${count} правильных`).join('\n')}
+Лог:
+${logEntries.map(entry => `- ${entry.spoken}${entry.structure ? ` (для "${entry.structure}")` : ''} - ${entry.correct ? 'Правильно' : 'Неправильно'}${entry.duplicate ? ', Повтор' : ''}${entry.exceeded ? ' 🎉🎈❤️' : ''}`).join('\n')}
+`;
+
+      // Telegram integration
+      const TELEGRAM_BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'; // Замени на твой Telegram Bot Token
+      const TELEGRAM_CHAT_ID = 'YOUR_TELEGRAM_CHAT_ID'; // Замени на твой Telegram Chat ID
+      const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+
+      try {
+        await fetch(telegramUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: resultSummary
+          })
+        });
+        feedback.textContent = 'Результаты отправлены в Telegram!';
+      } catch (error) {
+        feedback.textContent = 'Ошибка отправки в Telegram: ' + error.message;
+      }
+
+      // Bitrix24 integration
+      const BITRIX_WEBHOOK_URL = 'https://elcalmaty.bitrix24.kz/rest/1/t30j7bkqi9p4sy0b/'; // Твой вебхук
+      const BITRIX_CHAT_ID = '145624'; // ID чата из URL
+      const bitrixUrl = `${BITRIX_WEBHOOK_URL}im.message.add`;
+
+      try {
+        const response = await fetch(bitrixUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            CHAT_ID: BITRIX_CHAT_ID,
+            MESSAGE: resultSummary
+          })
+        });
+        const data = await response.json();
+        if (data.result) {
+          feedback.textContent = 'Результаты отправлены в Bitrix24!';
+        } else {
+          feedback.textContent = 'Ошибка отправки в Bitrix24: ' + JSON.stringify(data.error);
+        }
+      } catch (error) {
+        feedback.textContent = 'Ошибка отправки в Bitrix24: ' + error.message;
       }
     }
   </script>
