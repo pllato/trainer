@@ -80,6 +80,7 @@
             text-align: left;
             border-top: 1px solid #ddd;
             padding-top: 10px;
+            flex: 1;
         }
         #currentStructures h3 {
             font-size: 18px;
@@ -89,8 +90,9 @@
         .structure-item {
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
-            padding: 5px 0;
+            margin-bottom: 20px;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
         }
         .structure-item span {
             flex: 1;
@@ -147,6 +149,24 @@
             font-size: 12px;
             margin: 0;
             line-height: 15px;
+            display: flex;
+            align-items: center;
+        }
+        #lastLogEntry::before {
+            margin-right: 5px;
+            font-size: 14px;
+        }
+        #lastLogEntry.correct::before {
+            content: "✅";
+        }
+        #lastLogEntry.incorrect::before {
+            content: "❌";
+        }
+        #lastLogEntry.repeat::before {
+            content: "🔁";
+        }
+        #lastLogEntry.debug::before {
+            content: "⚠️";
         }
         #toggleLogButton {
             padding: 3px 6px;
@@ -205,7 +225,8 @@
                 font-size: 16px;
             }
             .structure-item {
-                margin-bottom: 10px;
+                margin-bottom: 15px;
+                padding: 5px 0;
             }
             .structure-item span {
                 font-size: 16px;
@@ -231,6 +252,9 @@
             #lastLogEntry {
                 font-size: 10px;
                 line-height: 12px;
+            }
+            #lastLogEntry::before {
+                font-size: 12px;
             }
             #toggleLogButton {
                 font-size: 8px;
@@ -279,7 +303,7 @@
                     Practice Log:
                     <button id="toggleLogButton">Show Log</button>
                 </h3>
-                <div id="lastLogEntry"></div>
+                <div id="lastLogEntry" class="status"></div>
                 <div id="logEntries" style="display: none;"></div>
             </div>
         </div>
@@ -403,6 +427,9 @@
             greeting.textContent = `Hello, ${userName}!`;
             lessonTitle.textContent = lessonSelect.options[lessonSelect.selectedIndex].text;
             updateStructures();
+            lastLogEntry.textContent = 'Press start to begin...';
+            lastLogEntry.style.display = 'block';
+            logContainer.style.display = 'block';
         });
 
         // Initialize speech recognition
@@ -441,19 +468,22 @@
             let isCorrect = false;
             let matchedStructure = null;
             let logMessage = '';
+            let logClass = '';
 
             matchedStructure = currentStructures.find(structure => checkPresentSimpleSentence(spokenSentence, structure));
             isCorrect = !!matchedStructure;
 
             if (saidSentences.has(spokenSentence)) {
-                logMessage = `Repeat: "${spokenSentence}"`;
+                logMessage = `🔁 Повтор: "${spokenSentence}"`;
+                logClass = 'repeat';
             } else if (isCorrect) {
                 const structureKey = matchedStructure.toLowerCase();
                 if (structureProgress[structureKey] < 10) {
                     structureProgress[structureKey]++;
                     correctCount++;
                     saidSentences.add(spokenSentence);
-                    logMessage = `Correct: "${spokenSentence}" (Structure: "${matchedStructure}")`;
+                    logMessage = `✅ Правильно: "${spokenSentence}" (Structure: "${matchedStructure}")`;
+                    logClass = 'correct';
                     status.textContent = `Progress: ${correctCount}/${currentStructures.length * 10}`;
 
                     // Update progress bar and count
@@ -463,19 +493,22 @@
                     progressBar.style.width = `${progressPercentage}%`;
                     countDisplay.textContent = `${structureProgress[structureKey]}/10`;
                 } else {
-                    logMessage = `Structure "${matchedStructure}" already completed 10 times: "${spokenSentence}"`;
+                    logMessage = `🔁 Структура "${matchedStructure}" уже завершена 10 раз: "${spokenSentence}"`;
+                    logClass = 'repeat';
                 }
             } else {
-                logMessage = `Incorrect: "${spokenSentence}" (wrong form or structure)`;
+                logMessage = `❌ Неправильно: "${spokenSentence}" (неверная форма или структура)`;
+                logClass = 'incorrect';
             }
 
             // Add to log
             const logEntry = document.createElement('p');
             logEntry.textContent = logMessage;
             lastLogEntry.textContent = logMessage;
-            lastLogEntry.style.display = 'block'; // Ensure lastLogEntry is visible
+            lastLogEntry.className = logClass;
+            lastLogEntry.style.display = 'block';
             logEntries.prepend(logEntry);
-            logContainer.style.display = 'block'; // Ensure log container is visible
+            logContainer.style.display = 'block';
 
             // Stop if all structures have been said 10 times
             if (correctCount >= currentStructures.length * 10) {
@@ -511,83 +544,42 @@
             if (structure === 'what is your name ?') {
                 const expectedSentence = 'what is your name';
                 const expectedSentenceShort = 'whats your name';
-                const expectedNoSpaces = 'whatisyourname'; // Handle cases where speech recognition removes spaces
-                const isMatch = normalizedSpokenSentence === expectedSentence || 
-                                normalizedSpokenSentence === expectedSentenceShort ||
-                                normalizedSpokenSentence === expectedNoSpaces;
+                const expectedNoSpaces = 'whatisyourname';
+                const expectedAltSpelling = 'what is yur name';
+                const expectedExtraSpaces = 'what  is  your  name';
+                const expectedMisrecognition1 = 'what is your namee';
+                const expectedMisrecognition2 = 'what isyour name';
+                const expectedMisrecognition3 = 'whatis your name';
+                const expectedMisrecognition4 = 'what is yourname';
+
+                // Check for exact matches
+                const exactMatches = [
+                    expectedSentence,
+                    expectedSentenceShort,
+                    expectedNoSpaces,
+                    expectedAltSpelling,
+                    expectedExtraSpaces,
+                    expectedMisrecognition1,
+                    expectedMisrecognition2,
+                    expectedMisrecognition3,
+                    expectedMisrecognition4
+                ];
+
+                let isMatch = exactMatches.includes(normalizedSpokenSentence);
+
+                // Check for partial match (starts with expected patterns)
+                if (!isMatch) {
+                    const partialPatterns = [
+                        'what is your name',
+                        'whats your name',
+                        'what is yur name',
+                        'whatisyourname',
+                        'whatis your name',
+                        'what isyour name'
+                    ];
+                    isMatch = partialPatterns.some(pattern => normalizedSpokenSentence.startsWith(pattern));
+                }
+
                 if (!isMatch) {
                     console.log(`Mismatch for "What is your name ?":`);
-                    console.log(`Expected: "${expectedSentence}", "${expectedSentenceShort}", or "${expectedNoSpaces}"`);
-                    console.log(`Got: "${normalizedSpokenSentence}"`);
-                    console.log(`Spoken words: ${spokenWords.join(', ')}`);
-                    console.log(`Structure words: ${structureWords.join(', ')}`);
-                }
-                return isMatch;
-            }
-
-            // Extract the expected position of the name (where ______ is)
-            let namePosition = structureWords.indexOf('______');
-            if (namePosition === -1) return false;
-
-            // Adjust structure words to exclude the name slot for length comparison
-            const structureWordsWithoutName = structureWords.filter(word => word !== '______');
-            let expectedLength = structureWordsWithoutName.length + 1; // +1 for the name
-
-            // Check if the spoken sentence has at least the expected number of words
-            if (spokenWords.length < expectedLength - 1) return false;
-
-            // Extract the spoken name at the correct position
-            let spokenNamePosition = namePosition;
-            const spokenName = spokenWords[spokenNamePosition];
-            if (!spokenName) return false;
-
-            // Verify the fixed parts of the sentence match
-            let structureMatches = true;
-            for (let i = 0; i < structureWords.length; i++) {
-                if (i === namePosition) continue; // Skip the name slot
-
-                let expectedWord = structureWords[i];
-                let spokenWord = spokenWords[i] || '';
-
-                if (expectedWord && expectedWord !== spokenWord) {
-                    structureMatches = false;
-                    break;
-                }
-            }
-
-            if (!structureMatches) return false;
-
-            // Validate the name based on the structure
-            const beStructures = [
-                'i am ______ . (asel, arman, madina, maksat, maria, piter, natalie, armaan)',
-                'you are ______ . (asel, arman, madina, maksat, maria, piter, natalie, armaan)',
-                'my name is ______ . (asel, arman, maksat, madina, mariya, maria, piter, natalie, armaan)',
-                'this is ______ . (asel, arman, maksat, madina, mariya, maria, piter, natalie, armaan)'
-            ];
-
-            structure = structure.toLowerCase();
-            if (beStructures.includes(structure)) {
-                return isValidName(spokenName);
-            }
-
-            return false;
-        }
-
-        // Event listeners
-        startButton.addEventListener('click', () => {
-            if (!isListening) {
-                if (!recognition) initSpeechRecognition();
-                isListening = true;
-                recognition.start();
-                startButton.textContent = 'Stop Practice';
-                listening.textContent = 'Listening...';
-            } else {
-                isListening = false;
-                recognition.stop();
-                startButton.textContent = 'Start Practice';
-                listening.textContent = 'Stopped. Press start to begin...';
-            }
-        });
-    </script>
-</body>
-</html>
+                    console.log(`
