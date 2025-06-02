@@ -294,7 +294,6 @@
         <p>- Сказано правильно: ${totalCorrect} примеров</p>
         <p>- Всего попыток: ${totalAttempts}</p>
         <p>- Процент аккуратности: ${accuracy}%</p>
-        <p>- Выполнено структур: s1: ${progress.s1}, s2: ${progress.s2}, s3: ${progress.s3}, s4: ${progress.s4}, s5: ${progress.s5}</p>
       `;
     }
 
@@ -319,7 +318,7 @@
             if (matchedStructure.hasName) spokenHistory.push(spokenText);
 
             if (progress[matchedStructure.id] > REQUIRED_CORRECT) {
-              feedback.textContent = `Отлично! 🎉🎈❤️ Ты превысил цель для "${matchedStructure.structure}"! Выполнено структур: s1: ${progress.s1}, s2: ${progress.s2}, s3: ${progress.s3}, s4: ${progress.s4}, s5: ${progress.s5}`;
+              feedback.textContent = `Отлично! 🎉🎈❤️ Ты превысил цель для "${matchedStructure.structure}"!`;
               logEntries.push({
                 time: new Date().toLocaleTimeString(),
                 spoken: `Превышена цель для "${matchedStructure.structure}"`,
@@ -328,22 +327,22 @@
                 exceeded: true
               });
             } else {
-              feedback.textContent = `Правильно! Ты сказал: "${spokenText}" для "${matchedStructure.structure}". Выполнено структур: s1: ${progress.s1}, s2: ${progress.s2}, s3: ${progress.s3}, s4: ${progress.s4}, s5: ${progress.s5}`;
+              feedback.textContent = `Правильно! Ты сказал: "${spokenText}" для "${matchedStructure.structure}"`;
             }
 
             updateProgressBars();
             checkCompletion();
           } else {
-            feedback.textContent = `Повтор: "${spokenText}". Скажи новый пример для: ${matchedStructure.structure}. Выполнено структур: s1: ${progress.s1}, s2: ${progress.s2}, s3: ${progress.s3}, s4: ${progress.s4}, s5: ${progress.s5}`;
+            feedback.textContent = `Повтор: "${spokenText}". Скажи новый пример для: ${matchedStructure.structure}`;
           }
         } else {
           logEntry.structure = matchedStructure.structure;
           logEntry.correct = false;
-          feedback.textContent = `Неправильно: "${spokenText}" для "${matchedStructure.structure}". Выполнено структур: s1: ${progress.s1}, s2: ${progress.s2}, s3: ${progress.s3}, s4: ${progress.s4}, s5: ${progress.s5}`;
+          feedback.textContent = `Неправильно: "${spokenText}" для "${matchedStructure.structure}"`;
         }
       } else {
         logEntry.correct = false;
-        feedback.textContent = `Не совпадает: "${spokenText}". Попробуй одну из структур выше. Выполнено структур: s1: ${progress.s1}, s2: ${progress.s2}, s3: ${progress.s3}, s4: ${progress.s4}, s5: ${progress.s5}`;
+        feedback.textContent = `Не совпадает: "${spokenText}". Попробуй одну из структур выше.`;
       }
 
       logEntries.push(logEntry);
@@ -359,7 +358,7 @@
     };
 
     recognition.onerror = (event) => {
-      feedback.textContent = 'Ошибка в распознавании: ' + event.error + '. Выполнено структур: s1: ' + progress.s1 + ', s2: ' + progress.s2 + ', s3: ' + progress.s3 + ', s4: ' + progress.s4 + ', s5: ' + progress.s5;
+      feedback.textContent = 'Ошибка в распознавании: ' + event.error;
       isListening = false;
       restartListeningBtn.classList.remove('hidden');
       startPracticeBtn.textContent = 'Начать практику';
@@ -372,7 +371,7 @@
       // Check for no-speech timeout
       const currentTime = Date.now();
       if (currentTime - lastSpeechTime > 10000) { // 10 seconds timeout
-        feedback.textContent = 'Давно не слышу речи. Перезапускаю... Выполнено структур: s1: ' + progress.s1 + ', s2: ' + progress.s2 + ', s3: ' + progress.s3 + ', s4: ' + progress.s4 + ', s5: ' + progress.s5;
+        feedback.textContent = 'Давно не слышу речи. Перезапускаю...';
         isListening = false;
         restartListeningBtn.classList.remove('hidden');
         startPracticeBtn.textContent = 'Начать практику';
