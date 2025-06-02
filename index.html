@@ -37,7 +37,8 @@
     <h1 class="text-2xl font-bold mb-4">Practice Grammar</h1>
     <p class="text-lg mb-2">Hello, <span id="user-name"></span>!</p>
     <p class="text-md mb-4">Level: <span id="user-level"></span>, <span id="user-lesson"></span></p>
-    <button id="start-practice-btn" class="w-full bg-green-600 text-white p-2 rounded-md mb-4 hover:bg-green-700">Start Practice</button>
+    <button id="start-practice-btn" class="w-full bg-green-600 text-white p-2 rounded-md mb-2 hover:bg-green-700">Start Practice</button>
+    <button id="restart-listening-btn" class="hidden w-full bg-yellow-600 text-white p-2 rounded-md mb-4 hover:bg-yellow-700">Restart Listening</button>
     <p id="feedback" class="text-md mb-4"></p>
     <div class="mb-6">
       <p class="text-lg font-semibold">Progress:</p>
@@ -78,12 +79,15 @@
     let spokenHistory = [];
     let logEntries = [];
     let isListening = false;
+    const REQUIRED_CORRECT = 3; // Reduced from 10 to 3
+    let lastSpeechTime = Date.now();
 
     // DOM elements
     const startScreen = document.getElementById('start-screen');
     const practiceScreen = document.getElementById('practice-screen');
     const startBtn = document.getElementById('start-btn');
     const startPracticeBtn = document.getElementById('start-practice-btn');
+    const restartListeningBtn = document.getElementById('restart-listening-btn');
     const feedback = document.getElementById('feedback');
     const progressBars = document.getElementById('progress-bars');
     const logDiv = document.getElementById('log');
@@ -112,15 +116,29 @@
     // Start continuous speech recognition
     startPracticeBtn.addEventListener('click', () => {
       if (!isListening) {
-        recognition.start();
-        isListening = true;
-        startPracticeBtn.textContent = 'Listening...';
-        startPracticeBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-        startPracticeBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
-        startPracticeBtn.disabled = true;
-        feedback.textContent = 'Speak any example from the structures above.';
+        startListening();
       }
     });
+
+    // Restart listening
+    restartListeningBtn.addEventListener('click', () => {
+      if (!isListening) {
+        startListening();
+      }
+    });
+
+    // Function to start listening
+    function startListening() {
+      recognition.start();
+      isListening = true;
+      startPracticeBtn.textContent = 'Listening...';
+      startPracticeBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+      startPracticeBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+      startPracticeBtn.disabled = true;
+      restartListeningBtn.classList.add('hidden');
+      feedback.textContent = 'Speak any example from the structures above.';
+      lastSpeechTime = Date.now();
+    }
 
     // Initialize progress bars
     function initializeProgressBars() {
@@ -131,9 +149,9 @@
         div.innerHTML = `
           <p class="text-sm">${struct.structure}</p>
           <div class="w-full bg-gray-200 rounded-full h-2.5">
-            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${progress[struct.id] * 10}%"></div>
+            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${(progress[struct.id] / REQUIRED_CORRECT) * 100}%"></div>
           </div>
-          <p class="text-xs text-gray-600">${progress[struct.id]}/10</p>
+          <p class="text-xs text-gray-600">${progress[struct.id]}/${REQUIRED_CORRECT}</p>
         `;
         progressBars.appendChild(div);
       });
@@ -144,6 +162,8 @@
       const spokenText = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
       const matchedStructure = findMatchingStructure(spokenText);
       const logEntry = { time: new Date().toLocaleTimeString(), spoken: spokenText };
+
+      lastSpeechTime = Date.now();
 
       if (matchedStructure) {
         const isCorrect = validateStructure(spokenText, matchedStructure);
@@ -156,7 +176,20 @@
           if (!isDuplicate || !matchedStructure.hasName) {
             progress[matchedStructure.id]++;
             if (matchedStructure.hasName) spokenHistory.push(spokenText);
-            feedback.textContent = `Correct! You said: "${spokenText}" for "${matchedStructure.structure}"`;
+
+            if (progress[matchedStructure.id] > REQUIRED_CORRECT) {
+              feedback.textContent = `Great job! 🎉🎈❤️ You’ve exceeded the goal for "${matchedStructure.structure}"!`;
+              logEntries.push({
+                time: new Date().toLocaleTimeString(),
+                spoken: `Exceeded goal for "${matchedStructure.structure}"`,
+                structure: matchedStructure.structure,
+                correct: true,
+                exceeded: true
+              });
+            } else {
+              feedback.textContent = `Correct! You said: "${spokenText}" for "${matchedStructure.structure}"`;
+            }
+
             updateProgressBars();
             checkCompletion();
           } else {
@@ -178,22 +211,35 @@
       // Brief pause before restarting recognition to avoid overlap
       setTimeout(() => {
         if (isListening && !completionEl.classList.contains('hidden')) {
-          recognition.stop();
+          recognition.start();
         }
       }, 500);
     };
 
     recognition.onerror = (event) => {
       feedback.textContent = 'Error occurred in recognition: ' + event.error;
-      // Restart recognition on error
-      setTimeout(() => {
-        if (isListening && !completionEl.classList.contains('hidden')) {
-          recognition.start();
-        }
-      }, 500);
+      isListening = false;
+      restartListeningBtn.classList.remove('hidden');
+      startPracticeBtn.textContent = 'Start Practice';
+      startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+      startPracticeBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+      startPracticeBtn.disabled = false;
     };
 
     recognition.onend = () => {
+      // Check for no-speech timeout
+      const currentTime = Date.now();
+      if (currentTime - lastSpeechTime > 10000) { // 10 seconds timeout
+        feedback.textContent = 'No speech detected for a while. Restarting...';
+        isListening = false;
+        restartListeningBtn.classList.remove('hidden');
+        startPracticeBtn.textContent = 'Start Practice';
+        startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+        startPracticeBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+        startPracticeBtn.disabled = false;
+        return;
+      }
+
       // Restart recognition if still listening and lesson not completed
       if (isListening && !completionEl.classList.contains('hidden')) {
         setTimeout(() => {
@@ -240,9 +286,9 @@
         div.innerHTML = `
           <p class="text-sm">${struct.structure}</p>
           <div class="w-full bg-gray-200 rounded-full h-2.5">
-            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${progress[struct.id] * 10}%"></div>
+            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${(progress[struct.id] / REQUIRED_CORRECT) * 100}%"></div>
           </div>
-          <p class="text-xs text-gray-600">${progress[struct.id]}/10</p>
+          <p class="text-xs text-gray-600">${progress[struct.id]}/${REQUIRED_CORRECT}</p>
         `;
         progressBars.appendChild(div);
       });
@@ -254,7 +300,11 @@
       logEntries.forEach(entry => {
         const p = document.createElement('p');
         p.className = 'mb-1';
-        p.textContent = `[${entry.time}] Said: "${entry.spoken}"${entry.structure ? ` for "${entry.structure}"` : ''} - ${entry.correct ? 'Correct' : 'Incorrect'}${entry.duplicate ? ', Duplicate' : ''}`;
+        if (entry.exceeded) {
+          p.textContent = `[${entry.time}] ${entry.spoken} 🎉🎈❤️`;
+        } else {
+          p.textContent = `[${entry.time}] Said: "${entry.spoken}"${entry.structure ? ` for "${entry.structure}"` : ''} - ${entry.correct ? 'Correct' : 'Incorrect'}${entry.duplicate ? ', Duplicate' : ''}`;
+        }
         logDiv.appendChild(p);
       });
       logDiv.scrollTop = logDiv.scrollHeight;
@@ -262,7 +312,7 @@
 
     // Check lesson completion
     function checkCompletion() {
-      if (Object.values(progress).every(count => count >= 10)) {
+      if (Object.values(progress).every(count => count >= REQUIRED_CORRECT)) {
         completionEl.classList.remove('hidden');
         isListening = false;
         recognition.stop();
