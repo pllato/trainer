@@ -7,22 +7,29 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
+            padding: 10px;
             background-color: #f0f0f0;
+            margin: 0;
         }
         .container {
             max-width: 600px;
             margin: 0 auto;
             background: white;
-            padding: 20px;
+            padding: 10px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 20px);
+        }
+        h1 {
+            font-size: 20px;
+            margin: 10px 0;
         }
         button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin: 10px;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin: 5px 0;
             cursor: pointer;
             background-color: #4CAF50;
             color: white;
@@ -33,39 +40,59 @@
             background-color: #45a049;
         }
         select {
-            padding: 10px;
-            font-size: 16px;
-            margin: 10px;
-            width: 300px;
-        }
-        #log {
-            text-align: left;
-            margin-top: 20px;
-            padding: 10px;
-            background: #e8e8e8;
-            border-radius: 5px;
-            max-height: 200px;
-            overflow-y: auto;
+            padding: 8px;
+            font-size: 14px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
         }
         .status {
-            font-size: 18px;
-            margin: 10px 0;
+            font-size: 14px;
+            margin: 5px 0;
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 5px 0;
+            z-index: 1;
         }
         .examples {
-            margin: 20px 0;
+            margin: 5px 0;
             text-align: left;
+        }
+        .examples h3 {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .examples p {
+            font-size: 12px;
+            margin: 0;
         }
         #currentStructures {
-            font-size: 16px;
-            margin: 15px 0;
+            font-size: 14px;
+            margin: 5px 0;
             text-align: left;
+            flex: 1;
+            overflow-y: auto;
+        }
+        #currentStructures h3 {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .structure-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .structure-item span {
+            flex: 1;
+            font-size: 12px;
         }
         .progress-bar {
-            width: 100%;
+            width: 60px;
             background-color: #f0f0f0;
             border-radius: 5px;
-            height: 10px;
-            margin-top: 5px;
+            height: 8px;
+            margin: 0 5px;
         }
         .progress {
             height: 100%;
@@ -73,8 +100,78 @@
             border-radius: 5px;
             transition: width 0.3s;
         }
-        .structure-item {
-            margin-bottom: 10px;
+        .count {
+            font-size: 10px;
+            width: 30px;
+            text-align: right;
+        }
+        #log {
+            text-align: left;
+            margin-top: 5px;
+            padding: 5px;
+            background: #e8e8e8;
+            border-radius: 5px;
+            height: 150px;
+            overflow-y: auto;
+        }
+        #log h3 {
+            font-size: 14px;
+            margin: 0 0 5px 0;
+        }
+        #log p {
+            font-size: 12px;
+            margin: 2px 0;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 5px;
+            }
+            h1 {
+                font-size: 18px;
+            }
+            button {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            select {
+                padding: 6px;
+                font-size: 12px;
+            }
+            .status {
+                font-size: 12px;
+            }
+            .examples h3 {
+                font-size: 12px;
+            }
+            .examples p {
+                font-size: 10px;
+            }
+            #currentStructures {
+                font-size: 12px;
+            }
+            #currentStructures h3 {
+                font-size: 12px;
+            }
+            .structure-item span {
+                font-size: 10px;
+            }
+            .progress-bar {
+                width: 50px;
+                height: 6px;
+            }
+            .count {
+                font-size: 8px;
+                width: 25px;
+            }
+            #log {
+                height: 120px;
+            }
+            #log h3 {
+                font-size: 12px;
+            }
+            #log p {
+                font-size: 10px;
+            }
         }
     </style>
 </head>
@@ -97,13 +194,13 @@
             <h3>Examples of words to use:</h3>
             <p id="exampleVerbs">Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)</p>
         </div>
+        <div class="status" id="status">Progress: 0/110</div>
+        <div class="status" id="listening">Press start to begin...</div>
+        <button id="startButton">Start Practice</button>
         <div id="currentStructures">
             <h3>Structures to practice (say each 10 times):</h3>
             <ul id="structureList"></ul>
         </div>
-        <button id="startButton">Start Practice</button>
-        <div class="status" id="status">Progress: 0/110</div>
-        <div class="status" id="listening">Press start to begin...</div>
         <div id="log">
             <h3>Practice Log:</h3>
             <div id="logEntries"></div>
@@ -143,23 +240,18 @@
                 'This is ______ . (Asel, Arman, Maksat, Madina, Mariya, Maria, Piter, Natalie, Armaan)'
             ],
             '2': [
-                // Placeholder for Beginner Part Two (TBD)
                 'I _______ . (work, play, eat)'
             ],
             '3': [
-                // Placeholder for Elementary (TBD)
                 'I _______ . (work, play, eat)'
             ],
             '4': [
-                // Placeholder for Pre-Intermediate (TBD)
                 'I _______ . (work, play, eat)'
             ],
             '5': [
-                // Placeholder for Intermediate (TBD)
                 'I _______ . (work, play, eat)'
             ],
             '6': [
-                // Placeholder for Upper-Intermediate (TBD)
                 'I _______ . (work, play, eat)'
             ]
         };
@@ -181,25 +273,18 @@
                 const li = document.createElement('li');
                 li.className = 'structure-item';
                 li.innerHTML = `
-                    ${structure}
+                    <span>${structure}</span>
                     <div class="progress-bar">
                         <div class="progress" id="progress-${structure.toLowerCase().replace(/[^a-z0-9]/g, '-')}" style="width: 0%"></div>
                     </div>
-                    <span id="count-${structure.toLowerCase().replace(/[^a-z0-9]/g, '-')}" style="font-size: 12px;">0/10</span>
+                    <span class="count" id="count-${structure.toLowerCase().replace(/[^a-z0-9]/g, '-')}" style="font-size: 12px;">0/10</span>
                 `;
                 structureList.appendChild(li);
             });
 
             // Update example words
-            const words = new Set();
-            currentStructures.forEach(structure => {
-                const match = structure.match(/\(([^)]+)\)/);
-                if (match) {
-                    const wordList = match[1].split(', ');
-                    wordList.forEach(word => words.add(word));
-                }
-            });
-            exampleVerbs.textContent = Array.from(words).join(', ') || 'Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)';
+            exampleVerbs.textContent = 'Any name (e.g., Asel, Arman, Madina, Maksat, Maria, Piter, Natalie, Armaan)';
+            status.textContent = `Progress: 0/${currentStructures.length * 10}`;
         }
 
         // Initialize speech recognition
@@ -248,13 +333,12 @@
             if (saidSentences.has(spokenSentence)) {
                 logMessage = `Repeat: "${spokenSentence}"`;
             } else if (isCorrect) {
-                // Increment progress for the matched structure
                 const structureKey = matchedStructure.toLowerCase();
-                structureProgress[structureKey] = (structureProgress[structureKey] || 0) + 1;
-                if (structureProgress[structureKey] <= 10) {
+                if (structureProgress[structureKey] < 10) {
+                    structureProgress[structureKey]++;
                     correctCount++;
                     saidSentences.add(spokenSentence);
-                    logMessage = `Correct: "${spokenSentence}"`;
+                    logMessage = `Correct: "${spokenSentence}" (Structure: "${matchedStructure}")`;
                     status.textContent = `Progress: ${correctCount}/${currentStructures.length * 10}`;
 
                     // Update progress bar and count
@@ -288,7 +372,6 @@
         function checkPresentSimpleSentence(spokenSentence, structure) {
             // Helper to check if a word is a valid name (any word that isn't a verb)
             function isValidName(word) {
-                // Простая проверка: имя должно состоять только из букв и не быть в списке известных глаголов
                 const verbIndicators = ['work', 'play', 'eat', 'like', 'love', 'want', 'is', 'are', 'am'];
                 if (!/^[a-zA-Z]+$/.test(word)) return false; // Должны быть только буквы
                 return !verbIndicators.includes(word.toLowerCase());
