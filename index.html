@@ -34,7 +34,10 @@
   </div>
 
   <div id="practice-screen" class="hidden bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-    <h1 class="text-2xl font-bold mb-4">Практика грамматики</h1>
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold">Практика грамматики</h1>
+      <button id="back-btn" class="bg-gray-500 text-white px-3 py-1 rounded-md hover:bg-gray-600">Назад (домой)</button>
+    </div>
     <p class="text-lg mb-2">Привет, <span id="user-name"></span>!</p>
     <p class="text-md mb-4">Уровень: <span id="user-level"></span>, <span id="user-lesson"></span></p>
     <button id="start-practice-btn" class="w-full bg-green-600 text-white p-2 rounded-md mb-2 hover:bg-green-700">Начать практику</button>
@@ -49,7 +52,7 @@
       <div id="log" class="h-40 overflow-y-auto border p-2 text-sm"></div>
     </div>
     <p id="completion" class="text-lg font-bold text-green-600 hidden">Урок завершён!</p>
-    <p id="congratulations" class="text-md text-purple-700 mt-2 hidden">Ты большой молодец! 🌟 Отличная работа, ты справился с уроком на ура! Продолжай в том же духе, и скоро ты будешь говорить на английском как носитель! 💪</p>
+    <p id="congratulations" class="text-md text-purple-700 mt-2 hidden"></p>
     <div class="flex space-x-2 mt-2">
       <button id="send-results-btn" class="hidden w-full bg-purple-600 text-white p-2 rounded-md hover:bg-purple-700">Отправить результаты учителю</button>
       <button id="restart-training-btn" class="hidden w-full bg-gray-600 text-white p-2 rounded-md hover:bg-gray-700">Начать заново тренировку</button>
@@ -69,6 +72,15 @@
         ]
       }
     };
+
+    // Encouragement messages
+    const encouragementMessages = [
+      "Ты просто супер! 🌟 Отличный результат, урок пройден на ура! Продолжай так же, и скоро ты заговоришь на английском, как настоящий профи! 💪",
+      "Молодец, ты справился блестяще! 🎉 Урок пройден, ты на высоте! Не останавливайся, и английский станет для тебя как родной! ✨",
+      "Ух, как здорово! 🌟 Ты прошёл урок с лёгкостью! Продолжай в том же духе, и скоро будешь говорить на английском без усилий! 💪",
+      "Ты настоящий чемпион! 🏆 Урок завершён, ты большой молодец! С такими успехами английский покорится тебе в два счёта! 🌟",
+      "Превосходно! 🎉 Ты справился с уроком на все 100%! Продолжай так же, и английский будет для тебя как вторая природа! 💪"
+    ];
 
     // Initialize speech recognition
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -91,6 +103,7 @@
     const startScreen = document.getElementById('start-screen');
     const practiceScreen = document.getElementById('practice-screen');
     const startBtn = document.getElementById('start-btn');
+    const backBtn = document.getElementById('back-btn');
     const startPracticeBtn = document.getElementById('start-practice-btn');
     const restartListeningBtn = document.getElementById('restart-listening-btn');
     const restartTrainingBtn = document.getElementById('restart-training-btn');
@@ -119,6 +132,34 @@
       userLevelEl.textContent = document.getElementById('level').options[document.getElementById('level').selectedIndex].text;
       userLessonEl.textContent = document.getElementById('lesson').options[document.getElementById('lesson').selectedIndex].text;
       initializeProgressBars();
+    });
+
+    // Back to start screen
+    backBtn.addEventListener('click', () => {
+      // Reset all data
+      progress = { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0 };
+      spokenHistory = [];
+      logEntries = [];
+      isListening = false;
+      recognition.stop();
+
+      // Reset UI
+      startPracticeBtn.textContent = 'Начать практику';
+      startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+      startPracticeBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+      startPracticeBtn.disabled = false;
+      restartListeningBtn.classList.add('hidden');
+      completionEl.classList.add('hidden');
+      congratulationsEl.classList.add('hidden');
+      sendResultsBtn.classList.add('hidden');
+      restartTrainingBtn.classList.add('hidden');
+      feedback.textContent = '';
+      logDiv.innerHTML = '';
+      updateProgressBars();
+
+      // Show start screen
+      practiceScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
     });
 
     // Start continuous speech recognition
@@ -186,246 +227,4 @@
     recognition.onresult = (event) => {
       const spokenText = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
       const matchedStructure = findMatchingStructure(spokenText);
-      const logEntry = { time: new Date().toLocaleTimeString(), spoken: spokenText };
-
-      lastSpeechTime = Date.now();
-
-      if (matchedStructure) {
-        const isCorrect = validateStructure(spokenText, matchedStructure);
-        if (isCorrect) {
-          const isDuplicate = matchedStructure.hasName && spokenHistory.includes(spokenText);
-          logEntry.structure = matchedStructure.structure;
-          logEntry.correct = true;
-          logEntry.duplicate = isDuplicate;
-
-          if (!isDuplicate || !matchedStructure.hasName) {
-            progress[matchedStructure.id]++;
-            if (matchedStructure.hasName) spokenHistory.push(spokenText);
-
-            if (progress[matchedStructure.id] > REQUIRED_CORRECT) {
-              feedback.textContent = `Отлично! 🎉🎈❤️ Ты превысил цель для "${matchedStructure.structure}"!`;
-              logEntries.push({
-                time: new Date().toLocaleTimeString(),
-                spoken: `Превышена цель для "${matchedStructure.structure}"`,
-                structure: matchedStructure.structure,
-                correct: true,
-                exceeded: true
-              });
-            } else {
-              feedback.textContent = `Правильно! Ты сказал: "${spokenText}" для "${matchedStructure.structure}"`;
-            }
-
-            updateProgressBars();
-            checkCompletion();
-          } else {
-            feedback.textContent = `Повтор: "${spokenText}". Скажи новый пример для: ${matchedStructure.structure}`;
-          }
-        } else {
-          logEntry.structure = matchedStructure.structure;
-          logEntry.correct = false;
-          feedback.textContent = `Неправильно: "${spokenText}" для "${matchedStructure.structure}"`;
-        }
-      } else {
-        logEntry.correct = false;
-        feedback.textContent = `Не совпадает: "${spokenText}". Попробуй одну из структур выше.`;
-      }
-
-      logEntries.push(logEntry);
-      updateLog();
-
-      // Brief pause before restarting recognition to avoid overlap
-      setTimeout(() => {
-        if (isListening && !completionEl.classList.contains('hidden')) {
-          recognition.start();
-        }
-      }, 500);
-    };
-
-    recognition.onerror = (event) => {
-      feedback.textContent = 'Ошибка в распознавании: ' + event.error;
-      isListening = false;
-      restartListeningBtn.classList.remove('hidden');
-      startPracticeBtn.textContent = 'Начать практику';
-      startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-      startPracticeBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-      startPracticeBtn.disabled = false;
-    };
-
-    recognition.onend = () => {
-      // Check for no-speech timeout
-      const currentTime = Date.now();
-      if (currentTime - lastSpeechTime > 10000) { // 10 seconds timeout
-        feedback.textContent = 'Давно не слышу речи. Перезапускаю...';
-        isListening = false;
-        restartListeningBtn.classList.remove('hidden');
-        startPracticeBtn.textContent = 'Начать практику';
-        startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-        startPracticeBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-        startPracticeBtn.disabled = false;
-        return;
-      }
-
-      // Restart recognition if still listening and lesson not completed
-      if (isListening && !completionEl.classList.contains('hidden')) {
-        setTimeout(() => {
-          recognition.start();
-        }, 500);
-      }
-    };
-
-    // Find matching structure
-    function findMatchingStructure(text) {
-      const structures = grammarData.beginner1.lesson1;
-      for (let struct of structures) {
-        if (validateStructure(text, struct)) {
-          return struct;
-        }
-      }
-      return null;
-    }
-
-    // Validate spoken structure
-    function validateStructure(text, structure) {
-      const words = text.split(' ');
-      const pattern = structure.pattern;
-      let wordIndex = 0;
-
-      for (let part of pattern) {
-        if (part === 'name') {
-          if (!words[wordIndex]) return false; // Must have a word for name
-          wordIndex++;
-        } else {
-          if (words[wordIndex] !== part) return false;
-          wordIndex++;
-        }
-      }
-      return wordIndex === words.length; // Ensure no extra words
-    }
-
-    // Update progress bars
-    function updateProgressBars() {
-      progressBars.innerHTML = '';
-      grammarData.beginner1.lesson1.forEach(struct => {
-        const totalCorrect = progress[struct.id];
-        const div = document.createElement('div');
-        div.className = 'mb-2';
-
-        let barsHTML = `
-          <p class="text-sm">${struct.structure}</p>
-        `;
-
-        // First progress bar (up to REQUIRED_CORRECT)
-        const firstBarProgress = Math.min(totalCorrect, REQUIRED_CORRECT);
-        const firstBarPercentage = (firstBarProgress / REQUIRED_CORRECT) * 100;
-        barsHTML += `
-          <div class="w-full bg-gray-200 rounded-full h-2.5 mb-1">
-            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${firstBarPercentage}%"></div>
-          </div>
-        `;
-
-        // Additional progress bar for exceeding the goal
-        if (totalCorrect > REQUIRED_CORRECT) {
-          const excessCorrect = totalCorrect - REQUIRED_CORRECT;
-          const excessProgress = excessCorrect % REQUIRED_CORRECT;
-          const excessPercentage = (excessProgress / REQUIRED_CORRECT) * 100;
-          barsHTML += `
-            <div class="w-full bg-gray-200 rounded-full h-2.5">
-              <div class="bg-green-600 h-2.5 rounded-full" style="width: ${excessPercentage}%"></div>
-            </div>
-          `;
-        }
-
-        barsHTML += `
-          <p class="text-xs text-gray-600">${totalCorrect}/${REQUIRED_CORRECT}</p>
-        `;
-        div.innerHTML = barsHTML;
-        progressBars.appendChild(div);
-      });
-    }
-
-    // Update log
-    function updateLog() {
-      logDiv.innerHTML = '';
-      logEntries.forEach(entry => {
-        const p = document.createElement('p');
-        p.className = 'mb-1';
-        if (entry.exceeded) {
-          p.textContent = `[${entry.time}] ${entry.spoken} 🎉🎈❤️`;
-        } else {
-          p.textContent = `[${entry.time}] Сказано: "${entry.spoken}"${entry.structure ? ` для "${entry.structure}"` : ''} - ${entry.correct ? 'Правильно' : 'Неправильно'}${entry.duplicate ? ', Повтор' : ''}`;
-        }
-        logDiv.appendChild(p);
-      });
-      logDiv.scrollTop = logDiv.scrollHeight;
-    }
-
-    // Check lesson completion
-    function checkCompletion() {
-      if (Object.values(progress).every(count => count >= REQUIRED_CORRECT)) {
-        completionEl.classList.remove('hidden');
-        congratulationsEl.classList.remove('hidden');
-        sendResultsBtn.classList.remove('hidden');
-        restartTrainingBtn.classList.remove('hidden');
-        isListening = false;
-        recognition.stop();
-        startPracticeBtn.textContent = 'Урок завершён';
-      }
-    }
-
-    // Send results to Telegram and Bitrix24
-    async function sendResults() {
-      const resultSummary = `
-Результаты для ${userName}
-Уровень: ${userLevelEl.textContent}
-Урок: ${userLessonEl.textContent}
-Прогресс: ${Object.entries(progress).map(([id, count]) => `${grammarData.beginner1.lesson1.find(s => s.id === id).structure}: ${count} правильных`).join('\n')}
-Лог:
-${logEntries.map(entry => `- ${entry.spoken}${entry.structure ? ` (для "${entry.structure}")` : ''} - ${entry.correct ? 'Правильно' : 'Неправильно'}${entry.duplicate ? ', Повтор' : ''}${entry.exceeded ? ' 🎉🎈❤️' : ''}`).join('\n')}
-`;
-
-      // Telegram integration
-      const TELEGRAM_BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'; // Замени на твой Telegram Bot Token
-      const TELEGRAM_CHAT_ID = 'YOUR_TELEGRAM_CHAT_ID'; // Замени на твой Telegram Chat ID
-      const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-
-      try {
-        await fetch(telegramUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text: resultSummary
-          })
-        });
-        feedback.textContent = 'Результаты отправлены преподавателю.';
-      } catch (error) {
-        feedback.textContent = 'Ошибка отправки в Telegram: ' + error.message;
-      }
-
-      // Bitrix24 integration
-      const BITRIX_WEBHOOK_URL = 'https://elcalmaty.bitrix24.kz/rest/1/t30j7bkqi9p4sy0b/'; // Твой вебхук
-      const BITRIX_CHAT_ID = '145624'; // ID чата из URL
-      const bitrixUrl = `${BITRIX_WEBHOOK_URL}im.message.add`;
-
-      try {
-        const response = await fetch(bitrixUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            CHAT_ID: BITRIX_CHAT_ID,
-            MESSAGE: resultSummary
-          })
-        });
-        const data = await response.json();
-        if (data.result) {
-          feedback.textContent = 'Результаты отправлены преподавателю.';
-        } else {
-          feedback.textContent = 'Ошибка отправки в Bitrix24: ' + JSON.stringify(data.error);
-        }
-      } catch (error) {
-        feedback.textContent = 'Ошибка отправки в Bitrix24: ' + error.message;
-      }
-    }
-  </script>
-</body>
-</html>
+      const logEntry = { time
