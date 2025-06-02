@@ -37,11 +37,7 @@
     <h1 class="text-2xl font-bold mb-4">Practice Grammar</h1>
     <p class="text-lg mb-2">Hello, <span id="user-name"></span>!</p>
     <p class="text-md mb-4">Level: <span id="user-level"></span>, <span id="user-lesson"></span></p>
-    <div class="mb-6">
-      <p class="text-lg font-semibold">Say this structure:</p>
-      <p id="grammar-structure" class="text-md font-bold"></p>
-    </div>
-    <button id="speak-btn" class="w-full bg-green-600 text-white p-2 rounded-md mb-4 hover:bg-green-700">Speak Example</button>
+    <button id="start-practice-btn" class="w-full bg-green-600 text-white p-2 rounded-md mb-4 hover:bg-green-700">Start Practice</button>
     <p id="feedback" class="text-md mb-4"></p>
     <div class="mb-6">
       <p class="text-lg font-semibold">Progress:</p>
@@ -59,11 +55,11 @@
     const grammarData = {
       beginner1: {
         lesson1: [
-          { structure: "I am [name].", pattern: ["i", "am", "name"], id: "s1" },
-          { structure: "You are [name].", pattern: ["you", "are", "name"], id: "s2" },
-          { structure: "What is your name?", pattern: ["what", "is", "your", "name"], id: "s3" },
-          { structure: "My name is [name].", pattern: ["my", "name", "is", "name"], id: "s4" },
-          { structure: "This is [name].", pattern: ["this", "is", "name"], id: "s5" }
+          { structure: "I am [name].", pattern: ["i", "am", "name"], id: "s1", hasName: true },
+          { structure: "You are [name].", pattern: ["you", "are", "name"], id: "s2", hasName: true },
+          { structure: "What is your name?", pattern: ["what", "is", "your", "name"], id: "s3", hasName: false },
+          { structure: "My name is [name].", pattern: ["my", "name", "is", "name"], id: "s4", hasName: true },
+          { structure: "This is [name].", pattern: ["this", "is", "name"], id: "s5", hasName: true }
         ]
       }
     };
@@ -73,21 +69,21 @@
     recognition.lang = 'en-US';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
+    recognition.continuous = true;
 
-    let currentStructure = null;
     let userName = '';
     let userLevel = '';
     let userLesson = '';
     let progress = { s1: 0, s2: 0, s3: 0, s4: 0, s5: 0 };
     let spokenHistory = [];
     let logEntries = [];
+    let isListening = false;
 
     // DOM elements
     const startScreen = document.getElementById('start-screen');
     const practiceScreen = document.getElementById('practice-screen');
     const startBtn = document.getElementById('start-btn');
-    const speakBtn = document.getElementById('speak-btn');
-    const grammarStructure = document.getElementById('grammar-structure');
+    const startPracticeBtn = document.getElementById('start-practice-btn');
     const feedback = document.getElementById('feedback');
     const progressBars = document.getElementById('progress-bars');
     const logDiv = document.getElementById('log');
@@ -96,7 +92,7 @@
     const userLessonEl = document.getElementById('user-lesson');
     const completionEl = document.getElementById('completion');
 
-    // Start practice
+    // Start practice screen
     startBtn.addEventListener('click', () => {
       userName = document.getElementById('name').value.trim();
       userLevel = document.getElementById('level').value;
@@ -111,7 +107,19 @@
       userLevelEl.textContent = document.getElementById('level').options[document.getElementById('level').selectedIndex].text;
       userLessonEl.textContent = document.getElementById('lesson').options[document.getElementById('lesson').selectedIndex].text;
       initializeProgressBars();
-      loadNewStructure();
+    });
+
+    // Start continuous speech recognition
+    startPracticeBtn.addEventListener('click', () => {
+      if (!isListening) {
+        recognition.start();
+        isListening = true;
+        startPracticeBtn.textContent = 'Listening...';
+        startPracticeBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+        startPracticeBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+        startPracticeBtn.disabled = true;
+        feedback.textContent = 'Speak any example from the structures above.';
+      }
     });
 
     // Initialize progress bars
@@ -131,57 +139,79 @@
       });
     }
 
-    // Load a random structure
-    function loadNewStructure() {
-      const structures = grammarData.beginner1.lesson1;
-      currentStructure = structures[Math.floor(Math.random() * structures.length)];
-      grammarStructure.textContent = currentStructure.structure;
-      feedback.textContent = '';
-    }
-
-    // Speech recognition
-    speakBtn.addEventListener('click', () => {
-      recognition.start();
-      feedback.textContent = 'Listening...';
-    });
-
+    // Speech recognition result
     recognition.onresult = (event) => {
-      const spokenText = event.results[0][0].transcript.trim().toLowerCase();
-      const isCorrect = validateStructure(spokenText, currentStructure);
-      const isDuplicate = spokenHistory.includes(spokenText);
-      const logEntry = {
-        time: new Date().toLocaleTimeString(),
-        spoken: spokenText,
-        structure: currentStructure.structure,
-        correct: isCorrect,
-        duplicate: isDuplicate
-      };
+      const spokenText = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+      const matchedStructure = findMatchingStructure(spokenText);
+      const logEntry = { time: new Date().toLocaleTimeString(), spoken: spokenText };
+
+      if (matchedStructure) {
+        const isCorrect = validateStructure(spokenText, matchedStructure);
+        if (isCorrect) {
+          const isDuplicate = matchedStructure.hasName && spokenHistory.includes(spokenText);
+          logEntry.structure = matchedStructure.structure;
+          logEntry.correct = true;
+          logEntry.duplicate = isDuplicate;
+
+          if (!isDuplicate || !matchedStructure.hasName) {
+            progress[matchedStructure.id]++;
+            if (matchedStructure.hasName) spokenHistory.push(spokenText);
+            feedback.textContent = `Correct! You said: "${spokenText}" for "${matchedStructure.structure}"`;
+            updateProgressBars();
+            checkCompletion();
+          } else {
+            feedback.textContent = `Duplicate: "${spokenText}". Say a new example for: ${matchedStructure.structure}`;
+          }
+        } else {
+          logEntry.structure = matchedStructure.structure;
+          logEntry.correct = false;
+          feedback.textContent = `Incorrect: "${spokenText}" for "${matchedStructure.structure}"`;
+        }
+      } else {
+        logEntry.correct = false;
+        feedback.textContent = `No match: "${spokenText}". Try one of the structures above.`;
+      }
+
       logEntries.push(logEntry);
       updateLog();
 
-      if (isCorrect && !isDuplicate) {
-        progress[currentStructure.id]++;
-        spokenHistory.push(spokenText);
-        feedback.textContent = `Correct! You said: "${spokenText}"`;
-        updateProgressBars();
-        checkCompletion();
-        setTimeout(loadNewStructure, 2000);
-      } else {
-        feedback.textContent = isDuplicate
-          ? `Duplicate: "${spokenText}". Say a new example for: ${currentStructure.structure}`
-          : `Incorrect: "${spokenText}". Try again with: ${currentStructure.structure}`;
-      }
+      // Brief pause before restarting recognition to avoid overlap
+      setTimeout(() => {
+        if (isListening && !completionEl.classList.contains('hidden')) {
+          recognition.stop();
+        }
+      }, 500);
     };
 
     recognition.onerror = (event) => {
       feedback.textContent = 'Error occurred in recognition: ' + event.error;
+      // Restart recognition on error
+      setTimeout(() => {
+        if (isListening && !completionEl.classList.contains('hidden')) {
+          recognition.start();
+        }
+      }, 500);
     };
 
     recognition.onend = () => {
-      if (!feedback.textContent.includes('Correct') && !feedback.textContent.includes('Incorrect') && !feedback.textContent.includes('Duplicate')) {
-        feedback.textContent = 'Please try again.';
+      // Restart recognition if still listening and lesson not completed
+      if (isListening && !completionEl.classList.contains('hidden')) {
+        setTimeout(() => {
+          recognition.start();
+        }, 500);
       }
     };
+
+    // Find matching structure
+    function findMatchingStructure(text) {
+      const structures = grammarData.beginner1.lesson1;
+      for (let struct of structures) {
+        if (validateStructure(text, struct)) {
+          return struct;
+        }
+      }
+      return null;
+    }
 
     // Validate spoken structure
     function validateStructure(text, structure) {
@@ -224,7 +254,7 @@
       logEntries.forEach(entry => {
         const p = document.createElement('p');
         p.className = 'mb-1';
-        p.textContent = `[${entry.time}] Said: "${entry.spoken}" for "${entry.structure}" - ${entry.correct ? 'Correct' : 'Incorrect'}${entry.duplicate ? ', Duplicate' : ''}`;
+        p.textContent = `[${entry.time}] Said: "${entry.spoken}"${entry.structure ? ` for "${entry.structure}"` : ''} - ${entry.correct ? 'Correct' : 'Incorrect'}${entry.duplicate ? ', Duplicate' : ''}`;
         logDiv.appendChild(p);
       });
       logDiv.scrollTop = logDiv.scrollHeight;
@@ -234,8 +264,9 @@
     function checkCompletion() {
       if (Object.values(progress).every(count => count >= 10)) {
         completionEl.classList.remove('hidden');
-        speakBtn.disabled = true;
-        speakBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+        isListening = false;
+        recognition.stop();
+        startPracticeBtn.textContent = 'Lesson Completed';
       }
     }
   </script>
