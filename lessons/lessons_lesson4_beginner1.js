@@ -75,13 +75,13 @@ addLesson({
 
     // Для вопросов (hasName: false) текст должен точно совпадать с шаблоном
     if (!structure.hasName) {
-      return wordIndex === normalizedWords.length; // Длина текста должна равняться длине шаблона
+      return wordIndex === normalizedWords.length; // Точное совпадение длины
     }
 
     // Для ответов (hasName: true) после шаблона должно быть хотя бы одно слово
     if (structure.hasName && spokenHistory && spokenHistory.includes(text.toLowerCase())) {
       return false; // Пропускаем дубликаты
     }
-    return wordIndex < normalizedWords.length; // Проверяем, что есть хотя бы одно слово после шаблона
+    return wordIndex < normalizedWords.length; // Проверяем, что есть имя после шаблона
   }
 });
