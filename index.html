@@ -810,6 +810,7 @@
         let segments = [];
         let currentSegment = [];
         let i = 0;
+        let lastValidatedIndex = -1;
 
         while (i < words.length) {
           let foundPattern = false;
@@ -824,7 +825,7 @@
                 }
               }
               if (match) {
-                if (currentSegment.length > 0) {
+                if (currentSegment.length > 0 && lastValidatedIndex < i - 1) {
                   segments.push(currentSegment.join(' '));
                   currentSegment = [];
                 }
@@ -854,8 +855,9 @@
                   i++;
                 }
                 let fullSegment = words.slice(segmentStart, i).join(' ');
-                if (fullSegment.split(' ').length >= patternWords.length) { // Пропускаем пустые сегменты
+                if (fullSegment.split(' ').length >= patternWords.length) {
                   segments.push(fullSegment);
+                  lastValidatedIndex = i - 1; // Запоминаем последний проверенный индекс
                 }
                 foundPattern = true;
                 break;
@@ -863,11 +865,13 @@
             }
           }
           if (!foundPattern && i < words.length) {
-            currentSegment.push(words[i]);
+            if (lastValidatedIndex < i - 1) {
+              currentSegment.push(words[i]);
+            }
             i++;
           }
         }
-        if (currentSegment.length > 0 && currentSegment.join(' ').split(' ').length >= 2) { // Пропускаем одиночные слова
+        if (currentSegment.length > 0 && currentSegment.join(' ').split(' ').length >= 2 && lastValidatedIndex < i - 1) {
           segments.push(currentSegment.join(' '));
         }
 
@@ -919,9 +923,12 @@
               feedbackMessages.push(`Неправильно: "${segment}" для "${matchedStructure.structure}" (Пример ${index + 1})`);
             }
           } else {
-            totalErrors++; // Увеличиваем счётчик ошибок только если структура не найдена
-            logEntry.correct = false;
-            feedbackMessages.push(`Не совпадает: "${segment}". Попробуй одну из структур ниже. (Пример ${index + 1})`);
+            // Не увеличиваем totalErrors для остаточных слов, которые уже были частью успешного сегмента
+            if (i > lastValidatedIndex + 1) {
+              totalErrors++;
+              logEntry.correct = false;
+              feedbackMessages.push(`Не совпадает: "${segment}". Попробуй одну из структур ниже. (Пример ${index + 1})`);
+            }
           }
 
           logEntries.push(logEntry);
