@@ -791,7 +791,10 @@
         console.log('SpeechRecognition onresult triggered');
         let spokenText = event.results[event.results.length - 1][0].transcript.trim();
         // Заменяем "what's" на "what is", "i'm" на "i am" и нормализуем знаки препинания
-        spokenText = spokenText.replace(/what's/gi, 'what is').replace(/i'm/gi, 'i am').replace(/[.,!?]/g, '');
+        spokenText = spokenText.replace(/what's/gi, 'what is')
+                             .replace(/i'm/gi, 'i am')
+                             .replace(/[.,!?]/g, '')
+                             .toLowerCase();
         console.log('Recognized text:', spokenText);
 
         // Динамическое определение начальных паттернов
@@ -806,7 +809,7 @@
         });
 
         // Разделяем текст на сегменты на основе начальных паттернов
-        const words = spokenText.toLowerCase().split(' ').filter(word => word.length > 0);
+        const words = spokenText.split(' ').filter(word => word.length > 0);
         let segments = [];
         let currentSegment = [];
         let i = 0;
@@ -831,7 +834,6 @@
                 }
                 let segmentStart = i;
                 i += patternWords.length;
-                // Добавляем все слова до следующего паттерна или конца текста
                 while (i < words.length) {
                   let nextPatternMatch = false;
                   for (let nextPattern of startPatterns) {
