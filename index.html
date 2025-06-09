@@ -790,66 +790,158 @@
       recognition.onresult = (event) => {
         console.log('SpeechRecognition onresult triggered');
         let spokenText = event.results[event.results.length - 1][0].transcript.trim();
-        // Заменяем "what's" на "what is"
-        spokenText = spokenText.replace(/what's/gi, 'what is');
+        // Заменяем "what's" на "what is" и "i'm" на "i am"
+        spokenText = spokenText.replace(/what's/gi, 'what is').replace(/i'm/gi, 'i am');
         console.log('Recognized text:', spokenText);
-        const matchedStructure = findMatchingStructure(spokenText);
-        const logEntry = { time: new Date().toLocaleTimeString(), spoken: spokenText };
+
+        // Динамическое определение начальных паттернов
+        const startPatterns = new Set();
+        currentLessonData.structures.forEach(struct => {
+          let pattern = struct.pattern.slice();
+          while (pattern.length > 0) {
+            let currentPattern = pattern.join(' ');
+            startPatterns.add(currentPattern);
+            pattern.pop(); // Убираем последний элемент для проверки более коротких паттернов
+          }
+        });
+
+        // Разделяем текст на сегменты на основе начальных паттернов
+        const words = spokenText.toLowerCase().split(' ').filter(word => word.length > 0);
+        let segments = [];
+        let currentSegment = [];
+        let i = 0;
+
+        while (i < words.length) {
+          let foundPattern = false;
+          for (let pattern of startPatterns) {
+            let patternWords = pattern.split(' ');
+            if (i + patternWords.length <= words.length) {
+              let match = true;
+              for (let j = 0; j < patternWords.length; j++) {
+                if (words[i + j] !== patternWords[j]) {
+                  match = false;
+                  break;
+                }
+              }
+              if (match) {
+                if (currentSegment.length > 0) {
+                  segments.push(currentSegment.join(' '));
+                  currentSegment = [];
+                }
+                let segmentStart = i;
+                i += patternWords.length;
+                // Добавляем все слова до следующего паттерна или конца текста
+                while (i < words.length) {
+                  let nextPatternMatch = false;
+                  for (let nextPattern of startPatterns) {
+                    let nextPatternWords = nextPattern.split(' ');
+                    if (i + nextPatternWords.length <= words.length) {
+                      let nextMatch = true;
+                      for (let k = 0; k < nextPatternWords.length; k++) {
+                        if (words[i + k] !== nextPatternWords[k]) {
+                          nextMatch = false;
+                          break;
+                        }
+                      }
+                      if (nextMatch) {
+                        nextPatternMatch = true;
+                        break;
+                      }
+                    }
+                  }
+                  if (nextPatternMatch) break;
+                  currentSegment.push(words[i]);
+                  i++;
+                }
+                segments.push(words.slice(segmentStart, i).join(' '));
+                foundPattern = true;
+                break;
+              }
+            }
+          }
+          if (!foundPattern && i < words.length) {
+            currentSegment.push(words[i]);
+            i++;
+          }
+        }
+        if (currentSegment.length > 0) {
+          segments.push(currentSegment.join(' '));
+        }
 
         lastSpeechTime = Date.now(); // Обновляем время последнего распознавания
+        let feedbackMessages = [];
+        let correctCount = 0;
 
-        if (matchedStructure) {
-          const isCorrect = currentLessonData.validateStructure(spokenText, matchedStructure);
-          if (isCorrect) {
-            // Проверяем, не является ли фраза повтором, только если hasName: true
-            let isDuplicate = false;
-            if (matchedStructure.hasName) {
-              isDuplicate = spokenHistory.includes(spokenText.toLowerCase());
+        // Обрабатываем каждое сегмент отдельно
+        segments.forEach((segment, index) => {
+          const logEntry = { time: new Date().toLocaleTimeString(), spoken: segment };
+          let matchedStructure = null;
+
+          // Проверяем все структуры для каждого сегмента
+          for (let struct of currentLessonData.structures) {
+            if (currentLessonData.validateStructure(segment, struct)) {
+              matchedStructure = struct;
+              break;
             }
-            logEntry.structure = matchedStructure.structure;
-            logEntry.correct = true;
-            logEntry.duplicate = isDuplicate;
+          }
 
-            if (!isDuplicate || !matchedStructure.hasName) {
-              progress[matchedStructure.id]++;
+          if (matchedStructure) {
+            const isCorrect = currentLessonData.validateStructure(segment, matchedStructure);
+            if (isCorrect) {
+              // Проверяем, не является ли фраза повтором, только если hasName: true
+              let isDuplicate = false;
               if (matchedStructure.hasName) {
-                spokenHistory.push(spokenText.toLowerCase()); // Добавляем в историю только если hasName: true
+                isDuplicate = spokenHistory.includes(segment.toLowerCase());
               }
+              logEntry.structure = matchedStructure.structure;
+              logEntry.correct = true;
+              logEntry.duplicate = isDuplicate;
 
-              if (progress[matchedStructure.id] > currentLessonData.requiredCorrect) {
-                feedback.textContent = `Отлично! 🎉🎈❤️ Ты превысил цель для "${matchedStructure.structure}"!`;
-                logEntries.push({
-                  time: new Date().toLocaleTimeString(),
-                  spoken: `Превышена цель для "${matchedStructure.structure}"`,
-                  structure: matchedStructure.structure,
-                  correct: true,
-                  exceeded: true
-                });
+              if (!isDuplicate || !matchedStructure.hasName) {
+                progress[matchedStructure.id]++;
+                if (matchedStructure.hasName) {
+                  spokenHistory.push(segment.toLowerCase()); // Добавляем в историю только если hasName: true
+                }
+                correctCount++;
+                if (progress[matchedStructure.id] > currentLessonData.requiredCorrect) {
+                  feedbackMessages.push(`Отлично! 🎉🎈❤️ Ты превысил цель для "${matchedStructure.structure}"! (Пример ${index + 1})`);
+                  logEntries.push({
+                    time: new Date().toLocaleTimeString(),
+                    spoken: `Превышена цель для "${matchedStructure.structure}"`,
+                    structure: matchedStructure.structure,
+                    correct: true,
+                    exceeded: true
+                  });
+                } else {
+                  feedbackMessages.push(`Правильно! Ты сказал: "${segment}" для "${matchedStructure.structure}" (Пример ${index + 1})`);
+                }
               } else {
-                feedback.textContent = `Правильно! Ты сказал: "${spokenText}" для "${matchedStructure.structure}"`;
+                feedbackMessages.push(`Повтор: "${segment}". Скажи новый пример для: ${matchedStructure.structure} (Пример ${index + 1})`);
               }
-
-              updateProgressBars('progress-chart');
-              checkCompletion();
             } else {
-              feedback.textContent = `Повтор: "${spokenText}". Скажи новый пример для: ${matchedStructure.structure}`;
+              totalErrors++; // Увеличиваем счётчик ошибок
+              logEntry.structure = matchedStructure.structure;
+              logEntry.correct = false;
+              feedbackMessages.push(`Неправильно: "${segment}" для "${matchedStructure.structure}" (Пример ${index + 1})`);
             }
           } else {
             totalErrors++; // Увеличиваем счётчик ошибок
-            logEntry.structure = matchedStructure.structure;
             logEntry.correct = false;
-            feedback.textContent = `Неправильно: "${spokenText}" для "${matchedStructure.structure}"`;
+            feedbackMessages.push(`Не совпадает: "${segment}". Попробуй одну из структур ниже. (Пример ${index + 1})`);
           }
-        } else {
-          totalErrors++; // Увеличиваем счётчик ошибок
-          logEntry.correct = false;
-          feedback.textContent = `Не совпадает: "${spokenText}". Попробуй одну из структур ниже.`;
-        }
 
-        logEntries.push(logEntry);
+          logEntries.push(logEntry);
+        });
+
+        // Обновляем feedback с указанием количества правильных примеров
+        feedback.textContent = feedbackMessages.join('\n');
+        if (correctCount > 0) {
+          feedback.textContent += `\nПравильных примеров: ${correctCount} из ${segments.length}.`;
+        }
         updateLog();
         updateStats();
         updateProgressBars('progress-chart'); // Обновляем диаграмму для отображения ошибок
+        checkCompletion();
 
         // Устанавливаем флаг для перезапуска
         if (isListening && completionModal.style.display !== 'block') {
