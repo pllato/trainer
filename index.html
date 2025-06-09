@@ -790,8 +790,8 @@
       recognition.onresult = (event) => {
         console.log('SpeechRecognition onresult triggered');
         let spokenText = event.results[event.results.length - 1][0].transcript.trim();
-        // Заменяем "what's" на "what is" и "i'm" на "i am"
-        spokenText = spokenText.replace(/what's/gi, 'what is').replace(/i'm/gi, 'i am');
+        // Заменяем "what's" на "what is", "i'm" на "i am" и нормализуем знаки препинания
+        spokenText = spokenText.replace(/what's/gi, 'what is').replace(/i'm/gi, 'i am').replace(/[.,!?]/g, '');
         console.log('Recognized text:', spokenText);
 
         // Динамическое определение начальных паттернов
