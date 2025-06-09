@@ -1,153 +1,34 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ELC Grammar Practice</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Подключение favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <!-- Подключение шрифтов Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Tahoma&family=Trebuchet+MS&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Trebuchet MS', 'Helvetica', 'Arial', sans-serif;
-      background-color: #F5F5F5;
-    }
-    h1, h2, h3 {
-      font-family: 'Montserrat', sans-serif;
-      text-transform: uppercase;
-    }
-    .logo {
-      font-family: 'Montserrat', sans-serif;
-      text-transform: uppercase;
-      color: #373D8D; /* Синий */
-      cursor: pointer;
-    }
-    .logo span {
-      color: #D72638; /* Красный */
-    }
-    .logo-subtext {
-      font-family: 'Trebuchet MS', sans-serif;
-      font-size: 0.8rem;
-      color: #373D8D;
-    }
-    .pattern-bg {
-      background-image: linear-gradient(45deg, #373D8D 25%, transparent 25%, transparent 75%, #373D8D 75%, #373D8D), 
-                        linear-gradient(45deg, #373D8D 25%, transparent 25%, transparent 75%, #373D8D 75%, #373D8D);
-      background-size: 20px 20px;
-      background-color: #FFFFFF;
-    }
-    button {
-      font-family: 'Trebuchet MS', sans-serif;
-    }
-    .stats {
-      color: #373D8D;
-      font-size: 0.9rem;
-      margin-bottom: 1rem;
-      border-left: 4px solid #D72638;
-      padding-left: 0.5rem;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-    }
-    .modal-content {
-      background-color: #FFFFFF;
-      margin: 5% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 80%;
-      max-width: 400px;
-      border-radius: 8px;
-      text-align: center;
-      max-height: 80vh;
-      overflow-y: auto;
-    }
-    .modal-content h2 {
-      color: #373D8D;
-    }
-    .modal-content p {
-      color: #F59E0B; /* Warm orange for a friendlier look */
-    }
-    .modal-content button {
-      background-color: #373D8D;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .modal-content button:hover {
-      background-color: #2A3171;
-    }
-    .modal-log {
-      margin-top: 1rem;
-      text-align: left;
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
-      padding: 10px;
-      font-size: 0.8rem;
-      color: inherit; /* Inherit default color (likely black) */
-    }
-  </style>
+  <!-- Подключение styles.css -->
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="flex items-center justify-center min-h-screen">
-  <div id="start-screen" class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+<body>
+  <!-- Стартовый экран -->
+  <div id="start-screen">
+    <!-- Логотип и подтекст -->
     <div class="text-center mb-6">
-      <h1 class="logo text-4xl font-bold">ELC</h1>
+      <h1 class="logo">ELC</h1>
       <p class="logo-subtext">English Lifestyle Communication</p>
+      <p class="logo-description">Тренажер грамматических структур</p>
     </div>
+    <!-- Поле для имени -->
     <div class="mb-4">
       <label for="name" class="block text-sm font-medium text-gray-700">Ваше имя</label>
-      <input type="text" id="name" class="mt-1 p-2 w-full border rounded-md" placeholder="Введите ваше имя" required>
+      <input type="text" id="name" placeholder="Введите ваше имя" required>
     </div>
+    <!-- Выбор уровня -->
     <div class="mb-4">
       <label for="level" class="block text-sm font-medium text-gray-700">Выберите уровень</label>
-      <select id="level" class="mt-1 p-2 w-full border rounded-md">
+      <select id="level">
         <option value="beginner1">Beginner Part One</option>
         <option value="beginner2">Beginner Part Two</option>
         <option value="elementary">Elementary</option>
@@ -156,16 +37,64 @@
         <option value="upperintermediate">Upper-Intermediate</option>
       </select>
     </div>
+    <!-- Выбор урока -->
     <div class="mb-6">
       <label for="lesson" class="block text-sm font-medium text-gray-700">Выберите урок</label>
-      <select id="lesson" class="mt-1 p-2 w-full border rounded-md">
+      <select id="lesson">
         <!-- Lessons will be populated dynamically -->
       </select>
     </div>
-    <button id="start-btn" class="w-full bg-[#373D8D] text-white p-2 rounded-md hover:bg-[#2A3171]">Начать практику</button>
+    <!-- Кнопка "Начать практику" -->
+    <button id="start-btn">Начать практику</button>
+    <!-- Текстовая ссылка "Админка" -->
+    <a href="#" id="admin-btn" class="admin-link">Админка</a>
+    <div id="level-lesson-screen"></div>
   </div>
 
-  <div id="practice-screen" class="hidden bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+  <!-- Экран админки -->
+  <div id="admin-screen" class="hidden">
+    <div class="flex justify-between items-center mb-4">
+      <div class="logo text-2xl font-bold" onclick="goBackToStart()">ELC</div>
+      <h1 class="text-2xl font-bold">Админка</h1>
+      <div></div> <!-- Пустой div для выравнивания -->
+    </div>
+    <!-- Поле для ввода GitHub токена -->
+    <div class="mb-4">
+      <label for="github-token" class="block text-sm font-medium text-gray-700">GitHub токен</label>
+      <input type="password" id="github-token" placeholder="Введите GitHub токен">
+    </div>
+    <!-- Загрузка нового урока -->
+    <div class="mb-4">
+      <label for="lesson-file" class="block text-sm font-medium text-gray-700">Загрузить новый урок (.js файл)</label>
+      <input type="file" id="lesson-file" accept=".js">
+    </div>
+    <button id="upload-lesson-btn">Загрузить урок на GitHub</button>
+    <!-- Удаление урока -->
+    <div class="mb-4">
+      <label for="delete-lesson" class="block text-sm font-medium text-gray-700">Удалить урок</label>
+      <select id="delete-lesson">
+        <option value="">Выберите урок для удаления</option>
+        <!-- Lessons will be populated dynamically -->
+      </select>
+    </div>
+    <button id="delete-lesson-btn">Удалить урок</button>
+    <!-- Обновление index.html -->
+    <div class="mb-4">
+      <label for="index-html-file" class="block text-sm font-medium text-gray-700">Обновить index.html</label>
+      <input type="file" id="index-html-file" accept=".html">
+    </div>
+    <button id="upload-index-html-btn">Обновить index.html на GitHub</button>
+    <!-- Обновление index.js -->
+    <div class="mb-4">
+      <label for="index-js-file" class="block text-sm font-medium text-gray-700">Обновить index.js</label>
+      <input type="file" id="index-js-file" accept=".js">
+    </div>
+    <button id="upload-index-js-btn">Обновить index.js на GitHub</button>
+    <p id="admin-feedback" class="text-md mb-4"></p>
+  </div>
+
+  <!-- Экран практики -->
+  <div id="practice-screen" class="hidden">
     <div class="flex justify-between items-center mb-4">
       <div class="logo text-2xl font-bold" onclick="goBackToStart()">ELC</div>
       <h1 class="text-2xl font-bold">Практика грамматики</h1>
@@ -173,44 +102,78 @@
     </div>
     <p class="text-lg mb-2">Привет, <span id="user-name"></span>!</p>
     <p class="text-md mb-4">Уровень: <span id="user-level"></span>, <span id="user-lesson"></span></p>
-    <button id="start-practice-btn" class="w-full bg-[#373D8D] text-white p-2 rounded-md mb-2 hover:bg-[#2A3171]">Начать практику</button>
-    <button id="restart-listening-btn" class="hidden w-full bg-[#D72638] text-white p-2 rounded-md mb-4 hover:bg-[#B72030]">Возобновить прослушивание</button>
+    <div id="mic-status" class="text-sm mb-4">
+      <span id="mic-indicator" class="text-gray-600">Микрофон: Инициализация...</span>
+    </div>
+    <button id="start-practice-btn">Начать практику</button>
+    <button id="restart-listening-btn" class="hidden">Возобновить прослушивание</button>
     <p id="feedback" class="text-md mb-4"></p>
     <div class="mb-6">
       <p class="text-lg font-semibold">Прогресс:</p>
-      <div id="progress-bars"></div>
+      <canvas id="progress-chart" width="200" height="200"></canvas>
+      <div id="progress-details" class="mt-2"></div>
     </div>
     <div class="mb-6">
       <p class="text-lg font-semibold">Протокол:</p>
       <div id="stats" class="stats"></div>
       <div id="log" class="h-40 overflow-y-auto border p-2 text-sm"></div>
     </div>
-    <div id="completion-modal" class="modal">
+    <!-- Модальное окно завершения урока -->
+    <div id="completion-modal" class="modal hidden">
       <div class="modal-content">
         <h2 class="text-2xl font-bold mb-2">Урок завершён!</h2>
         <p id="congratulations" class="text-md mb-4"></p>
+        <canvas id="modal-progress-chart" width="200" height="200" class="mb-4"></canvas>
+        <div id="modal-progress-details" class="mt-2 mb-4"></div>
         <p class="text-sm mb-2">Результаты высланы на проверку преподавателю.</p>
         <div class="modal-log" id="modal-log"></div>
-        <button onclick="startNewTraining()" class="mt-4">Начать новую тренировку</button>
+        <button onclick="startNewTraining()">Завершить</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно для ввода пароля -->
+  <div id="password-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2 class="text-2xl font-bold mb-2">Введите пароль</h2>
+      <input type="password" id="password-input" class="password-modal-input" placeholder="Пароль">
+      <p id="password-error" class="password-error"></p>
+      <button onclick="checkPassword()">Подтвердить</button>
     </div>
   </div>
 
   <script src="index.js"></script>
   <script>
-    // Check if SpeechRecognition is supported
+    // Подбадривающие сообщения
+    const encouragementMessages = [
+      "Ты большой молодец! 🌟 Отличная работа, ты справился с уроком на ура! Ты уже говоришь на английском как носитель! 💪",
+      "Молодец, ты справился блестяще! 🎉 Урок пройден, ты на высоте! Ты уже владеешь английским как настоящий профи! ✨",
+      "Ух, как здорово! 🌟 Ты прошёл урок с лёгкостью! Ты уже говоришь на английском как носитель, это потрясающе! 💪",
+      "Ты настоящий чемпион! 🏆 Урок завершён, ты большой молодец! Ты уже разговариваешь как носитель английского! 🌟",
+      "Превосходно! 🎉 Ты справился с уроком на все 100%! Ты уже общаешься на английском как носитель, это невероятно! 💪",
+      "Вау, ты супер! 🌟 Урок пройден, и ты уже говоришь как носитель английского! Продолжай в том же духе! 🚀",
+      "Отлично сработано! 🎉 Ты завершил урок, и твой английский звучит как у носителя! Ты звезда! ⭐",
+      "Как круто! 🌟 Ты прошёл урок, и твой английский уже на уровне носителя! Горжусь тобой! 💖",
+      "Ты справился на ура! 🏆 Урок завершён, и ты уже общаешься как носитель! Это фантастика! 🎈",
+      "Супер, ты сделал это! 🌟 Урок пройден, и ты уже говоришь как носитель английского! Ты молодец! 💪"
+    ];
+
+    // Проверка поддержки SpeechRecognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert("Ваш браузер не поддерживает SpeechRecognition API. Пожалуйста, используйте современный браузер, например, Google Chrome.");
     }
 
-    // Initialize speech recognition
+    // Инициализация распознавания речи
     const recognition = SpeechRecognition ? new SpeechRecognition() : null;
     if (recognition) {
       recognition.lang = 'en-US';
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
       recognition.continuous = true;
+      console.log('SpeechRecognition initialized successfully');
+    } else {
+      console.error('SpeechRecognition not supported');
     }
 
     let userName = '';
@@ -220,21 +183,35 @@
     let spokenHistory = [];
     let logEntries = [];
     let isListening = false;
+    let shouldRestart = false; // Флаг для перезапуска распознавания
     let lastSpeechTime = Date.now();
-    let startTime = null; // To track the start time of the training
-    let endTime = null; // To track the end time of the training
-    let lessonCompleted = false; // Flag to indicate if the lesson is completed
-    let currentLessonData = null; // To store the current lesson's data
+    let startTime = null;
+    let endTime = null;
+    let lessonCompleted = false;
+    let currentLessonData = null;
+    let totalErrors = 0; // Счётчик ошибок
 
-    // DOM elements
+    // Конфигурация GitHub
+    const GITHUB_OWNER = 'pllato';
+    const GITHUB_REPO = 'elc-trainer';
+    const GITHUB_PATH = 'lessons';
+
+    // Фиксированный пароль для админки
+    const ADMIN_PASSWORD = 'boxl100'; // Замени на свой пароль
+
+    // Элементы DOM
     const startScreen = document.getElementById('start-screen');
     const practiceScreen = document.getElementById('practice-screen');
+    const adminScreen = document.getElementById('admin-screen');
     const startBtn = document.getElementById('start-btn');
+    const adminBtn = document.getElementById('admin-btn');
     const startPracticeBtn = document.getElementById('start-practice-btn');
     const restartListeningBtn = document.getElementById('restart-listening-btn');
     const feedback = document.getElementById('feedback');
+    const adminFeedback = document.getElementById('admin-feedback');
     const statsDiv = document.getElementById('stats');
-    const progressBars = document.getElementById('progress-bars');
+    const progressChart = document.getElementById('progress-chart');
+    const progressDetails = document.getElementById('progress-details');
     const logDiv = document.getElementById('log');
     const userNameEl = document.getElementById('user-name');
     const userLevelEl = document.getElementById('user-level');
@@ -242,27 +219,355 @@
     const completionModal = document.getElementById('completion-modal');
     const congratulationsEl = document.getElementById('congratulations');
     const modalLog = document.getElementById('modal-log');
+    const modalProgressChart = document.getElementById('modal-progress-chart');
+    const modalProgressDetails = document.getElementById('modal-progress-details');
     const levelSelect = document.getElementById('level');
     const lessonSelect = document.getElementById('lesson');
+    const lessonFileInput = document.getElementById('lesson-file');
+    const uploadLessonBtn = document.getElementById('upload-lesson-btn');
+    const githubTokenInput = document.getElementById('github-token');
+    const indexHtmlFileInput = document.getElementById('index-html-file');
+    const uploadIndexHtmlBtn = document.getElementById('upload-index-html-btn');
+    const indexJsFileInput = document.getElementById('index-js-file');
+    const uploadIndexJsBtn = document.getElementById('upload-index-js-btn');
+    const deleteLessonSelect = document.getElementById('delete-lesson');
+    const deleteLessonBtn = document.getElementById('delete-lesson-btn');
+    const passwordModal = document.getElementById('password-modal');
+    const passwordInput = document.getElementById('password-input');
+    const passwordError = document.getElementById('password-error');
 
-    // Populate lessons dynamically based on selected level
+    // Показать модальное окно пароля при клике на "Админка"
+    adminBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (passwordModal) {
+        passwordModal.style.display = 'block';
+        passwordInput.value = '';
+        passwordError.textContent = '';
+        passwordInput.focus();
+      } else {
+        console.error('Password modal not found');
+      }
+    });
+
+    // Проверка пароля
+    function checkPassword() {
+      const enteredPassword = passwordInput.value.trim();
+
+      if (enteredPassword === '') {
+        passwordError.textContent = 'Пожалуйста, введите пароль.';
+        passwordInput.focus();
+        return;
+      }
+
+      // Проверяем введённый пароль
+      if (enteredPassword === ADMIN_PASSWORD) {
+        // Пароль верный, открываем админку
+        passwordModal.style.display = 'none';
+        if (startScreen && adminScreen) {
+          startScreen.classList.add('hidden');
+          adminScreen.classList.remove('hidden');
+          githubTokenInput.value = ''; // Очищаем поле токена
+        } else {
+          console.error('startScreen or adminScreen not found');
+        }
+      } else {
+        // Пароль неверный, показываем ошибку
+        passwordError.textContent = 'Неверный пароль. Попробуйте снова.';
+        passwordInput.value = '';
+        passwordInput.focus();
+      }
+    }
+
+    // Обработчик нажатия Enter для проверки пароля
+    passwordInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        checkPassword();
+      }
+    });
+
+    // Загрузка уроков с GitHub через API
+    async function loadLessonsFromGitHub() {
+      console.log('Starting to load lessons from GitHub API...');
+      lessonsData.length = 0;
+      deleteLessonSelect.innerHTML = '<option value="">Выберите урок для удаления</option>';
+      const token = githubTokenInput.value.trim();
+      const headers = {
+        'Accept': 'application/vnd.github.v3+json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `token ${token}`;
+        console.log('Using GitHub token for authorization');
+      } else {
+        console.log('No GitHub token provided, proceeding without authorization');
+      }
+
+      try {
+        const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}`;
+        console.log(`Fetching lessons from ${apiUrl}`);
+        const response = await fetch(apiUrl, { headers });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`GitHub API error: ${response.statusText} (${response.status}) - ${errorText}`);
+        }
+        const files = await response.json();
+        console.log('Files fetched from GitHub:', files);
+
+        for (const file of files) {
+          if (file.name.endsWith('.js')) {
+            console.log(`Processing file: ${file.name}`);
+            const option = document.createElement('option');
+            option.value = file.name;
+            option.textContent = file.name;
+            deleteLessonSelect.appendChild(option);
+
+            const fileResponse = await fetch(file.download_url);
+            if (!fileResponse.ok) {
+              console.error(`Failed to fetch lesson ${file.name}: ${fileResponse.statusText}`);
+              continue;
+            }
+            const script = await fileResponse.text();
+            try {
+              eval(script);
+            } catch (error) {
+              console.error(`Error evaluating lesson ${file.name}:`, error);
+            }
+          }
+        }
+        console.log('Lessons loaded from GitHub:', lessonsData);
+        populateLessons();
+      } catch (error) {
+        console.error('Error loading lessons from GitHub:', error);
+        feedback.textContent = 'Ошибка при загрузке уроков с GitHub: ' + error.message;
+      }
+    }
+
+    // Извлечение номера урока из названия
+    function extractLessonNumber(lessonName) {
+      const match = lessonName.match(/Урок (\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    }
+
+    // Заполнение списка уроков
     function populateLessons() {
       const selectedLevel = levelSelect.value;
-      lessonSelect.innerHTML = ''; // Clear previous options
+      lessonSelect.innerHTML = '';
       const lessons = lessonsData.filter(lesson => lesson.level === selectedLevel);
-      lessons.forEach(lesson => {
+      console.log('Populating lessons for level:', selectedLevel, 'Found lessons:', lessons);
+      if (lessons.length === 0) {
         const option = document.createElement('option');
-        option.value = lesson.lesson;
-        option.textContent = lesson.name;
+        option.textContent = 'Нет доступных уроков';
+        option.disabled = true;
         lessonSelect.appendChild(option);
+      } else {
+        // Сортируем уроки по номеру
+        lessons.sort((a, b) => extractLessonNumber(a.name) - extractLessonNumber(b.name));
+        lessons.forEach(lesson => {
+          const option = document.createElement('option');
+          option.value = lesson.lesson;
+          option.textContent = lesson.name;
+          lessonSelect.appendChild(option);
+        });
+      }
+    }
+
+    loadLessonsFromGitHub();
+    levelSelect.addEventListener('change', populateLessons);
+
+    async function uploadFileToGitHub(file, filePath, token, successMessage) {
+      if (!file) {
+        adminFeedback.textContent = `Пожалуйста, выберите файл для ${filePath}.`;
+        return false;
+      }
+
+      if (!token) {
+        adminFeedback.textContent = 'Пожалуйста, введите GitHub токен.';
+        return false;
+      }
+
+      const reader = new FileReader();
+      return new Promise((resolve, reject) => {
+        reader.onload = async function(e) {
+          const fileContent = e.target.result;
+
+          try {
+            let sha = null;
+            try {
+              const existingFileResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`,
+                {
+                  headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                  }
+                }
+              );
+              if (existingFileResponse.ok) {
+                const existingFile = await existingFileResponse.json();
+                sha = existingFile.sha;
+              }
+            } catch (error) {
+              // File doesn't exist, proceed with creating a new file
+            }
+
+            const content = btoa(unescape(encodeURIComponent(fileContent)));
+
+            const response = await fetch(
+              `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`,
+              {
+                method: 'PUT',
+                headers: {
+                  'Authorization': `token ${token}`,
+                  'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify({
+                  message: `Update ${filePath}`,
+                  content: content,
+                  sha: sha
+                })
+              }
+            );
+
+            if (!response.ok) throw new Error(`GitHub API error: ${response.statusText}`);
+
+            adminFeedback.textContent = successMessage;
+            resolve(true);
+          } catch (error) {
+            adminFeedback.textContent = `Ошибка при загрузке ${filePath} на GitHub: ${error.message}`;
+            console.error(`Error uploading ${filePath} to GitHub:`, error);
+            resolve(false);
+          }
+        };
+        reader.onerror = function() {
+          adminFeedback.textContent = `Ошибка при чтении файла ${filePath}.`;
+          resolve(false);
+        };
+        reader.readAsText(file);
       });
     }
 
-    // Populate lessons on page load and when level changes
-    populateLessons();
-    levelSelect.addEventListener('change', populateLessons);
+    uploadLessonBtn.addEventListener('click', async () => {
+      const file = lessonFileInput.files[0];
+      const token = githubTokenInput.value.trim();
 
-    // Start practice screen
+      if (!file) {
+        adminFeedback.textContent = 'Пожалуйста, выберите файл урока (.js)';
+        return;
+      }
+
+      if (!file.name.endsWith('.js')) {
+        adminFeedback.textContent = 'Файл должен быть в формате .js';
+        return;
+      }
+
+      const success = await uploadFileToGitHub(
+        file,
+        `${GITHUB_PATH}/${file.name}`,
+        token,
+        'Урок успешно загружен на GitHub! Перейдите на стартовый экран, чтобы увидеть его.'
+      );
+
+      if (success) {
+        lessonFileInput.value = '';
+        githubTokenInput.value = '';
+        await loadLessonsFromGitHub();
+      }
+    });
+
+    deleteLessonBtn.addEventListener('click', async () => {
+      const lessonFile = deleteLessonSelect.value;
+      const token = githubTokenInput.value.trim();
+
+      if (!lessonFile) {
+        adminFeedback.textContent = 'Пожалуйста, выберите урок для удаления.';
+        return;
+      }
+
+      if (!token) {
+        adminFeedback.textContent = 'Пожалуйста, введите GitHub токен.';
+        return;
+      }
+
+      try {
+        const fileResponse = await fetch(
+          `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}/${lessonFile}`,
+          {
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          }
+        );
+        if (!fileResponse.ok) throw new Error(`GitHub API error: ${fileResponse.statusText}`);
+        const fileData = await fileResponse.json();
+        const sha = fileData.sha;
+
+        const deleteResponse = await fetch(
+          `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}/${lessonFile}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify({
+              message: `Delete lesson ${lessonFile}`,
+              sha: sha
+            })
+          }
+        );
+
+        if (!deleteResponse.ok) throw new Error(`GitHub API error: ${deleteResponse.statusText}`);
+
+        adminFeedback.textContent = 'Урок успешно удалён из GitHub! Перейдите на стартовый экран, чтобы обновить данные.';
+        githubTokenInput.value = '';
+        await loadLessonsFromGitHub();
+      } catch (error) {
+        adminFeedback.textContent = `Ошибка при удалении урока: ${error.message}`;
+        console.error('Error deleting lesson from GitHub:', error);
+      }
+    });
+
+    uploadIndexHtmlBtn.addEventListener('click', async () => {
+      const file = indexHtmlFileInput.files[0];
+      const token = githubTokenInput.value.trim();
+
+      const success = await uploadFileToGitHub(
+        file,
+        'index.html',
+        token,
+        'index.html успешно обновлён на GitHub! Страница перезагрузится через 3 секунды.'
+      );
+
+      if (success) {
+        indexHtmlFileInput.value = '';
+        githubTokenInput.value = '';
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
+      }
+    });
+
+    uploadIndexJsBtn.addEventListener('click', async () => {
+      const file = indexJsFileInput.files[0];
+      const token = githubTokenInput.value.trim();
+
+      const success = await uploadFileToGitHub(
+        file,
+        'index.js',
+        token,
+        'index.js успешно обновлён на GitHub! Страница перезагрузится через 3 секунды.'
+      );
+
+      if (success) {
+        indexJsFileInput.value = '';
+        githubTokenInput.value = '';
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
+      }
+    });
+
     startBtn.addEventListener('click', () => {
       userName = document.getElementById('name').value.trim();
       userLevel = document.getElementById('level').value;
@@ -272,18 +577,17 @@
         return;
       }
 
-      // Find the current lesson data
-      currentLessonData = lessonsData.find(lesson => lesson.level === userLevel && lesson.lesson === userLesson);
+      currentLessonData = lessonsData.find(l => l.level === userLevel && l.lesson === userLesson);
       if (!currentLessonData) {
         alert('Урок не найден. Пожалуйста, выберите другой урок.');
         return;
       }
 
-      // Initialize progress for the current lesson's structures
       progress = {};
       currentLessonData.structures.forEach(struct => {
         progress[struct.id] = 0;
       });
+      totalErrors = 0; // Сбрасываем счётчик ошибок при начале нового урока
 
       startScreen.classList.add('hidden');
       practiceScreen.classList.remove('hidden');
@@ -294,49 +598,58 @@
       updateStats();
     });
 
-    // Back to start screen via logo
     function goBackToStart() {
-      // Reset all data
+      console.log('goBackToStart called');
+      // Сбрасываем состояние
       progress = {};
       spokenHistory = [];
       logEntries = [];
       isListening = false;
+      shouldRestart = false;
       lessonCompleted = false;
       startTime = null;
       endTime = null;
+      totalErrors = 0; // Сбрасываем счётчик ошибок
       currentLessonData = null;
-      if (recognition) recognition.stop();
+      if (recognition) {
+        recognition.stop();
+        recognition.onend = null; // Сбрасываем обработчик, чтобы избежать лишних перезапусков
+      }
 
-      // Reset UI
-      startPracticeBtn.textContent = 'Начать практику';
-      startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-      startPracticeBtn.classList.add('bg-[#373D8D]', 'hover:bg-[#2A3171]');
-      startPracticeBtn.disabled = false;
-      restartListeningBtn.classList.add('hidden');
-      completionModal.style.display = 'none';
-      feedback.textContent = '';
-      statsDiv.innerHTML = '';
-      logDiv.innerHTML = '';
-      modalLog.innerHTML = '';
-      updateProgressBars();
+      // Проверяем, что элементы существуют, прежде чем менять их классы
+      if (startPracticeBtn) {
+        startPracticeBtn.textContent = 'Начать практику';
+        startPracticeBtn.disabled = false;
+      }
+      if (restartListeningBtn) {
+        restartListeningBtn.classList.add('hidden');
+      }
+      if (completionModal) {
+        completionModal.style.display = 'none';
+      }
+      if (feedback) feedback.textContent = '';
+      if (adminFeedback) adminFeedback.textContent = '';
+      if (statsDiv) statsDiv.innerHTML = '';
+      if (logDiv) logDiv.innerHTML = '';
+      if (modalLog) modalLog.innerHTML = '';
+      updateProgressBars('progress-chart');
 
-      // Show start screen
-      practiceScreen.classList.add('hidden');
-      startScreen.classList.remove('hidden');
+      // Переключаем экраны
+      if (practiceScreen) practiceScreen.classList.add('hidden');
+      if (adminScreen) adminScreen.classList.add('hidden');
+      if (startScreen) startScreen.classList.remove('hidden');
     }
 
-    // Start continuous speech recognition
     startPracticeBtn.addEventListener('click', () => {
       feedback.textContent = 'Попытка запустить практику...';
       if (!isListening) {
-        startTime = new Date(); // Record the start time when practice begins
+        startTime = new Date();
         startListening();
       } else {
-        feedback.textContent = 'Практика уже запущена. Если ничего не происходит, проверьте доступ к микрофону и перезапустите.';
+        feedback.textContent = 'Практика уже запущена. Если ничего не происходит, нажмите "Возобновить прослушивание".';
       }
     });
 
-    // Restart listening
     restartListeningBtn.addEventListener('click', () => {
       feedback.textContent = 'Попытка возобновить прослушивание...';
       if (!isListening) {
@@ -346,45 +659,55 @@
       }
     });
 
-    // Start new training (from modal)
     function startNewTraining() {
       goBackToStart();
     }
 
-    // Function to start listening
     function startListening() {
       if (!recognition) {
         feedback.textContent = 'SpeechRecognition не поддерживается в вашем браузере.';
+        console.error('SpeechRecognition not available in startListening');
         return;
       }
 
       try {
+        // Принудительно останавливаем предыдущую сессию, если она зависла
+        if (isListening) {
+          recognition.stop();
+          console.log('Previous SpeechRecognition session stopped');
+        }
+        console.log('Starting SpeechRecognition...');
         recognition.start();
         isListening = true;
-        startPracticeBtn.textContent = 'Слушаю...';
-        startPracticeBtn.classList.remove('bg-[#373D8D]', 'hover:bg-[#2A3171]');
-        startPracticeBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
-        startPracticeBtn.disabled = true;
-        restartListeningBtn.classList.add('hidden');
+        shouldRestart = false;
+        if (startPracticeBtn) {
+          startPracticeBtn.textContent = 'Слушаю...';
+          startPracticeBtn.disabled = true;
+        }
+        if (restartListeningBtn) {
+          restartListeningBtn.classList.add('hidden');
+        }
         feedback.textContent = 'Говори любой пример из структур ниже.';
         lastSpeechTime = Date.now();
+        console.log('SpeechRecognition started successfully');
       } catch (error) {
-        feedback.textContent = 'Ошибка при запуске распознавания речи: ' + error.message + '. Проверьте доступ к микрофону и попробуйте снова.';
+        console.error('Ошибка при запуске распознавания речи:', error);
+        feedback.textContent = 'Ошибка при запуске распознавания речи: ' + error.message + '. Нажмите "Возобновить прослушивание".';
         isListening = false;
-        startPracticeBtn.textContent = 'Начать практику';
-        startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-        startPracticeBtn.classList.add('bg-[#373D8D]', 'hover:bg-[#2A3171]');
-        startPracticeBtn.disabled = false;
-        restartListeningBtn.classList.remove('hidden');
+        if (startPracticeBtn) {
+          startPracticeBtn.textContent = 'Начать практику';
+          startPracticeBtn.disabled = false;
+        }
+        if (restartListeningBtn) {
+          restartListeningBtn.classList.remove('hidden');
+        }
       }
     }
 
-    // Initialize progress bars
     function initializeProgressBars() {
-      updateProgressBars();
+      updateProgressBars('progress-chart');
     }
 
-    // Function to format duration
     function formatDuration(start, end) {
       if (!start || !end) return '0 минут 0 секунд';
       const durationMs = end - start;
@@ -393,7 +716,6 @@
       return `${minutes} минут ${seconds} секунд`;
     }
 
-    // Update statistics
     function updateStats() {
       if (!currentLessonData) return;
       const requiredExamples = currentLessonData.requiredCorrect * currentLessonData.structures.length;
@@ -406,6 +728,7 @@
         <p>- Нужно было сказать: ${requiredExamples} примеров</p>
         <p>- Сказано правильно: ${totalCorrect} примеров</p>
         <p>- Всего попыток: ${totalAttempts}</p>
+        <p>- Ошибок: ${totalErrors}</p>
         <p>- Процент аккуратности: ${accuracy}%</p>
       `;
       
@@ -416,7 +739,6 @@
       statsDiv.innerHTML = statsHTML;
     }
 
-    // Update modal log (protocol in the completion modal)
     function updateModalLog() {
       if (!currentLessonData) return;
       const requiredExamples = currentLessonData.requiredCorrect * currentLessonData.structures.length;
@@ -425,12 +747,16 @@
       const accuracy = totalAttempts > 0 ? ((totalCorrect / totalAttempts) * 100).toFixed(2) : 0;
       const duration = formatDuration(startTime, endTime);
 
+      // Обновляем диаграмму в модальном окне
+      updateProgressBars('modal-progress-chart', 'modal-progress-details');
+
       let logHTML = `
         <p><strong>Протокол:</strong></p>
         <p><strong>Статистика:</strong></p>
         <p>- Нужно было сказать: ${requiredExamples} примеров</p>
         <p>- Сказано правильно: ${totalCorrect} примеров</p>
         <p>- Всего попыток: ${totalAttempts}</p>
+        <p>- Ошибок: ${totalErrors}</p>
         <p>- Процент аккуратности: ${accuracy}%</p>
         <p>- Время тренировки: ${duration}</p>
         <p><strong>Попытки:</strong></p>
@@ -449,26 +775,46 @@
       modalLog.innerHTML = logHTML;
     }
 
-    // Speech recognition result
+    function findMatchingStructure(text) {
+      if (!currentLessonData) return null;
+      const structures = currentLessonData.structures;
+      for (let struct of structures) {
+        if (currentLessonData.validateStructure(text, struct)) {
+          return struct;
+        }
+      }
+      return null;
+    }
+
     if (recognition) {
       recognition.onresult = (event) => {
-        const spokenText = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+        console.log('SpeechRecognition onresult triggered');
+        let spokenText = event.results[event.results.length - 1][0].transcript.trim();
+        // Заменяем "what's" на "what is"
+        spokenText = spokenText.replace(/what's/gi, 'what is');
+        console.log('Recognized text:', spokenText);
         const matchedStructure = findMatchingStructure(spokenText);
         const logEntry = { time: new Date().toLocaleTimeString(), spoken: spokenText };
 
-        lastSpeechTime = Date.now();
+        lastSpeechTime = Date.now(); // Обновляем время последнего распознавания
 
         if (matchedStructure) {
           const isCorrect = currentLessonData.validateStructure(spokenText, matchedStructure);
           if (isCorrect) {
-            const isDuplicate = matchedStructure.hasName && spokenHistory.includes(spokenText);
+            // Проверяем, не является ли фраза повтором, только если hasName: true
+            let isDuplicate = false;
+            if (matchedStructure.hasName) {
+              isDuplicate = spokenHistory.includes(spokenText.toLowerCase());
+            }
             logEntry.structure = matchedStructure.structure;
             logEntry.correct = true;
             logEntry.duplicate = isDuplicate;
 
             if (!isDuplicate || !matchedStructure.hasName) {
               progress[matchedStructure.id]++;
-              if (matchedStructure.hasName) spokenHistory.push(spokenText);
+              if (matchedStructure.hasName) {
+                spokenHistory.push(spokenText.toLowerCase()); // Добавляем в историю только если hasName: true
+              }
 
               if (progress[matchedStructure.id] > currentLessonData.requiredCorrect) {
                 feedback.textContent = `Отлично! 🎉🎈❤️ Ты превысил цель для "${matchedStructure.structure}"!`;
@@ -483,17 +829,19 @@
                 feedback.textContent = `Правильно! Ты сказал: "${spokenText}" для "${matchedStructure.structure}"`;
               }
 
-              updateProgressBars();
+              updateProgressBars('progress-chart');
               checkCompletion();
             } else {
               feedback.textContent = `Повтор: "${spokenText}". Скажи новый пример для: ${matchedStructure.structure}`;
             }
           } else {
+            totalErrors++; // Увеличиваем счётчик ошибок
             logEntry.structure = matchedStructure.structure;
             logEntry.correct = false;
             feedback.textContent = `Неправильно: "${spokenText}" для "${matchedStructure.structure}"`;
           }
         } else {
+          totalErrors++; // Увеличиваем счётчик ошибок
           logEntry.correct = false;
           feedback.textContent = `Не совпадает: "${spokenText}". Попробуй одну из структур ниже.`;
         }
@@ -501,134 +849,257 @@
         logEntries.push(logEntry);
         updateLog();
         updateStats();
+        updateProgressBars('progress-chart'); // Обновляем диаграмму для отображения ошибок
 
-        // Brief pause before restarting recognition to avoid overlap
-        setTimeout(() => {
-          if (isListening && completionModal.style.display !== 'block') {
-            recognition.start();
-          }
-        }, 500);
+        // Устанавливаем флаг для перезапуска
+        if (isListening && completionModal.style.display !== 'block') {
+          shouldRestart = true;
+        }
       };
 
       recognition.onerror = (event) => {
-        feedback.textContent = 'Ошибка в распознавании: ' + event.error + '. Попробуйте снова или проверьте доступ к микрофону.';
+        console.error('SpeechRecognition error:', event.error);
+        feedback.textContent = 'Ошибка в распознавании: ' + event.error + '. Нажмите "Возобновить прослушивание".';
         isListening = false;
-        restartListeningBtn.classList.remove('hidden');
-        startPracticeBtn.textContent = 'Начать практику';
-        startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-        startPracticeBtn.classList.add('bg-[#373D8D]', 'hover:bg-[#2A3171]');
-        startPracticeBtn.disabled = false;
+        shouldRestart = false;
+        if (startPracticeBtn) {
+          startPracticeBtn.textContent = 'Начать практику';
+          startPracticeBtn.disabled = false;
+        }
+        if (restartListeningBtn) {
+          restartListeningBtn.classList.remove('hidden');
+        }
       };
 
       recognition.onend = () => {
-        // Check for no-speech timeout
+        console.log('SpeechRecognition ended');
         const currentTime = Date.now();
-        if (currentTime - lastSpeechTime > 10000) { // 10 seconds timeout
-          feedback.textContent = 'Давно не слышу речи. Перезапускаю...';
+        // Если прошло 10 секунд без речи или распознавание завершилось, показываем кнопку перезапуска
+        if (currentTime - lastSpeechTime > 10000 || !isListening) {
+          console.log('No speech detected for 10 seconds or recognition stopped, showing restart button');
+          feedback.textContent = 'Микрофон отключился. Нажмите "Возобновить прослушивание" или начните заново.';
           isListening = false;
-          restartListeningBtn.classList.remove('hidden');
-          startPracticeBtn.textContent = 'Начать практику';
-          startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-          startPracticeBtn.classList.add('bg-[#373D8D]', 'hover:bg-[#2A3171]');
-          startPracticeBtn.disabled = false;
+          shouldRestart = false;
+          if (startPracticeBtn) {
+            startPracticeBtn.textContent = 'Начать практику';
+            startPracticeBtn.disabled = false;
+          }
+          if (restartListeningBtn) {
+            restartListeningBtn.classList.remove('hidden');
+          }
           return;
         }
 
-        // Restart recognition if still listening and modal is not visible
-        if (isListening && completionModal.style.display !== 'block') {
-          setTimeout(() => {
-            try {
-              recognition.start();
-            } catch (error) {
-              feedback.textContent = 'Ошибка при перезапуске распознавания: ' + error.message + '. Попробуйте снова.';
-              isListening = false;
-              restartListeningBtn.classList.remove('hidden');
+        // Перезапускаем распознавание, если флаг установлен
+        if (shouldRestart && isListening && completionModal.style.display !== 'block') {
+          try {
+            console.log('Restarting SpeechRecognition');
+            recognition.start();
+            shouldRestart = false; // Сбрасываем флаг после успешного перезапуска
+          } catch (error) {
+            console.error('Ошибка при перезапуске распознавания:', error);
+            feedback.textContent = 'Ошибка при перезапуске: ' + error.message + '. Нажмите "Возобновить прослушивание".';
+            isListening = false;
+            shouldRestart = false;
+            if (startPracticeBtn) {
               startPracticeBtn.textContent = 'Начать практику';
-              startPracticeBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-              startPracticeBtn.classList.add('bg-[#373D8D]', 'hover:bg-[#2A3171]');
               startPracticeBtn.disabled = false;
             }
-          }, 500);
+            if (restartListeningBtn) {
+              restartListeningBtn.classList.remove('hidden');
+            }
+          }
+        } else if (!isListening) {
+          console.log('Recognition stopped, showing restart button');
+          feedback.textContent = 'Микрофон отключился. Нажмите "Возобновить прослушивание".';
+          isListening = false;
+          shouldRestart = false;
+          if (startPracticeBtn) {
+            startPracticeBtn.textContent = 'Начать практику';
+            startPracticeBtn.disabled = false;
+          }
+          if (restartListeningBtn) {
+            restartListeningBtn.classList.remove('hidden');
+          }
         }
       };
     }
 
-    // Find matching structure
-    function findMatchingStructure(text) {
-      if (!currentLessonData) return null;
-      const structures = currentLessonData.structures;
-      for (let struct of structures) {
-        if (currentLessonData.validateStructure(text, struct)) {
-          return struct;
+    function updateLog() {
+      logDiv.innerHTML = '';
+      logEntries.forEach(entry => {
+        const p = document.createElement('p');
+        p.className = 'mb-1';
+        if (entry.exceeded) {
+          p.textContent = `[${entry.time}] ${entry.spoken} 🎉🎈❤️`;
+        } else {
+          const statusIcon = entry.correct ? '✅' : '❌';
+          const duplicateIcon = entry.duplicate ? '🔁' : '';
+          p.textContent = `[${entry.time}] Сказано: "${entry.spoken}"${entry.structure ? ` для "${entry.structure}"` : ''} - ${statusIcon} ${entry.correct ? 'Правильно' : 'Неправильно'}${duplicateIcon ? ` ${duplicateIcon} Повтор` : ''}`;
+          p.setAttribute('data-status', entry.correct ? 'correct' : 'incorrect');
         }
-      }
-      return null;
+        logDiv.appendChild(p);
+      });
+      logDiv.scrollTop = logDiv.scrollHeight;
     }
 
-    // Update progress bars
-    function updateProgressBars() {
+    function updateProgressBars(chartId, detailsId = 'progress-details') {
       if (!currentLessonData) return;
-      progressBars.innerHTML = '';
-      currentLessonData.structures.forEach(struct => {
+
+      const chartElement = document.getElementById(chartId);
+      const detailsElement = document.getElementById(detailsId);
+      if (!chartElement || !detailsElement) return;
+
+      const ctx = chartElement.getContext('2d');
+      const dpr = window.devicePixelRatio || 1; // Получаем плотность пикселей
+      const canvasWidth = 200; // Фиксированный размер
+      const canvasHeight = 200; // Фиксированный размер
+
+      // Устанавливаем физическое разрешение canvas с учетом dpr
+      chartElement.width = canvasWidth * dpr;
+      chartElement.height = canvasHeight * dpr;
+      ctx.scale(dpr, dpr);
+
+      const structures = currentLessonData.structures;
+      const centerX = canvasWidth / 2;
+      const centerY = canvasHeight / 2;
+      const baseRadius = 20; // Начальный радиус для первого кольца
+      const ringWidth = 7; // Толщина каждого кольца
+      const gap = 3; // Расстояние между кольцами
+
+      // Настраиваем сглаживание
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Очищаем canvas перед перерисовкой
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+      // Очищаем текстовую информацию
+      detailsElement.innerHTML = '';
+
+      // Рисуем кольца прогресса
+      structures.forEach((struct, index) => {
         const totalCorrect = progress[struct.id];
-        const div = document.createElement('div');
-        div.className = 'mb-2';
+        const outerRadius = baseRadius + index * (ringWidth + gap);
+        const innerRadius = outerRadius - ringWidth;
 
-        let barsHTML = `
-          <p class="text-sm">${struct.structure}</p>
-        `;
+        // Рисуем серый фон (незаполненное кольцо)
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, outerRadius - ringWidth / 2, 0, 2 * Math.PI);
+        ctx.lineWidth = ringWidth;
+        ctx.strokeStyle = '#e5e7eb'; // Серый цвет фона
+        ctx.stroke();
 
-        // First progress bar (up to REQUIRED_CORRECT)
-        const firstBarProgress = Math.min(totalCorrect, currentLessonData.requiredCorrect);
-        const firstBarPercentage = (firstBarProgress / currentLessonData.requiredCorrect) * 100;
-        barsHTML += `
-          <div class="w-full bg-gray-200 rounded-full h-2.5 mb-1">
-            <div class="bg-[#373D8D] h-2.5 rounded-full" style="width: ${firstBarPercentage}%"></div>
-          </div>
-        `;
+        // Вычисляем прогресс для основного кольца (до requiredCorrect)
+        const firstProgress = Math.min(totalCorrect, currentLessonData.requiredCorrect);
+        const firstPercentage = firstProgress / currentLessonData.requiredCorrect;
+        const firstAngle = firstPercentage * 2 * Math.PI - Math.PI / 2; // Начинаем с верхней точки
 
-        // Additional progress bar for exceeding the goal
+        // Рисуем заполненное кольцо (основной прогресс)
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, outerRadius - ringWidth / 2, -Math.PI / 2, firstAngle);
+        ctx.lineWidth = ringWidth;
+        ctx.strokeStyle = '#373D8D'; // Синий цвет
+        ctx.stroke();
+
+        // Если есть избыточные примеры, рисуем второй круг
         if (totalCorrect > currentLessonData.requiredCorrect) {
           const excessCorrect = totalCorrect - currentLessonData.requiredCorrect;
-          const excessProgress = excessCorrect % currentLessonData.requiredCorrect;
-          const excessPercentage = (excessProgress / currentLessonData.requiredCorrect) * 100;
-          barsHTML += `
-            <div class="w-full bg-gray-200 rounded-full h-2.5">
-              <div class="bg-[#28A745] h-2.5 rounded-full" style="width: ${excessPercentage}%"></div>
-            </div>
-          `;
+          const excessProgress = (excessCorrect % currentLessonData.requiredCorrect) / currentLessonData.requiredCorrect;
+          const excessAngle = excessProgress * 2 * Math.PI - Math.PI / 2;
+
+          // Рисуем избыточный прогресс другим цветом
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, outerRadius - ringWidth / 2, -Math.PI / 2, excessAngle);
+          ctx.lineWidth = ringWidth;
+          ctx.strokeStyle = '#28A745'; // Зелёный цвет
+          ctx.stroke();
         }
 
-        barsHTML += `
-          <p class="text-xs text-gray-600">${totalCorrect}/${currentLessonData.requiredCorrect}</p>
+        // Добавляем информацию о структуре и прогрессе
+        const detailDiv = document.createElement('div');
+        detailDiv.className = 'mb-1';
+        detailDiv.innerHTML = `
+          <p class="text-sm">${struct.structure}: ${totalCorrect}/${currentLessonData.requiredCorrect}</p>
         `;
-        div.innerHTML = barsHTML;
-        progressBars.appendChild(div);
+
+        // Добавляем примеры для структуры
+        if (struct.examples && struct.examples.length > 0) {
+          const examplesList = document.createElement('ul');
+          examplesList.className = 'text-xs text-gray-600 ml-4';
+          struct.examples.forEach(example => {
+            const exampleItem = document.createElement('li');
+            exampleItem.textContent = example;
+            examplesList.appendChild(exampleItem);
+          });
+          detailDiv.appendChild(examplesList);
+        }
+
+        detailsElement.appendChild(detailDiv);
       });
+
+      // Рисуем внешние окружности ошибок
+      const errorsPerRing = 10; // 10 ошибок на один полный круг
+      const numErrorRings = Math.ceil(totalErrors / errorsPerRing); // Количество колец ошибок
+      const maxProgressRadius = baseRadius + (structures.length - 1) * (ringWidth + gap); // Радиус последнего кольца прогресса
+      const errorRingGap = 3; // Расстояние между кольцами ошибок
+
+      for (let i = 0; i < numErrorRings; i++) {
+        const errorsInThisRing = Math.min(totalErrors - i * errorsPerRing, errorsPerRing);
+        const errorPercentage = errorsInThisRing / errorsPerRing;
+        const errorAngle = errorPercentage * 2 * Math.PI - Math.PI / 2;
+        const errorRadius = maxProgressRadius + (i + 1) * (ringWidth + errorRingGap);
+
+        // Определяем цвет в зависимости от номера кольца
+        let errorColor;
+        if (i === 0) errorColor = '#FFA500'; // Оранжевый (первый круг)
+        else if (i === 1) errorColor = '#FF0000'; // Красный (второй круг)
+        else errorColor = '#800000'; // Бордовый (третий и последующие круги)
+
+        // Рисуем серый фон для кольца ошибок
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, errorRadius - ringWidth / 2, 0, 2 * Math.PI);
+        ctx.lineWidth = ringWidth;
+        ctx.strokeStyle = '#e5e7eb'; // Серый цвет фона
+        ctx.stroke();
+
+        // Рисуем заполненное кольцо ошибок
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, errorRadius - ringWidth / 2, -Math.PI / 2, errorAngle);
+        ctx.lineWidth = ringWidth;
+        ctx.strokeStyle = errorColor;
+        ctx.stroke();
+      }
+
+      // Добавляем информацию об ошибках под диаграммой
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'mb-1';
+      errorDiv.innerHTML = `
+        <p class="text-sm text-red-600">Ошибок: ${totalErrors}</p>
+      `;
+      detailsElement.appendChild(errorDiv);
     }
 
-    // Check lesson completion
     function checkCompletion() {
       if (!currentLessonData) return;
       if (Object.values(progress).every(count => count >= currentLessonData.requiredCorrect)) {
-        endTime = new Date(); // Record the end time when the lesson is completed
+        endTime = new Date();
         lessonCompleted = true;
         const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
         congratulationsEl.textContent = randomMessage;
-        updateModalLog(); // Update the protocol in the modal
+        updateModalLog();
         completionModal.style.display = 'block';
         isListening = false;
+        shouldRestart = false;
         if (recognition) recognition.stop();
         startPracticeBtn.textContent = 'Урок завершён';
-        updateStats(); // Update stats to include duration
-        sendResults(); // Automatically send results
+        updateStats();
+        sendResults();
       }
     }
 
-    // Send results to Telegram and Bitrix24
     async function sendResults() {
       if (!currentLessonData) return;
-      // Calculate statistics
       const requiredExamples = currentLessonData.requiredCorrect * currentLessonData.structures.length;
       const totalCorrect = Object.values(progress).reduce((sum, count) => sum + count, 0);
       const totalAttempts = logEntries.length;
@@ -644,6 +1115,7 @@
 - Нужно было сказать: ${requiredExamples} примеров
 - Сказано правильно: ${totalCorrect} примеров
 - Всего попыток: ${totalAttempts}
+- Ошибок: ${totalErrors}
 - Процент аккуратности: ${accuracy}%
 - Время тренировки: ${duration}
 Протокол:
@@ -651,22 +1123,21 @@
 - Нужно было сказать: ${requiredExamples} примеров
 - Сказано правильно: ${totalCorrect} примеров
 - Всего попыток: ${totalAttempts}
+- Ошибок: ${totalErrors}
 - Процент аккуратности: ${accuracy}%
 - Время тренировки: ${duration}
 ${logEntries.map(entry => {
   if (entry.exceeded) {
     return `- ${entry.spoken} 🎉🎈❤️`;
-  } else {
-    const statusIcon = entry.correct ? '✅' : '❌';
-    const duplicateIcon = entry.duplicate ? '🔁' : '';
-    return `- ${entry.spoken}${entry.structure ? ` (для "${entry.structure}")` : ''} - ${statusIcon} ${entry.correct ? 'Правильно' : 'Неправильно'}${duplicateIcon ? ` ${duplicateIcon} Повтор` : ''}`;
   }
+  const statusIcon = entry.correct ? '✅' : '❌';
+  const duplicateIcon = entry.duplicate ? '🔁' : '';
+  return `- ${entry.spoken}${entry.structure ? ` (для "${entry.structure}")` : ''} - ${statusIcon} ${entry.correct ? 'Правильно' : 'Неправильно'}${duplicateIcon ? ` ${duplicateIcon} Повтор` : ''}`;
 }).join('\n')}
 `;
 
-      // Telegram integration
-      const TELEGRAM_BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'; // Замени на твой Telegram Bot Token
-      const TELEGRAM_CHAT_ID = 'YOUR_TELEGRAM_CHAT_ID'; // Замени на твой Telegram Chat ID
+      const TELEGRAM_BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN';
+      const TELEGRAM_CHAT_ID = 'YOUR_TELEGRAM_CHAT_ID';
       const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
 
       try {
@@ -682,9 +1153,8 @@ ${logEntries.map(entry => {
         console.error('Ошибка отправки в Telegram:', error.message);
       }
 
-      // Bitrix24 integration
-      const BITRIX_WEBHOOK_URL = 'https://elcalmaty.bitrix24.kz/rest/1/t30j7bkqi9p4sy0b/'; // Твой вебхук
-      const BITRIX_CHAT_ID = '145630'; // ID чата
+      const BITRIX_WEBHOOK_URL = 'https://elcalmaty.bitrix24.kz/rest/1/t30j7bkqi9p4sy0b/';
+      const BITRIX_CHAT_ID = '145630';
       const bitrixUrl = `${BITRIX_WEBHOOK_URL}im.message.add`;
 
       try {
