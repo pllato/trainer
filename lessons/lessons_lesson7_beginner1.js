@@ -2,26 +2,80 @@ addLesson({
   level: "beginner1",
   lesson: "lesson7",
   name: "Урок 7",
-  structures: [
-    { structure: "Is he _____?", pattern: ["is", "he"], translations: ["Он _____?", "Ему _____?"], id: "is-he", hasName: false },
-    { structure: "Is she _____?", pattern: ["is", "she"], translations: ["Она _____?", "Ей _____?"], id: "is-she", hasName: false },
-    { structure: "Is it _____?", pattern: ["is", "it"], translations: ["Это _____?", "Ему/ей _____?"], id: "is-it", hasName: false },
-    { structure: "Yes, he is _____.", pattern: ["yes", "he", "is"], translations: ["Да, он _____.", "Да, ему _____."], id: "yes-he-is", hasName: true },
-    { structure: "Yes, she is _____.", pattern: ["yes", "she", "is"], translations: ["Да, она _____.", "Да, ей _____."], id: "yes-she-is", hasName: true },
-    { structure: "Yes, it is _____.", pattern: ["yes", "it", "is"], translations: ["Да, это _____.", "Да, ему/ей _____."], id: "yes-it-is", hasName: true },
-    { structure: "No, he is not _____.", pattern: ["no", "he", "is", "not"], translations: ["Нет, он не _____.", "Нет, ему не _____."], id: "no-he-is-not", hasName: true },
-    { structure: "No, she is not _____.", pattern: ["no", "she", "is", "not"], translations: ["Нет, она не _____.", "Нет, ей не _____."], id: "no-she-is-not", hasName: true },
-    { structure: "No, it is not _____.", pattern: ["no", "it", "is", "not"], translations: ["Нет, это не _____.", "Нет, ему/ей не _____."], id: "no-it-is-not", hasName: true }
-  ],
   requiredCorrect: 6, // 6 correct examples per structure
-  validateStructure: function(text, structure) {
-    const words = text.split(' ').filter(word => word.length > 0);
+  structures: [
+    {
+      id: "is-he",
+      structure: "Is he _____?",
+      pattern: ["is", "he"],
+      hasName: false,
+      examples: ["Is he nice?", "Is he tall?"]
+    },
+    {
+      id: "is-she",
+      structure: "Is she _____?",
+      pattern: ["is", "she"],
+      hasName: false,
+      examples: ["Is she kind?", "Is she happy?"]
+    },
+    {
+      id: "is-it",
+      structure: "Is it _____?",
+      pattern: ["is", "it"],
+      hasName: false,
+      examples: ["Is it nice?", "Is it cold?"]
+    },
+    {
+      id: "yes-he-is",
+      structure: "Yes, he is _____.",
+      pattern: ["yes", "he", "is"],
+      hasName: true,
+      examples: ["Yes, he is nice.", "Yes, he is tall."]
+    },
+    {
+      id: "yes-she-is",
+      structure: "Yes, she is _____.",
+      pattern: ["yes", "she", "is"],
+      hasName: true,
+      examples: ["Yes, she is kind.", "Yes, she is happy."]
+    },
+    {
+      id: "yes-it-is",
+      structure: "Yes, it is _____.",
+      pattern: ["yes", "it", "is"],
+      hasName: true,
+      examples: ["Yes, it is nice.", "Yes, it is cold."]
+    },
+    {
+      id: "no-he-is-not",
+      structure: "No, he is not _____.",
+      pattern: ["no", "he", "is", "not"],
+      hasName: true,
+      examples: ["No, he is not nice.", "No, he is not tall."]
+    },
+    {
+      id: "no-she-is-not",
+      structure: "No, she is not _____.",
+      pattern: ["no", "she", "is", "not"],
+      hasName: true,
+      examples: ["No, she is not kind.", "No, she is not happy."]
+    },
+    {
+      id: "no-it-is-not",
+      structure: "No, it is not _____.",
+      pattern: ["no", "it", "is", "not"],
+      hasName: true,
+      examples: ["No, it is not nice.", "No, it is not cold."]
+    }
+  ],
+  validateStructure: function(text, structure, spokenHistory) {
+    console.log('Validating:', text, 'against', structure.structure);
+    const words = text.toLowerCase().replace(/[.,!?]/g, '').split(' ').filter(word => word.length > 0);
     const pattern = structure.pattern;
     let wordIndex = 0;
 
     // Функция для обработки сокращений
     function normalizeWord(word) {
-      word = word.toLowerCase();
       if (word === "he's") return ["he", "is"];
       if (word === "she's") return ["she", "is"];
       if (word === "it's") return ["it", "is"];
@@ -34,9 +88,10 @@ addLesson({
       normalizedWords.push(...normalizeWord(word));
     }
 
-    // Проверяем, что начало текста соответствует шаблону
-    for (let part of pattern) {
-      if (!normalizedWords[wordIndex] || normalizedWords[wordIndex] !== part) return false;
+    // Проверяем соответствие шаблону
+    if (normalizedWords.length < pattern.length) return false;
+    for (let i = 0; i < pattern.length; i++) {
+      if (normalizedWords[i] !== pattern[i]) return false;
       wordIndex++;
     }
 
@@ -46,6 +101,9 @@ addLesson({
     }
 
     // Для ответов (hasName: true) после шаблона должно быть хотя бы одно слово
+    if (structure.hasName && spokenHistory && spokenHistory.includes(text.toLowerCase())) {
+      return false; // Пропускаем дубликаты
+    }
     return wordIndex < normalizedWords.length; // Проверяем, что есть хотя бы одно слово после шаблона
   }
 });
