@@ -779,7 +779,7 @@
       if (!currentLessonData) return null;
       const structures = currentLessonData.structures;
       for (let struct of structures) {
-        if (currentLessonData.validateStructure(text, struct)) {
+        if (currentLessonData.validateStructure(text, struct, spokenHistory)) {
           return struct;
         }
       }
@@ -853,7 +853,10 @@
                   currentSegment.push(words[i]);
                   i++;
                 }
-                segments.push(words.slice(segmentStart, i).join(' '));
+                let fullSegment = words.slice(segmentStart, i).join(' ');
+                if (fullSegment.split(' ').length >= patternWords.length) { // Пропускаем пустые сегменты
+                  segments.push(fullSegment);
+                }
                 foundPattern = true;
                 break;
               }
@@ -864,7 +867,7 @@
             i++;
           }
         }
-        if (currentSegment.length > 0) {
+        if (currentSegment.length > 0 && currentSegment.join(' ').split(' ').length >= 2) { // Пропускаем одиночные слова
           segments.push(currentSegment.join(' '));
         }
 
@@ -875,20 +878,11 @@
         // Обрабатываем каждое сегмент отдельно
         segments.forEach((segment, index) => {
           const logEntry = { time: new Date().toLocaleTimeString(), spoken: segment };
-          let matchedStructure = null;
-
-          // Проверяем все структуры для каждого сегмента
-          for (let struct of currentLessonData.structures) {
-            if (currentLessonData.validateStructure(segment, struct)) {
-              matchedStructure = struct;
-              break;
-            }
-          }
+          let matchedStructure = findMatchingStructure(segment);
 
           if (matchedStructure) {
-            const isCorrect = currentLessonData.validateStructure(segment, matchedStructure);
+            const isCorrect = currentLessonData.validateStructure(segment, matchedStructure, spokenHistory);
             if (isCorrect) {
-              // Проверяем, не является ли фраза повтором, только если hasName: true
               let isDuplicate = false;
               if (matchedStructure.hasName) {
                 isDuplicate = spokenHistory.includes(segment.toLowerCase());
@@ -919,13 +913,13 @@
                 feedbackMessages.push(`Повтор: "${segment}". Скажи новый пример для: ${matchedStructure.structure} (Пример ${index + 1})`);
               }
             } else {
-              totalErrors++; // Увеличиваем счётчик ошибок
+              totalErrors++; // Увеличиваем счётчик ошибок только если валидация не удалась
               logEntry.structure = matchedStructure.structure;
               logEntry.correct = false;
               feedbackMessages.push(`Неправильно: "${segment}" для "${matchedStructure.structure}" (Пример ${index + 1})`);
             }
           } else {
-            totalErrors++; // Увеличиваем счётчик ошибок
+            totalErrors++; // Увеличиваем счётчик ошибок только если структура не найдена
             logEntry.correct = false;
             feedbackMessages.push(`Не совпадает: "${segment}". Попробуй одну из структур ниже. (Пример ${index + 1})`);
           }
