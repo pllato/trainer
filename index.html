@@ -962,13 +962,15 @@
         if (restartListeningBtn) {
           restartListeningBtn.classList.remove('hidden');
         }
+        console.log('isListening set to false due to error:', isListening);
       };
 
       recognition.onend = () => {
         console.log('SpeechRecognition ended');
         const currentTime = Date.now();
+        console.log('Current time:', currentTime, 'Last speech time:', lastSpeechTime, 'isListening:', isListening);
         // Если прошло 10 секунд без речи или распознавание завершилось, показываем кнопку перезапуска
-        if (currentTime - lastSpeechTime > 10000 || !isListening) {
+        if ((currentTime - lastSpeechTime > 10000 && isListening) || !isListening) {
           console.log('No speech detected for 10 seconds or recognition stopped, showing restart button');
           feedback.textContent = 'Микрофон отключился. Нажмите "Возобновить прослушивание" или начните заново.';
           isListening = false;
@@ -980,17 +982,14 @@
           if (restartListeningBtn) {
             restartListeningBtn.classList.remove('hidden');
           }
-          return;
-        }
-
-        // Перезапускаем распознавание, если флаг установлен
-        if (shouldRestart && isListening && completionModal.style.display !== 'block') {
+        } else if (shouldRestart && isListening && completionModal.style.display !== 'block') {
           try {
-            console.log('Restarting SpeechRecognition');
+            console.log('Attempting to restart SpeechRecognition');
             recognition.start();
-            shouldRestart = false; // Сбрасываем флаг после успешного перезапуска
+            shouldRestart = false;
+            console.log('SpeechRecognition restarted successfully, isListening:', isListening);
           } catch (error) {
-            console.error('Ошибка при перезапуске распознавания:', error);
+            console.error('Error restarting SpeechRecognition:', error);
             feedback.textContent = 'Ошибка при перезапуске: ' + error.message + '. Нажмите "Возобновить прослушивание".';
             isListening = false;
             shouldRestart = false;
@@ -1001,18 +1000,7 @@
             if (restartListeningBtn) {
               restartListeningBtn.classList.remove('hidden');
             }
-          }
-        } else if (!isListening) {
-          console.log('Recognition stopped, showing restart button');
-          feedback.textContent = 'Микрофон отключился. Нажмите "Возобновить прослушивание".';
-          isListening = false;
-          shouldRestart = false;
-          if (startPracticeBtn) {
-            startPracticeBtn.textContent = 'Начать практику';
-            startPracticeBtn.disabled = false;
-          }
-          if (restartListeningBtn) {
-            restartListeningBtn.classList.remove('hidden');
+            console.log('isListening set to false due to restart error:', isListening);
           }
         }
       };
