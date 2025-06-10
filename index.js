@@ -105,6 +105,7 @@ function resetLessonState() {
   window.lessonStarted = false;
   window.usedVerbs = [];
   window.userProgress = {};
+  window.usedDates = []; // Сбрасываем даты для предотвращения накопления
   lastValidatedText = null;
   lastValidatedTime = 0;
   console.log('Lesson state reset');
