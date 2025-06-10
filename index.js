@@ -318,7 +318,7 @@ function startRecognition() {
         console.log('Перезапуск SpeechRecognition');
         startRecognition();
       }
-    }, 2000); // Уменьшили с 5000 до 2000
+    }, 2000); // Уменьшили таймаут с 5000 до 2000
   };
 
   try {
@@ -369,12 +369,12 @@ function validateInput(text, lessonId = 'lesson13') {
   }
 }
 
-// Start fetching lessons and add manual input handler
+// Start fetching lessons and handle manual input
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, starting fetchLessons');
   fetchLessons();
 
-  // Добавляем обработчик для текстового ввода
+  // Добавляем обработчик для ручного ввода текста
   const submitManualInput = document.getElementById('submit-manual-input');
   if (submitManualInput) {
     submitManualInput.addEventListener('click', () => {
