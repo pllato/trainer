@@ -105,7 +105,8 @@ function resetLessonState() {
   window.lessonStarted = false;
   window.usedVerbs = [];
   window.userProgress = {};
-  window.usedDates = []; // Сбрасываем даты
+  window.usedDates = [];
+  window.usedPhrases = []; // Сбрасываем использованные фразы
   lastValidatedText = null;
   lastValidatedTime = 0;
   console.log('Lesson state reset');
@@ -186,7 +187,6 @@ function updateProgressBars(lessonId) {
   lesson.structures.forEach((struct, index) => {
     if (!struct.id) {
       console.warn(`Structure ID is undefined at index ${index}:`, struct);
-      // Присваиваем временный ID, если он отсутствует
       struct.id = `struct-${index}`;
     }
     const totalCorrect = window.userProgress[struct.id] || 0;
@@ -253,9 +253,9 @@ function startRecognition() {
   }
 
   window.recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-  window.recognition.lang = 'en'; // Убрали региональную привязку для большей гибкости
-  window.recognition.continuous = true; // Включаем непрерывное распознавание
-  window.recognition.interimResults = false; // Только финальные результаты
+  window.recognition.lang = 'en';
+  window.recognition.continuous = true;
+  window.recognition.interimResults = false;
 
   const micIndicator = document.getElementById('mic-indicator');
   if (micIndicator) {
@@ -293,7 +293,7 @@ function startRecognition() {
       console.log('Проблема с сетью, пытаемся перезапустить через 2 секунды');
     } else if (event.error === 'no-speech') {
       console.log('Речь не обнаружена, продолжаем слушать');
-      return; // Не останавливаем для no-speech
+      return;
     } else if (event.error === 'aborted') {
       console.log('Распознавание прервано, перезапускаем');
     }
@@ -308,17 +308,15 @@ function startRecognition() {
       micIndicator.className = 'text-red-600';
     }
     window.recognition = null;
-    // Показываем кнопку перезапуска
     const restartButton = document.getElementById('restart-listening-btn');
     if (restartButton) restartButton.classList.remove('hidden');
 
-    // Перезапускаем через 2 секунды, если не активно
     setTimeout(() => {
       if (!window.recognition || window.recognition.state !== 'listening') {
         console.log('Перезапуск SpeechRecognition');
         startRecognition();
       }
-    }, 2000); // Уменьшили таймаут с 5000 до 2000
+    }, 2000);
   };
 
   try {
@@ -328,7 +326,6 @@ function startRecognition() {
       micIndicator.textContent = 'Микрофон: Слушает...';
       micIndicator.className = 'text-green-600';
     }
-    // Скрываем кнопку перезапуска при старте
     const restartButton = document.getElementById('restart-listening-btn');
     if (restartButton) restartButton.classList.add('hidden');
   } catch (error) {
@@ -356,6 +353,7 @@ function validateInput(text, lessonId = 'lesson13') {
   let isCorrect = false;
   let currentStructure;
   for (const structure of lesson.structures) {
+    console.log(`Validating input "${text}" against structure "${structure.id}"`);
     if (lesson.validateStructure(text, structure)) {
       isCorrect = true;
       currentStructure = structure;
@@ -363,7 +361,7 @@ function validateInput(text, lessonId = 'lesson13') {
     }
   }
 
-  console.log(`Validation result for "${text}": ${isCorrect ? 'Correct' : 'Incorrect'}`);
+  console.log(`Validation result for "${text}": ${isCorrect ? 'Correct' : 'Incorrect'}`, currentStructure ? `Structure: ${currentStructure.id}` : '');
   if (isCorrect) {
     updateProgress(currentStructure.id, true, lessonId);
   }
@@ -374,7 +372,6 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, starting fetchLessons');
   fetchLessons();
 
-  // Добавляем обработчик для ручного ввода текста
   const submitManualInput = document.getElementById('submit-manual-input');
   if (submitManualInput) {
     submitManualInput.addEventListener('click', () => {
