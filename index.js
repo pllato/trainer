@@ -105,7 +105,7 @@ function resetLessonState() {
   window.lessonStarted = false;
   window.usedVerbs = [];
   window.userProgress = {};
-  window.usedDates = []; // Сбрасываем даты для предотвращения накопления
+  window.usedDates = []; // Сбрасываем даты
   lastValidatedText = null;
   lastValidatedTime = 0;
   console.log('Lesson state reset');
@@ -290,7 +290,7 @@ function startRecognition() {
     if (log) log.appendChild(errorMessage);
 
     if (event.error === 'network') {
-      console.log('Проблема с сетью, пытаемся перезапустить через 5 секунд');
+      console.log('Проблема с сетью, пытаемся перезапустить через 2 секунды');
     } else if (event.error === 'no-speech') {
       console.log('Речь не обнаружена, продолжаем слушать');
       return; // Не останавливаем для no-speech
@@ -312,13 +312,13 @@ function startRecognition() {
     const restartButton = document.getElementById('restart-listening-btn');
     if (restartButton) restartButton.classList.remove('hidden');
 
-    // Перезапускаем через 5 секунд, если не активно
+    // Перезапускаем через 2 секунды, если не активно
     setTimeout(() => {
       if (!window.recognition || window.recognition.state !== 'listening') {
         console.log('Перезапуск SpeechRecognition');
         startRecognition();
       }
-    }, 5000);
+    }, 2000); // Уменьшили с 5000 до 2000
   };
 
   try {
@@ -369,8 +369,20 @@ function validateInput(text, lessonId = 'lesson13') {
   }
 }
 
-// Start fetching lessons
+// Start fetching lessons and add manual input handler
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, starting fetchLessons');
   fetchLessons();
+
+  // Добавляем обработчик для текстового ввода
+  const submitManualInput = document.getElementById('submit-manual-input');
+  if (submitManualInput) {
+    submitManualInput.addEventListener('click', () => {
+      const manualInput = document.getElementById('manual-input').value;
+      if (manualInput) {
+        console.log('Manual input:', manualInput);
+        validateInput(manualInput);
+      }
+    });
+  }
 }, { once: true });
